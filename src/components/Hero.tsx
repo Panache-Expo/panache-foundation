@@ -2,10 +2,6 @@ import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-beauty.jpg";
 import { Link } from "react-router-dom";
 
-declare module "*.jpg" {
-  const value: string;
-  export default value;
-}
 
 export const Hero = () => {
   return (
@@ -39,8 +35,6 @@ export const Hero = () => {
               Explore Workshops
             </Button>
           </Link>
-          >
-        </div>
       </div>
       
       {/* Floating Elements */}
