@@ -58,7 +58,7 @@ export const Footer = () => {
               </li>
               <li className="flex items-center text-sm text-primary-foreground/80">
                 <MapPin className="w-4 h-4 mr-3" />
-                Douala, Cameroon
+                  Cameroon
               </li>
             </ul>
           </div>

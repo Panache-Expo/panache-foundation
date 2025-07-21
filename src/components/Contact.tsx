@@ -35,7 +35,7 @@ export const Contact = () => {
               <span className="text-2xl">📍</span>
             </div>
             <h3 className="font-semibold text-primary-foreground mb-2">Visit Us</h3>
-            <p className="text-primary-foreground/80 text-sm">Beauty District, NYC</p>
+            <p className="text-primary-foreground/80 text-sm">Cameroon</p>
           </div>
         </div>
         
