@@ -31,7 +31,7 @@ export const Founder = () => {
               <div className="flex items-center gap-2 mb-6">
                 <Instagram className="w-5 h-5 text-rose-gold" />
                 <a 
-                  href="https://instagram.com/ekiewalters" 
+                  href="https://instagram.com/ekie_walters" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-rose-gold hover:text-primary transition-colors font-medium"
@@ -44,19 +44,18 @@ export const Founder = () => {
             
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                With over a decade of experience in the beauty industry, Ekie Walters founded 
-                Panache Expo with a vision to elevate beauty standards and empower professionals 
+                Ekie Walters founded Panache Expo with a vision to elevate beauty standards and empower professionals 
                 across Cameroon and beyond.
               </p>
               
               <p>
-                Her passion for excellence and commitment to education has transformed countless 
+                His passion for excellence and commitment to education has transformed countless 
                 lives, creating a platform where beauty professionals can learn, grow, and 
                 celebrate their craft together.
               </p>
               
               <p>
-                Through Panache Expo, Ekie continues to bridge the gap between traditional 
+                Through Panache Expo, he continues to bridge the gap between traditional 
                 beauty practices and modern techniques, fostering a community that celebrates 
                 diversity, creativity, and professional excellence.
               </p>
@@ -64,7 +63,7 @@ export const Founder = () => {
             
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <a 
-                href="https://instagram.com/ekiewalters" 
+                href="https://instagram.com/ekie_walters" 
                 target="_blank" 
                 rel="noopener noreferrer"
               >
@@ -73,9 +72,6 @@ export const Founder = () => {
                   Follow on Instagram
                 </Button>
               </a>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Read Full Story
-              </Button>
             </div>
           </div>
         </div>
