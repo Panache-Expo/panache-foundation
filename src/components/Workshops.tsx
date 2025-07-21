@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const workshops = [
   {
@@ -81,17 +82,16 @@ export const Workshops = () => {
                 ))}
               </ul>
               
-              <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
-                Learn More
-              </Button>
             </div>
           ))}
         </div>
         
         <div className="text-center mt-16">
-          <Button variant="hero" size="lg">
-            Register for Workshops
-          </Button>
+          <Link to="/register">
+            <Button variant="hero" size="lg">
+              Register for Workshops
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
