@@ -1,17 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import logoImage from "@/assets/panache-logo.png";
+import logoImage from "@/assets/Panache Expo logo-01.png";
 
 export const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center">
-          <img 
-            src={logoImage} 
-            alt="Panache Expo" 
-            className="h-12 w-auto"
-          />
+        <Link to="/" className="font-display text-2xl font-bold text-primary">
+          Panache <span className="text-rose-gold">Expo</span>
         </Link>
         
         <nav className="hidden md:flex items-center gap-8">
@@ -33,6 +29,12 @@ export const Header = () => {
         
         {/* Mobile menu button - simplified for now */}
         <div className="md:hidden">
+          <Link to="/workshops" className="text-foreground hover:text-primary transition-colors">
+            Workshops
+          </Link>
+          <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
+            Contact
+          </Link>
           <Link to="/register">
             <Button variant="default" size="sm">
               Register

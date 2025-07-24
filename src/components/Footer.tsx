@@ -68,15 +68,7 @@ export const Footer = () => {
             <h4 className="font-semibold text-lg mb-4">Follow Us</h4>
             <div className="flex space-x-4 mb-4">
               <a 
-                href="https://facebook.com/panacheexpo" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://instagram.com/panacheexpo" 
+                href="https://instagram.com/panache_expo" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
@@ -84,7 +76,7 @@ export const Footer = () => {
                 <Instagram className="w-5 h-5" />
               </a>
               <a 
-                href="https://twitter.com/panacheexpo" 
+                href="https://x.com/waltersekie?s=21" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"

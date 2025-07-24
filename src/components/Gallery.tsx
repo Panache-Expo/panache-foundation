@@ -1,35 +1,39 @@
-import { Button } from "@/components/ui/button";
-
+import makeupImage from "@/assets/Makeup.jpg";
+import StylingImage from "@/assets/HairStyling.jpg"; 
+import NailImage from "@/assets/NailArt.jpg";
+import WigImage from "@/assets/WigInstall.jpg";
+import LashImage from "@/assets/Lash.jpg";
+import BraidingImage from "@/assets/Braid.jpg";
 export const Gallery = () => {
   const galleryItems = [
     {
       type: "image",
-      src: "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&h=400&fit=crop",
-      alt: "Makeup workshop in progress"
+      src: makeupImage,
+      alt: "Makeup workshop"
     },
     {
       type: "image", 
-      src: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=400&fit=crop",
-      alt: "Professional hair styling session"
+      src: StylingImage,
+      alt: "Barber workshop"
     },
     {
       type: "image",
-      src: "", 
+      src: NailImage, 
       alt: "Nail art workshop"
     },
     {
       type: "image",
-      src: "",
-      alt: "Beauty pageant event"
+      src: WigImage,
+      alt: "Wig installation workshop"
     },
     {
       type: "image",
-      src: "",
+      src: LashImage,
       alt: "Lash extension training"
     },
     {
       type: "image",
-      src: "",
+      src: BraidingImage,
       alt: "Braiding workshop demonstration"
     }
   ];
@@ -71,12 +75,6 @@ export const Gallery = () => {
               </div>
             </div>
           ))}
-        </div>
-        
-        <div className="text-center">
-          <Button variant="outline" size="lg">
-            View More Photos
-          </Button>
         </div>
       </div>
     </section>
