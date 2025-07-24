@@ -27,8 +27,8 @@ export const Header = () => {
           </Link>
         </nav>
         
-        {/* Mobile menu button - simplified for now */}
-        <div className="md:hidden">
+        {/* Mobile menu */}
+        <div className="md:hidden flex flex-col items-end gap-y-2">
           <Link to="/workshops" className="text-foreground hover:text-primary transition-colors">
             Workshops
           </Link>
