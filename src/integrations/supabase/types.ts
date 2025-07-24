@@ -23,6 +23,7 @@ export type Database = {
           last_name: string
           message: string
           subject: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -32,6 +33,7 @@ export type Database = {
           last_name: string
           message: string
           subject: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -41,6 +43,31 @@ export type Database = {
           last_name?: string
           message?: string
           subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -55,6 +82,7 @@ export type Database = {
           last_name: string
           newsletter_subscription: boolean
           phone: string
+          user_id: string | null
           workshop: string
         }
         Insert: {
@@ -67,6 +95,7 @@ export type Database = {
           last_name: string
           newsletter_subscription?: boolean
           phone: string
+          user_id?: string | null
           workshop: string
         }
         Update: {
@@ -79,6 +108,7 @@ export type Database = {
           last_name?: string
           newsletter_subscription?: boolean
           phone?: string
+          user_id?: string | null
           workshop?: string
         }
         Relationships: []
