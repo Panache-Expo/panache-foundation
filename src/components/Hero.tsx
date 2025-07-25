@@ -17,10 +17,10 @@ export const Hero = () => {
       </div>
       
       {/* Content */}
-      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center gap-3">
-        <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground animate-fade-in mb-2">
-          <img src={logoImage} alt="Panache Expo" className="mx-auto mb-5 max-w-[320px] md:max-w-[500px]" />
-        </h1>
+      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
+        <div className="animate-fade-in mb-8">
+          <img src={logoImage} alt="Panache Expo" className="mx-auto max-w-[320px] md:max-w-[500px] mb-6" />
+        </div>
         
         <p className="text-xl md:text-2xl lg:text-3xl text-primary-foreground/90 font-light leading-relaxed animate-fade-in mb-1">
           Celebrating Beauty, Fashion and Skincare through 

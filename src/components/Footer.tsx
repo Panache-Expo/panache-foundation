@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import logoImage from "@/assets/Panache Expo logo-01.png";
 
 export const Footer = () => {
   return (
@@ -9,9 +10,7 @@ export const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="md:col-span-1">
-            <h3 className="font-display text-2xl font-bold mb-4">
-              Panache <span className="text-rose-gold">Expo</span>
-            </h3>
+            <img src={logoImage} alt="Panache Expo" className="h-16 mb-4" />
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               Celebrating Beauty, Fashion and Skincare through Workshops, Pageants and Prestigious Awards
             </p>
