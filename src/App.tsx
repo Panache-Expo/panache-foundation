@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import { WorkshopsPage } from "./pages/WorkshopsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import PanacheDorPage from "./pages/PanacheDorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/workshops" element={<WorkshopsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/panache-dor" element={<PanacheDorPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react";
 import logoImage from "@/assets/Panache Expo logo-01.png";
 
 export const Footer = () => {
@@ -28,6 +28,11 @@ export const Footer = () => {
               <li>
                 <Link to="/workshops" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
                   Workshops
+                </Link>
+              </li>
+              <li>
+                <Link to="/panache-dor" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  Panache D'or
                 </Link>
               </li>
               <li>
@@ -73,6 +78,22 @@ export const Footer = () => {
                 className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
               >
                 <Instagram className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://facebook.com/panacheexpo" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://youtube.com/@panacheexpo" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+              >
+                <Youtube className="w-5 h-5" />
               </a>
               <a 
                 href="https://x.com/waltersekie?s=21" 
