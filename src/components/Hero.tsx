@@ -30,11 +30,18 @@ export const Hero = () => {
           Workshops • Pageants • Prestigious Awards
         </p>
         
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/workshops">
             <Button variant="hero" size="lg">
               Explore Workshops
             </Button>
           </Link>
+          <Link to="/panache-dor">
+            <Button variant="outline" size="lg" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+              Panache D'or Winners
+            </Button>
+          </Link>
+        </div>
       </div>
       
       {/* Floating Elements */}

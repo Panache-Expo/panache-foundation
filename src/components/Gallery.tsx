@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import makeupImage from "@/assets/Makeup.jpg";
 import StylingImage from "@/assets/HairStyling.jpg"; 
 import NailImage from "@/assets/NailArt.jpg";
@@ -75,6 +77,14 @@ export const Gallery = () => {
               </div>
             </div>
           ))}
+        </div>
+        
+        <div className="text-center">
+          <Link to="/panache-dor">
+            <Button variant="rose" size="lg">
+              View Panache D'or Winners
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
