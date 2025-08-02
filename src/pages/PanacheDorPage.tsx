@@ -43,7 +43,14 @@ const PanacheDorPage = () => {
                   Current Miss Panache
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Our current Miss Panache is a symbol of beauty and empowerment, inspiring others to embrace their uniqueness.
+                  Introducing the remarkable Miss Djoulhida Soule, our shining star as Miss Panache D’Or 2025 and the proud Ambassador of Panache Expo!
+                  As the CEO of Charisma Beauty Skincare, Miss Soule is not just a certified chemist in cosmetic production; she is a visionary hair stylist and an incredible makeup artist. Her passion for beauty, skincare, and style radiates in everything she does.
+                  
+                  At Charisma Beauty, she inspires confidence by merging glamour with self-care, showing that every individual deserves to shine!
+                  With her elegance and intelligence, Miss Soule is truly a beacon of empowerment and sophistication.
+
+                  As the representative of Panache Expo 2025, she perfectly embodies the fusion of beauty and intelligence.
+                  Let’s give a warm welcome to @misspanachedor as she joins the vibrant Panache family!
                 </p>
               </div>
             </CardContent>
