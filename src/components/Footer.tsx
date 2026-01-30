@@ -24,12 +24,22 @@ export const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link to="/" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
-                  Home
+                  Foundation Home
                 </Link>
               </li>
               <li>
-                <Link to="/workshops" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
-                  Workshops
+                <Link to="/panache-expo" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  Panache Expo 2026
+                </Link>
+              </li>
+              <li>
+                <Link to="/cyes" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  CYES
+                </Link>
+              </li>
+              <li>
+                <Link to="/panache-360" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  Panache 360 Beauty
                 </Link>
               </li>
               <li>
