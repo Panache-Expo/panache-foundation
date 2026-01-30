@@ -4,17 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/Footer";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useSubmitContact } from "@/hooks/useSupabase";
+import { logError, getErrorMessage } from "@/integrations/supabase/errors";
 
 export const ContactPage = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
+  const submitMutation = useSubmitContact();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -26,27 +27,23 @@ export const ContactPage = () => {
     };
 
     try {
-      const { error } = await supabase
-        .from('contact_submissions')
-        .insert([data]);
-
-      if (error) throw error;
+      await submitMutation.mutateAsync(data);
 
       toast({
         title: "Message sent successfully!",
         description: "We'll get back to you soon.",
       });
 
-      e.currentTarget.reset();
+      formRef.current?.reset();
     } catch (error) {
-      console.error('Error submitting contact form:', error);
+      const errorMessage = getErrorMessage(error);
+      logError('contact_form_submission', error);
+      
       toast({
         title: "Error sending message",
-        description: "Please try again later.",
+        description: errorMessage,
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -95,7 +92,7 @@ export const ContactPage = () => {
             
             {/* Contact Form */}
             <div className="bg-background/10 backdrop-blur-sm rounded-2xl p-8">
-              <form className="space-y-6" onSubmit={handleSubmit}>
+              <form ref={formRef} className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName" className="text-primary-foreground">First Name</Label>
@@ -122,8 +119,8 @@ export const ContactPage = () => {
                   <Textarea id="message" name="message" className="mt-2" rows={4} placeholder="Tell us more about your inquiry..." required />
                 </div>
                 
-                <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending..." : "Send Message"}
+                <Button type="submit" className="w-full" size="lg" disabled={submitMutation.isPending}>
+                  {submitMutation.isPending ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </div>
