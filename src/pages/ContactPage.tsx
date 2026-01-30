@@ -24,6 +24,7 @@ export const ContactPage = () => {
       email: formData.get('email') as string,
       subject: formData.get('subject') as string,
       message: formData.get('message') as string,
+      user_id: null,
     };
 
     try {
