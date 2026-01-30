@@ -2,18 +2,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Sparkles, Users } from "lucide-react";
-import logoImage from "@/assets/Panache Expo logo-01.png";
 
 const FoundationHome = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      {/* Header */}
-      <header className="py-6 px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-center">
-          <img src={logoImage} alt="Panache Expo Foundation" className="h-16 md:h-20" />
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className="py-16 md:py-24 px-6">
         <div className="max-w-5xl mx-auto text-center">
