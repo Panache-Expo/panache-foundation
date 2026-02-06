@@ -7,7 +7,9 @@ import React, { Suspense } from "react";
 import FoundationHome from "./pages/FoundationHome";
 import PanacheExpoPage from "./pages/PanacheExpoPage";
 import CYESPage from "./pages/CYESPage";
+import CharityNightPage from "./pages/CharityNightPage";
 import Panache360Page from "./pages/Panache360Page";
+import FashionNightPage from "./pages/FashionNightPage";
 import { WorkshopsPage } from "./pages/WorkshopsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -97,7 +99,9 @@ const App = () => (
               <Route path="/" element={<FoundationHome />} />
               <Route path="/panache-expo" element={<PanacheExpoPage />} />
               <Route path="/cyes" element={<CYESPage />} />
+              <Route path="/cyes/charity-night" element={<CharityNightPage />} />
               <Route path="/panache-360" element={<Panache360Page />} />
+              <Route path="/panache-fashion-night" element={<FashionNightPage />} />
               <Route path="/workshops" element={<WorkshopsPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/register" element={<RegisterPage />} />

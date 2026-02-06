@@ -76,9 +76,9 @@ export const Sponsors = ({ variant = "panache" }: SponsorsProps) => {
           <p className="text-muted-foreground mb-6">
             Interested in becoming a sponsor or partner?
           </p>
-          <Link to="/contact"onClick={() => setIsMobileMenuOpen(false)}>
+          <Link to="/contact">
             <Button variant="rose" size="lg">
-                Become a Partner 
+              Become a Partner
             </Button>
           </Link>
         </div>
