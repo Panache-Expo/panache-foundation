@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Sparkles, Users } from "lucide-react";
+import { Footer } from "@/components/Footer";
 
 const FoundationHome = () => {
   return (
@@ -85,15 +86,7 @@ const FoundationHome = () => {
           </p>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-6 border-t border-border">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-muted-foreground text-sm">
-            © 2025 Panache Expo Foundation. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
