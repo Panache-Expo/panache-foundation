@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Menu, X, ChevronDown, Home } from "lucide-react";
-import logoImage from "@/assets/Panache Expo logo-01.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +13,6 @@ export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   
-  // Determine if we're in CYES context
-  const isCYES = location.pathname.startsWith("/cyes");
-  const isPanacheExpo = location.pathname.startsWith("/panache-expo") || 
-                        location.pathname.startsWith("/panache-360") ||
-                        location.pathname.startsWith("/workshops") ||
-                        location.pathname.startsWith("/panache-dor");
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -52,6 +45,11 @@ export const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/panache-fashion-night" className="cursor-pointer">
+                    Panache Fashion Night
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/workshops" className="cursor-pointer">
                     Workshops
                   </Link>
@@ -65,8 +63,32 @@ export const Header = () => {
             </DropdownMenu>
           </div>
 
-          <Link to="/cyes" className="text-foreground hover:text-primary transition-colors">
-            CYES
+          {/* CYES Dropdown */}
+          <div className="flex items-center gap-1">
+            <Link to="/cyes" className="text-foreground hover:text-primary transition-colors">
+              CYES
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-foreground hover:text-primary transition-colors p-1">
+                <ChevronDown className="w-4 h-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-background border border-border shadow-elegant z-50">
+                <DropdownMenuItem asChild>
+                  <Link to="/cyes" className="cursor-pointer">
+                    Summit & Awards
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/cyes/charity-night" className="cursor-pointer">
+                    Charity Night
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
+            Contact
           </Link>
           <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
             Contact
@@ -115,6 +137,13 @@ export const Header = () => {
                   Panache 360 Beauty
                 </Link>
                 <Link 
+                  to="/panache-fashion-night" 
+                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Panache Fashion Night
+                </Link>
+                <Link 
                   to="/workshops" 
                   className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -129,13 +158,23 @@ export const Header = () => {
                   Panache D'or Winners
                 </Link>
               </div>
-              <Link 
-                to="/cyes" 
-                className="text-foreground hover:text-primary transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                CYES
-              </Link>
+              <div className="border-t border-border pt-4">
+                <p className="text-sm text-muted-foreground mb-2">CYES</p>
+                <Link 
+                  to="/cyes" 
+                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Summit & Awards
+                </Link>
+                <Link 
+                  to="/cyes/charity-night" 
+                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Charity Night
+                </Link>
+              </div>
               <Link 
                 to="/contact" 
                 className="text-foreground hover:text-primary transition-colors"
