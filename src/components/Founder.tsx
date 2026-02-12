@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Instagram, ExternalLink } from "lucide-react";
-import FounderImage from "@/assets/Founder 1.jpeg"; 
+import FounderImage from "@/assets/Founder.jpeg"; 
 
 
 export const Founder = () => {
