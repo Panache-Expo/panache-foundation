@@ -7,6 +7,8 @@ import React, { Suspense } from "react";
 import FoundationHome from "./pages/FoundationHome";
 import PanacheExpoPage from "./pages/PanacheExpoPage";
 import CYESPage from "./pages/CYESPage";
+import CYESAwardsPage from "./pages/CYESAwardsPage";
+import CYESNominationsPage from "./pages/CYESNominationsPage";
 import CharityNightPage from "./pages/CharityNightPage";
 import Panache360Page from "./pages/Panache360Page";
 import FashionNightPage from "./pages/FashionNightPage";
@@ -14,13 +16,14 @@ import { WorkshopsPage } from "./pages/WorkshopsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import PanacheDorPage from "./pages/PanacheDorPage";
+import PanacheNominationsPage from "./pages/PanacheNominationsPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      staleTime: 1000 * 60 * 5,
       retry: 1,
     },
   },
@@ -89,17 +92,14 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Suspense fallback={<LoadingFallback />}>
-            {/* Show diagnostic in dev mode - comment out for production */}
-            {/* {import.meta.env.DEV && (
-              <div className="fixed top-0 left-0 right-0 z-50 p-2">
-                <DatabaseDiagnostic />
-              </div>
-            )} */}
             <Routes>
               <Route path="/" element={<FoundationHome />} />
               <Route path="/panache-expo" element={<PanacheExpoPage />} />
+              <Route path="/panache-expo/charity-night" element={<CharityNightPage />} />
+              <Route path="/panache-expo/nominations" element={<PanacheNominationsPage />} />
               <Route path="/cyes" element={<CYESPage />} />
-              <Route path="/cyes/charity-night" element={<CharityNightPage />} />
+              <Route path="/cyes/awards" element={<CYESAwardsPage />} />
+              <Route path="/cyes/nominations" element={<CYESNominationsPage />} />
               <Route path="/panache-360" element={<Panache360Page />} />
               <Route path="/panache-fashion-night" element={<FashionNightPage />} />
               <Route path="/workshops" element={<WorkshopsPage />} />

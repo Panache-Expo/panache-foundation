@@ -13,7 +13,6 @@ import {
 export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -51,6 +50,11 @@ export const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/panache-expo/charity-night" className="cursor-pointer">
+                    Charity Night
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/workshops" className="cursor-pointer">
                     Workshops
                   </Link>
@@ -58,6 +62,11 @@ export const Header = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/panache-dor" className="cursor-pointer">
                     Panache D'or Winners
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/panache-expo/nominations" className="cursor-pointer">
+                    Nominations
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -80,17 +89,19 @@ export const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/cyes/charity-night" className="cursor-pointer">
-                    Charity Night
+                  <Link to="/cyes/awards" className="cursor-pointer">
+                    CYESCD Awards
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/cyes/nominations" className="cursor-pointer">
+                    Nominations
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
-          <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
-            Contact
-          </Link>
           <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
             Contact
           </Link>
@@ -123,57 +134,38 @@ export const Header = () => {
               </Link>
               <div className="border-t border-border pt-4">
                 <p className="text-sm text-muted-foreground mb-2">Panache Expo</p>
-                <Link 
-                  to="/panache-expo" 
-                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+                <Link to="/panache-expo" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   6th Edition 2026
                 </Link>
-                <Link 
-                  to="/panache-360" 
-                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+                <Link to="/panache-360" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Panache 360 Beauty
                 </Link>
-                <Link 
-                  to="/panache-fashion-night" 
-                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+                <Link to="/panache-fashion-night" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Panache Fashion Night
                 </Link>
-                <Link 
-                  to="/workshops" 
-                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+                <Link to="/panache-expo/charity-night" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  Charity Night
+                </Link>
+                <Link to="/workshops" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Workshops
                 </Link>
-                <Link 
-                  to="/panache-dor" 
-                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+                <Link to="/panache-dor" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Panache D'or Winners
+                </Link>
+                <Link to="/panache-expo/nominations" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  Nominations
                 </Link>
               </div>
               <div className="border-t border-border pt-4">
                 <p className="text-sm text-muted-foreground mb-2">CYES</p>
-                <Link 
-                  to="/cyes" 
-                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
+                <Link to="/cyes" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Summit & Awards
                 </Link>
-                <Link 
-                  to="/cyes/charity-night" 
-                  className="block text-foreground hover:text-primary transition-colors py-1 pl-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Charity Night
+                <Link to="/cyes/awards" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  CYESCD Awards
+                </Link>
+                <Link to="/cyes/nominations" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  Nominations
                 </Link>
               </div>
               <Link 
