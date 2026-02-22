@@ -7,17 +7,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Footer } from "@/components/Footer";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+
+const TARGET_EMAIL = "dhruvroshan10@gmail.com";
 
 export const RegisterPage = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedWorkshop, setSelectedWorkshop] = useState("");
   const [selectedExperience, setSelectedExperience] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [newsletterSubscription, setNewsletterSubscription] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!selectedWorkshop) {
@@ -36,58 +36,37 @@ export const RegisterPage = () => {
       return;
     }
 
-    setIsSubmitting(true);
-
     const formData = new FormData(e.currentTarget);
-    const data = {
-      first_name: formData.get('firstName') as string,
-      last_name: formData.get('lastName') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      workshop: selectedWorkshop,
-      experience_level: selectedExperience || null,
-      agreed_to_terms: agreedToTerms,
-      newsletter_subscription: newsletterSubscription,
-    };
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const email = formData.get('email') as string;
+    const phone = formData.get('phone') as string;
 
-    try {
-      const { data: result, error } = await supabase
-        .from('workshop_registrations')
-        .insert([data])
-        .select();
+    const subject = encodeURIComponent(`Workshop Registration - ${selectedWorkshop}`);
+    const body = encodeURIComponent(
+      `WORKSHOP REGISTRATION\n\n` +
+      `Name: ${firstName} ${lastName}\n` +
+      `Email: ${email}\n` +
+      `Phone: ${phone}\n` +
+      `Workshop: ${selectedWorkshop}\n` +
+      `Experience Level: ${selectedExperience || "Not specified"}\n` +
+      `Newsletter: ${newsletterSubscription ? "Yes" : "No"}\n`
+    );
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw new Error(error.message || 'Failed to submit registration');
-      }
+    window.open(`mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`, "_blank");
 
-      if (result && result.length > 0) {
-        toast({
-          title: "Registration successful!",
-          description: "You're registered for the workshop. We'll send you details soon.",
-        });
+    toast({
+      title: "Registration prepared!",
+      description: "Your email client will open. Please send the email to complete your registration.",
+    });
 
-        if (e.currentTarget instanceof HTMLFormElement) {
-          e.currentTarget.reset();
-        }
-        setSelectedWorkshop("");
-        setSelectedExperience("");
-        setAgreedToTerms(false);
-        setNewsletterSubscription(false);
-      } else {
-        throw new Error('No confirmation received from database');
-      }
-    } catch (error) {
-      console.error('Error submitting registration:', error);
-      const errorMsg = error instanceof Error ? error.message : 'Please try again later';
-      toast({
-        title: "Registration failed",
-        description: errorMsg,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    if (e.currentTarget instanceof HTMLFormElement) {
+      e.currentTarget.reset();
     }
+    setSelectedWorkshop("");
+    setSelectedExperience("");
+    setAgreedToTerms(false);
+    setNewsletterSubscription(false);
   };
 
   return (
@@ -182,8 +161,8 @@ export const RegisterPage = () => {
                 </Label>
               </div>
               
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? "Registering..." : "Register for Workshop"}
+              <Button type="submit" className="w-full" size="lg">
+                Register for Workshop
               </Button>
             </form>
           </div>

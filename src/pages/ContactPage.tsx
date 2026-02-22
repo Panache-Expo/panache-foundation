@@ -6,46 +6,40 @@ import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/Footer";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useSubmitContact } from "@/hooks/useSupabase";
-import { logError, getErrorMessage } from "@/integrations/supabase/errors";
+
+const TARGET_EMAIL = "dhruvroshan10@gmail.com";
 
 export const ContactPage = () => {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  const submitMutation = useSubmitContact();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const data = {
-      first_name: formData.get('firstName') as string,
-      last_name: formData.get('lastName') as string,
-      email: formData.get('email') as string,
-      subject: formData.get('subject') as string,
-      message: formData.get('message') as string,
-      user_id: null,
-    };
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const email = formData.get('email') as string;
+    const subjectVal = formData.get('subject') as string;
+    const message = formData.get('message') as string;
 
-    try {
-      await submitMutation.mutateAsync(data);
+    const subject = encodeURIComponent(`Contact Form: ${subjectVal}`);
+    const body = encodeURIComponent(
+      `CONTACT FORM SUBMISSION\n\n` +
+      `Name: ${firstName} ${lastName}\n` +
+      `Email: ${email}\n` +
+      `Subject: ${subjectVal}\n\n` +
+      `Message:\n${message}`
+    );
 
-      toast({
-        title: "Message sent successfully!",
-        description: "We'll get back to you soon.",
-      });
+    window.open(`mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`, "_blank");
 
-      formRef.current?.reset();
-    } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      logError('contact_form_submission', error);
-      
-      toast({
-        title: "Error sending message",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Message prepared!",
+      description: "Your email client will open. Please send the email to complete your submission.",
+    });
+
+    formRef.current?.reset();
   };
 
   return (
@@ -120,8 +114,8 @@ export const ContactPage = () => {
                   <Textarea id="message" name="message" className="mt-2" rows={4} placeholder="Tell us more about your inquiry..." required />
                 </div>
                 
-                <Button type="submit" className="w-full" size="lg" disabled={submitMutation.isPending}>
-                  {submitMutation.isPending ? "Sending..." : "Send Message"}
+                <Button type="submit" className="w-full" size="lg">
+                  Send Message
                 </Button>
               </form>
             </div>
