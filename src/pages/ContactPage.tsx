@@ -7,7 +7,7 @@ import { Footer } from "@/components/Footer";
 import { useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-const TARGET_EMAIL = "dhruvroshan10@gmail.com";
+const TARGET_EMAIL = "thepanacheexpo@gmail.com";
 
 export const ContactPage = () => {
   const { toast } = useToast();

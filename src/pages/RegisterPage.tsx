@@ -8,7 +8,7 @@ import { Footer } from "@/components/Footer";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-const TARGET_EMAIL = "dhruvroshan10@gmail.com";
+const TARGET_EMAIL = "thepanacheexpo@gmail.com";
 
 export const RegisterPage = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
