@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-beauty.png";
 import { Link } from "react-router-dom";
+import { Calendar } from "lucide-react";
 
 
 export const Hero = () => {
@@ -18,18 +19,20 @@ export const Hero = () => {
       
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-        <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-8 animate-fade-in">
-           Panache <span className="text-rose-gold">Expo</span>
+        <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-6 animate-fade-in">
+          Panache <span className="text-rose-gold">Expo</span>
         </h1>
-        
+        {/* Event Date - prominent placement */}
+        <div className="flex items-center justify-center gap-2 mb-8 animate-fade-in">
+          <Calendar className="w-6 h-6 text-rose-gold" />
+          <span className="text-2xl md:text-3xl font-semibold text-primary-foreground">July 16th 2026</span>
+        </div>
         <p className="text-xl md:text-2xl lg:text-3xl text-primary-foreground/90 mb-6 font-light leading-relaxed animate-fade-in">
           Celebrating Beauty, Fashion and Skincare through 
         </p>
-        
         <p className="text-lg md:text-xl text-primary-foreground/80 mb-12 animate-fade-in">
           Workshops • Pageants • Prestigious Awards
         </p>
-        
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/workshops">
             <Button variant="hero" size="lg">
