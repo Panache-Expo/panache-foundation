@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles, Users } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import foundationLogo from "@/assets/foundationlogo.jpeg";
 import cyesLogo from "@/assets/CYESLogo.jpeg";
-import panchacheLogo from "@/assets/Panache Expo logo-01.png";
+import panache from "@/assets/PanachExpo.jpeg";
 
 const FoundationHome = () => {
   return (
@@ -53,7 +53,7 @@ const FoundationHome = () => {
                 <CardContent className="p-8 md:p-10">
                   <div className="w-24 h-24 md:w-28 md:h-28 bg-gradient-primary rounded-xl flex items-center justify-center mb-6 shadow-lg border border-gray-200 group-hover:scale-110 transition-transform duration-300">
                     <img
-                      src={panchacheLogo}
+                      src={panache}
                       alt="Panache Expo logo"
                       className="w-20 h-20 md:w-24 md:h-24 object-contain"
                     />
@@ -78,7 +78,7 @@ const FoundationHome = () => {
             <Link to="/cyes" className="group">
                 <Card className="h-full overflow-hidden border-2 border-transparent hover:border-rose-gold transition-all duration-500 hover:shadow-elegant hover:-translate-y-2">
                 <CardContent className="p-8 md:p-10">
-                  <div className="w-24 h-24 md:w-28 md:h-28 bg-white rounded-xl flex items-center justify-center mb-6 shadow-lg border border-gray-200 group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-24 h-24 md:w-28 md:h-28 bg-rose-gold rounded-xl flex items-center justify-center mb-6 shadow-lg border border-gray-200 group-hover:scale-110 transition-transform duration-300">
                     <img
                       src={cyesLogo}
                       alt="CYES logo"
