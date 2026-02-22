@@ -16,18 +16,40 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Award } from "lucide-react";
 
-const CYES_EMAIL = "dhruvroshan10@gmail.com";
+const CYES_EMAIL = "info.cyescyecdawards@gmail.com";
 
-const categories = [
-  "Young Entrepreneur of the Year",
-  "Best Startup Innovation",
-  "Social Impact Award",
-  "Tech Excellence Award",
-  "Best Female Entrepreneur",
-  "Community Leadership Award",
-  "Best Business Growth",
-  "Creative Industries Award",
+const competitiveCategories = [
+  { value: "Youth Entrepreneur of the Year", description: "Outstanding young entrepreneur (under 35) who has built a sustainable and impactful business demonstrating leadership, measurable growth, and innovation." },
+  { value: "Startup of the Year", description: "Promising startup (less than 5 years old) showing innovation, scalability, strong market traction, and potential for long-term success." },
+  { value: "Technology Innovator of the Year", description: "Individual or company leveraging technology to solve problems, improve systems, or drive digital transformation with measurable impact." },
+  { value: "Agribusiness of the Year", description: "Business or entrepreneur making significant contributions to agriculture, agritech, food production, or rural economic development." },
+  { value: "Creative Entrepreneur of the Year", description: "Creative industry professional running a structured and impactful business in fashion, media, art, design, photography, or entertainment." },
+  { value: "Social Impact Business of the Year", description: "Business that combines profitability with purpose, actively addressing social or community challenges." },
+  { value: "Community Leader of the Year", description: "Individual who has demonstrated exceptional leadership in driving positive change within their community." },
+  { value: "NGO of the Year", description: "Registered non-profit organization making measurable and sustainable contributions to community development." },
+  { value: "Youth Empowerment Initiative of the Year", description: "Project or organization empowering young people through skills development, mentorship, or opportunity creation." },
+  { value: "Education Impact of the Year", description: "Individual or organization improving access to education, academic excellence, or mentorship programs." },
+  { value: "Health Impact of the Year", description: "Impactful work in healthcare, public health awareness, humanitarian medical support, or health innovation." },
+  { value: "Environmental Impact of the Year", description: "Initiatives promoting sustainability, environmental protection, climate awareness, or eco-friendly innovation." },
+  { value: "Corporate Impact of the Year", description: "Corporate organization demonstrating strong social responsibility, community investment, and sustainable impact." },
+  { value: "SME of the Year", description: "Small or medium-sized enterprise with strong growth, operational excellence, and measurable contribution to the economy." },
+  { value: "Financial Institution of the Year", description: "Financial institution supporting entrepreneurship, community development, and economic empowerment." },
+  { value: "Woman in Business of the Year", description: "Female business leader demonstrating excellence, resilience, and measurable business impact." },
+  { value: "Diaspora Impact of the Year", description: "Diaspora individual or organization contributing significantly to development and investment back home." },
+  { value: "Emerging Youth Leader of the Year", description: "Young leader demonstrating influence, integrity, and positive impact within their sector or community." },
+  { value: "Media & Advocacy of the Year", description: "Media personality or platform using their voice to promote awareness, development, or social change." },
+  { value: "Voice of the Generation Award", description: "Spoken word artist, poet, or youth voice using creative expression to inspire change and influence society." },
 ];
+
+const honoraryCategories = [
+  { value: "Lifetime Achievement Award", description: "Individual with decades of sustained impact and outstanding contribution to community or national development." },
+  { value: "National Impact Award", description: "Distinguished personality whose work has significantly influenced national growth and transformation." },
+  { value: "Entrepreneurial Legacy Award", description: "Visionary business leader whose long-term work has shaped industries and inspired future generations." },
+  { value: "Youth Champion Award", description: "Individual or institution consistently supporting and advancing youth empowerment initiatives." },
+  { value: "Presidential Honor Award", description: "Special recognition presented by the Founder to an exceptional personality for outstanding service and strategic impact." },
+];
+
+const allCategories = [...competitiveCategories, ...honoraryCategories];
 
 const CYESNominationsPage = () => {
   const { toast } = useToast();
@@ -41,6 +63,8 @@ const CYESNominationsPage = () => {
     reason: "",
   });
 
+  const selectedCategoryInfo = allCategories.find(c => c.value === formData.category);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -53,9 +77,9 @@ const CYESNominationsPage = () => {
       return;
     }
 
-    const subject = encodeURIComponent(`CYESCD Awards Nomination - ${formData.category}`);
+    const subject = encodeURIComponent(`CYECD Awards Nomination - ${formData.category}`);
     const body = encodeURIComponent(
-      `CYESCD AWARDS NOMINATION\n\n` +
+      `CYECD AWARDS NOMINATION\n\n` +
       `Category: ${formData.category}\n\n` +
       `--- Nominee Details ---\n` +
       `Name: ${formData.nomineeName}\n` +
@@ -87,11 +111,11 @@ const CYESNominationsPage = () => {
             <Award className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="font-display text-4xl md:text-5xl font-bold text-primary mb-4">
-            CYESCD Awards <span className="text-rose-gold">Nominations</span>
+            CYECD Awards <span className="text-rose-gold">Nominations</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Nominate an outstanding young entrepreneur for the CYESCD Awards.
-            Fill in the form below and submit your nomination.
+            Cameroon Youths Entrepreneurial & Community Development Awards (CYECD) 2026.
+            Nominate an outstanding individual, business, or initiative below.
           </p>
         </div>
       </section>
@@ -117,13 +141,29 @@ const CYESNominationsPage = () => {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
+                    <SelectItem disabled value="__competitive_header__" className="font-bold text-primary">
+                      — Competitive Categories —
+                    </SelectItem>
+                    {competitiveCategories.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.value}
+                      </SelectItem>
+                    ))}
+                    <SelectItem disabled value="__honorary_header__" className="font-bold text-primary">
+                      — Honorary Categories (Board Selected) —
+                    </SelectItem>
+                    {honoraryCategories.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.value}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedCategoryInfo && (
+                  <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 mt-2">
+                    <strong>Description:</strong> {selectedCategoryInfo.description}
+                  </p>
+                )}
               </div>
 
               {/* Nominee Details */}

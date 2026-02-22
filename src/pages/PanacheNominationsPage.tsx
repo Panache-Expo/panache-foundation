@@ -16,17 +16,26 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles } from "lucide-react";
 
-const PANACHE_EMAIL = "dhruvroshan10@gmail.com";
+const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
 
 const categories = [
-  "Best Makeup Artist",
-  "Best Hairstylist",
-  "Best Nail Artist",
-  "Best Skincare Brand",
-  "Best Fashion Designer",
-  "Best Beauty Influencer",
-  "Best Lash Technician",
-  "Best Bridal Stylist",
+  { value: "Barber of the Year", description: "Must demonstrate consistent professional barbering excellence, client base growth, technical skill, and visible industry impact." },
+  { value: "Hairstylist of the Year", description: "Must show creativity, professional service delivery, portfolio consistency, and strong client or event presence." },
+  { value: "Braider of the Year", description: "Must demonstrate advanced braiding techniques, originality, consistency, and strong cultural or market relevance." },
+  { value: "Makeup Artist of the Year (Including SFX)", description: "Must show versatility in beauty and/or special effects makeup, portfolio strength, and professional recognition." },
+  { value: "Nail Artist of the Year", description: "Must demonstrate creativity, hygiene standards, technique precision, and strong visual portfolio." },
+  { value: "Lash Artist of the Year", description: "Must show expertise in lash extensions, design precision, safety standards, and consistent client results." },
+  { value: "Wig Installation Specialist of the Year", description: "Must demonstrate advanced wig construction or installation techniques, finishing quality, and professional delivery." },
+  { value: "Fashion Designer of the Year", description: "Must show original collections, runway or commercial presence, brand identity, and creative consistency." },
+  { value: "Emerging Fashion Designer of the Year", description: "Must have less than 5 years of active professional practice and show strong growth trajectory and innovation." },
+  { value: "Model of the Year", description: "Must demonstrate professional modeling portfolio, runway/editorial experience, brand collaborations, and industry conduct." },
+  { value: "Fashion Stylist of the Year", description: "Must show creative direction skills, styling portfolio, media or event presence, and industry impact." },
+  { value: "Beauty Educator of the Year", description: "Must have trained students professionally through workshops, academies, or masterclasses with verifiable impact." },
+  { value: "Content Creator of the Year", description: "Must produce consistent beauty or fashion content with measurable engagement, originality, and industry influence." },
+  { value: "Beauty Brand of the Year", description: "Must operate as a registered or structured beauty-related brand with visible market presence and product/service consistency." },
+  { value: "Creative Entrepreneur of the Year", description: "Must demonstrate business leadership, growth strategy, employment or collaboration impact, and innovation." },
+  { value: "Emerging Creative Talent of the Year", description: "Must be within early professional stage (recommended under 5 years active) and show rapid industry growth and recognition." },
+  { value: "Creative Photographer of the Year", description: "Must have demonstrated excellence in fashion or beauty photography within the last 24 months, supported by a strong professional portfolio with creative originality and clear industry impact." },
 ];
 
 const PanacheNominationsPage = () => {
@@ -40,6 +49,8 @@ const PanacheNominationsPage = () => {
     nominatorEmail: "",
     reason: "",
   });
+
+  const selectedCategoryInfo = categories.find(c => c.value === formData.category);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,14 +101,30 @@ const PanacheNominationsPage = () => {
             Panache D'or <span className="text-rose-gold">Nominations</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Nominate an outstanding beauty or fashion professional for the Panache D'or Awards.
-            Fill in the form below and submit your nomination.
+            Panache D'or 2026 — Nominate an outstanding beauty or fashion professional.
+            Achievements must fall within the last 24 months.
           </p>
         </div>
       </section>
 
+      {/* Eligibility */}
+      <section className="py-8 px-6">
+        <Card className="max-w-3xl mx-auto bg-muted/30">
+          <CardContent className="pt-6">
+            <h3 className="font-display text-lg font-semibold text-primary mb-3">General Eligibility Requirements</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Nominee must be actively practicing within the beauty, fashion, or creative industry.</li>
+              <li>Achievements considered must fall within the last 24 months unless otherwise stated.</li>
+              <li>Nominee must provide verifiable portfolio, social presence, or documented proof of work.</li>
+              <li>Nominee must accept nomination and submit required documentation within 72 hours of request.</li>
+              <li>Nominee must not have ongoing serious misconduct allegations that could damage event integrity.</li>
+            </ul>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Form */}
-      <section className="py-16 px-6">
+      <section className="py-8 pb-16 px-6">
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
             <CardTitle className="font-display text-2xl text-primary">
@@ -118,12 +145,17 @@ const PanacheNominationsPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
+                      <SelectItem key={cat.value} value={cat.value}>
+                        {cat.value}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedCategoryInfo && (
+                  <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 mt-2">
+                    <strong>Eligibility:</strong> {selectedCategoryInfo.description}
+                  </p>
+                )}
               </div>
 
               {/* Nominee Details */}
