@@ -16,7 +16,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles } from "lucide-react";
 
-const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
+const PANACHE_EMAIL = "dhruvroshan10@gmail.com";
 
 const categories = [
   "Best Makeup Artist",

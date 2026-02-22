@@ -16,7 +16,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Award } from "lucide-react";
 
-const CYES_EMAIL = "info.cyescyecdawards@gmail.com";
+const CYES_EMAIL = "dhruvroshan10@gmail.com";
 
 const categories = [
   "Young Entrepreneur of the Year",
