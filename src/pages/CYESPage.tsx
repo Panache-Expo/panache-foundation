@@ -39,7 +39,7 @@ const CYESPage = () => {
         </div>
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
-          <img src={cyesLogo} alt="CYES Logo" className="w-32 md:w-40 object-contain mx-auto mb-6 rounded-2xl" />
+          <img src={cyesLogo} alt="CYES Logo" className="w-44 h-44 md:w-56 md:h-56 object-cover mx-auto mb-6 rounded-full border-4 border-primary-foreground/30 shadow-elegant" />
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-cyes-white mb-6">
             CYES <span className="text-cyes-yellow">2026</span>
           </h1>

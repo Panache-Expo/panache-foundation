@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-beauty.png";
 import { Link } from "react-router-dom";
 import { Calendar } from "lucide-react";
-import panacheLogo from "@/assets/PanachExpo.jpeg";
+import panacheLogo from "@/assets/PanacheExpoLogo.png";
 
 export const Hero = () => {
   return (
@@ -19,7 +19,7 @@ export const Hero = () => {
       
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-        <img src={panacheLogo} alt="Panache Logo" className="w-32 md:w-40 object-contain mx-auto mb-6 rounded-2xl" />
+        <img src={panacheLogo} alt="Panache Logo" className="w-44 h-44 md:w-56 md:h-56 object-cover mx-auto mb-6 rounded-full border-4 border-primary-foreground/30 shadow-elegant" />
         <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-6 animate-fade-in">
           Panache <span className="text-rose-gold">Expo</span>
         </h1>

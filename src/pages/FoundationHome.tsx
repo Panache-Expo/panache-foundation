@@ -5,7 +5,7 @@ import { ArrowRight, Heart, Sparkles } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import foundationLogo from "@/assets/foundationlogo.jpeg";
 import cyesLogo from "@/assets/CYESLogo.jpeg";
-import panache from "@/assets/PanachExpo.jpeg";
+import panache from "@/assets/PanacheExpoLogo.png";
 
 const FoundationHome = () => {
   return (
@@ -20,7 +20,7 @@ const FoundationHome = () => {
           <img
             src={foundationLogo}
             alt="Panache Expo Foundation logo"
-            className="mx-auto w-32 h-32 md:w-44 md:h-44 object-contain mb-8 rounded-2xl shadow-elegant border-2 border-primary-foreground/20"
+            className="w-44 h-44 md:w-56 md:h-56 object-cover mx-auto mb-6 rounded-full border-4 border-primary-foreground/30 shadow-elegant"
           />
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6">
             Panache Expo <span className="text-rose-gold">Foundation</span>
@@ -49,7 +49,7 @@ const FoundationHome = () => {
             <Link to="/panache-expo" className="group">
               <Card className="h-full overflow-hidden border-2 border-transparent hover:border-rose-gold transition-all duration-500 hover:shadow-elegant hover:-translate-y-2">
                 <CardContent className="p-8 md:p-10">
-                  <div className="w-24 h-24 md:w-28 md:h-28 bg-gradient-primary rounded-2xl flex items-center justify-center mb-6 shadow-elegant border border-border group-hover:scale-110 transition-transform duration-300 overflow-hidden">
+                  <div className="w-24 h-24 md:w-28 md:h-28 bg-gradient-primary rounded-full flex items-center justify-center mb-6 shadow-elegant border border-border group-hover:scale-110 transition-transform duration-300 overflow-hidden">
                     <img
                       src={panache}
                       alt="Panache Expo logo"
@@ -76,7 +76,7 @@ const FoundationHome = () => {
             <Link to="/cyes" className="group">
               <Card className="h-full overflow-hidden border-2 border-transparent hover:border-rose-gold transition-all duration-500 hover:shadow-elegant hover:-translate-y-2">
                 <CardContent className="p-8 md:p-10">
-                  <div className="w-24 h-24 md:w-28 md:h-28 bg-gradient-secondary rounded-2xl flex items-center justify-center mb-6 shadow-rose border border-border group-hover:scale-110 transition-transform duration-300 overflow-hidden">
+                  <div className="w-24 h-24 md:w-28 md:h-28 bg-gradient-secondary rounded-full flex items-center justify-center mb-6 shadow-rose border border-border group-hover:scale-110 transition-transform duration-300 overflow-hidden">
                     <img
                       src={cyesLogo}
                       alt="CYES logo"
