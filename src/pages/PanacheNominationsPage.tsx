@@ -79,14 +79,13 @@ const PanacheNominationsPage = () => {
       `${formData.reason}`
     );
 
-    window.open(`mailto:${PANACHE_EMAIL}?subject=${subject}&body=${body}`, "_blank");
+    window.location.href = `mailto:${PANACHE_EMAIL}?subject=${subject}&body=${body}`;
 
     toast({
       title: "Nomination prepared!",
       description: "Your email client will open with the nomination details. Please send it to complete your submission.",
     });
   };
-
   return (
     <div className="min-h-screen">
       <Header />

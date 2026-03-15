@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Sparkles, Shirt, Camera, Calendar, MapPin, Star, Scissors } from "lucide-react";
+import fashionNight from "@/assets/FashionNight.jpg";
 
 const highlights = [
   {
@@ -35,8 +36,8 @@ const FashionNightPage = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-rose-gold/80">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,...')] opacity-10"></div>
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" style={{ backgroundImage: `url(${fashionNight})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/70 to-rose-gold/70"></div>
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6">
@@ -56,19 +57,12 @@ const FashionNightPage = () => {
                 Get Your Ticket
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="bg-white/10 text-primary-foreground border-primary-foreground/20 hover:bg-white/20"
-            >
-              Learn More
-            </Button>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 text-primary-foreground/80 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              <span>Coming Soon 2026</span>
+              <span>July 2026</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />

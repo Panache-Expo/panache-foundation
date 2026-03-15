@@ -11,7 +11,7 @@ import {
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-const TARGET_EMAIL = "dhruvroshan10@gmail.com";
+const TARGET_EMAIL = "info.cyescyecdawards@gmail.com";
 
 const topics = [
   "ENTREPRENEURSHIP & BUSINESS GROWTH",
@@ -49,7 +49,7 @@ export const CYESRegisterPage = () => {
       `CYES SUMMIT REGISTRATION\n\nName: ${firstName} ${lastName}\nEmail: ${email}\nPhone: ${phone}\nTopic: ${selectedTopic}\nAdditional Details: ${details || "None"}\nNewsletter: ${newsletterSubscription ? "Yes" : "No"}\n`
     );
 
-    window.open(`mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`, "_blank");
+    window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
     toast({ title: "Registration prepared!", description: "Your email client will open. Please send the email to complete your registration." });
 
     e.currentTarget.reset();
@@ -57,7 +57,6 @@ export const CYESRegisterPage = () => {
     setNewsletterSubscription(false);
     setSelectedTopic("");
   };
-
   return (
     <div className="min-h-screen">
       <Header />

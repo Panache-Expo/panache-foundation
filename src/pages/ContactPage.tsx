@@ -32,7 +32,7 @@ export const ContactPage = () => {
       `Message:\n${message}`
     );
 
-    window.open(`mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`, "_blank");
+    window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
 
     toast({
       title: "Message prepared!",
@@ -41,7 +41,6 @@ export const ContactPage = () => {
 
     formRef.current?.reset();
   };
-
   return (
     <div className="min-h-screen">
       <Header />

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Award, Trophy, Star, Users, Calendar, MapPin } from "lucide-react";
+import cyesCDAwards from "@/assets/CYESCDAwards.jpeg";
 
 const competitiveCategories = [
   "Youth Entrepreneur of the Year",
@@ -42,14 +43,15 @@ const CYESAwardsPage = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-cyes-green via-cyes-blue to-cyes-green">
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" style={{ backgroundImage: `url(${cyesCDAwards})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-cyes-green/80 via-cyes-blue/80 to-cyes-green/80"></div>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_35px,rgba(255,255,255,0.03)_35px,rgba(255,255,255,0.03)_70px)]"></div>
         </div>
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-cyes-white mb-6">
-            CYECD <span className="text-cyes-yellow">Awards</span>
+            CYESCD <span className="text-cyes-yellow">Awards</span>
           </h1>
           <p className="text-xl md:text-2xl text-cyes-white/90 mb-4 font-light">
             Cameroon Youths Entrepreneurial & Community Development Awards 2026

@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-const TARGET_EMAIL = "dhruvroshan10@gmail.com";
+const TARGET_EMAIL = "thepanacheexpo@gmail.com";
 
 export const FashionNightRegisterPage = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -34,14 +34,13 @@ export const FashionNightRegisterPage = () => {
       `PANACHE FASHION NIGHT REGISTRATION\n\nName: ${firstName} ${lastName}\nEmail: ${email}\nPhone: ${phone}\nAdditional Details: ${details || "None"}\nNewsletter: ${newsletterSubscription ? "Yes" : "No"}\n`
     );
 
-    window.open(`mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`, "_blank");
+    window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
     toast({ title: "Registration prepared!", description: "Your email client will open. Please send the email to complete your registration." });
 
     e.currentTarget.reset();
     setAgreedToTerms(false);
     setNewsletterSubscription(false);
   };
-
   return (
     <div className="min-h-screen">
       <Header />

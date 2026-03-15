@@ -9,6 +9,8 @@ import speaker1 from "@/assets/speaker1.jpeg";
 import speaker2 from "@/assets/speaker2.jpeg";
 import speaker3 from "@/assets/speaker3.jpeg";
 import speaker4 from "@/assets/speaker4.jpeg";
+import cyesLogo from "@/assets/CYESLogo.jpeg";
+import cyesBackground from "@/assets/CYESBackground.jpeg";
 
 const speakers = [
   { image: speaker1 },
@@ -30,12 +32,14 @@ const CYESPage = () => {
       <Header />
 
       {/* Hero Section - CYES Colors */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-cyes-green via-cyes-blue to-cyes-green">
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" style={{ backgroundImage: `url(${cyesBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-cyes-green/80 via-cyes-blue/80 to-cyes-green/80"></div>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_35px,rgba(255,255,255,0.03)_35px,rgba(255,255,255,0.03)_70px)]"></div>
         </div>
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
+          <img src={cyesLogo} alt="CYES Logo" className="w-32 md:w-40 object-contain mx-auto mb-6 rounded-2xl" />
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-cyes-white mb-6">
             CYES <span className="text-cyes-yellow">2026</span>
           </h1>

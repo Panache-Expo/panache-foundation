@@ -18,7 +18,7 @@ const Panache360Page = () => {
             <span className="text-rose-gold text-sm font-medium">Part of Panache Expo</span>
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold text-primary mb-6">
-            Panache <span className="text-rose-gold">360</span> Beauty
+            Panache <span className="text-rose-gold">360</span> Beauty <span className="text-rose-gold">Competition</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Comprehensive beauty education covering every aspect of the industry. 

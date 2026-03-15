@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin, Linkedin } from "lucide-react";
 import logoImage from "@/assets/Panache Expo logo-01.png";
 
 export const Footer = () => {
@@ -81,7 +81,7 @@ export const Footer = () => {
           
           {/* Social Media */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Follow Us</h4>
+            <h4 className="font-semibold text-lg mb-4">Follow Us - Panache Expo</h4>
             <div className="flex space-x-4 mb-4">
               <a 
                 href="https://instagram.com/panache_expo" 
@@ -108,12 +108,39 @@ export const Footer = () => {
                 <Youtube className="w-5 h-5" />
               </a>
               <a 
-                href="https://x.com/waltersekie?s=21" 
+                href="https://www.linkedin.com/company/thepanacheexpo/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
               >
-                <Twitter className="w-5 h-5" />
+                <Linkedin className="w-5 h-5" />
+              </a>
+            </div>
+            <h4 className="font-semibold text-lg mb-4">Follow Us - CYES</h4>
+            <div className="flex space-x-4 mb-4">
+              <a 
+                href="https://www.instagram.com/cyes_awards?igsh=bTN5eGdqcWR6ODk3&utm_source=qr" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://www.facebook.com/share/1BiZNSBN2q/?mibextid=wwXIfr" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://www.linkedin.com/company/cyes-youth-summit-awards/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-primary-foreground/10 rounded-full flex items-center justify-center hover:bg-primary-foreground/20 transition-colors"
+              >
+                <Linkedin className="w-5 h-5" />
               </a>
             </div>
             <p className="text-primary-foreground/80 text-sm">

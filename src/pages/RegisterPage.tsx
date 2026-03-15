@@ -45,7 +45,7 @@ export const RegisterPage = () => {
       `Newsletter: ${newsletterSubscription ? "Yes" : "No"}\n`
     );
 
-    window.open(`mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`, "_blank");
+    window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
 
     toast({
       title: "Registration prepared!",

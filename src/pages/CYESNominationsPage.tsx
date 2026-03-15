@@ -67,10 +67,9 @@ const CYESNominationsPage = () => {
     const body = encodeURIComponent(
       `CYECD AWARDS NOMINATION\n\nCategory: ${formData.category}\n\n--- Nominee Details ---\nName: ${formData.nomineeName}\nEmail: ${formData.nomineeEmail}\nPhone: ${formData.nomineePhone}\n\n--- Nominator Details ---\nName: ${formData.nominatorName}\nEmail: ${formData.nominatorEmail}\n\n--- Reason for Nomination ---\n${formData.reason}`
     );
-    window.open(`mailto:${CYES_EMAIL}?subject=${subject}&body=${body}`, "_blank");
+    window.location.href = `mailto:${CYES_EMAIL}?subject=${subject}&body=${body}`;
     toast({ title: "Nomination prepared!", description: "Your email client will open. Please send to complete your submission." });
   };
-
   return (
     <div className="min-h-screen">
       <Header />
