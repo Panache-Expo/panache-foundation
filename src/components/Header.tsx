@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Menu, X, ChevronDown, Home } from "lucide-react";
-import foundationLogo from "@/assets/foundationlogo.jpeg";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,6 @@ export const Header = () => {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-3 font-display text-2xl font-bold text-primary">
-            <img src={foundationLogo} alt="Panache Foundation Logo" className="h-10 w-10 rounded-full object-cover" />
             Panache Expo <span className="text-rose-gold">Foundation</span>
           </Link>
         </div>
