@@ -25,7 +25,7 @@ const Panache360Page = () => {
             From makeup to hair styling, nail art to skincare – master it all.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register">
+            <Link to="/panache-360/register">
               <Button variant="default" size="lg">
                 Register for Workshops
               </Button>

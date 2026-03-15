@@ -9,9 +9,12 @@ import PanacheExpoPage from "./pages/PanacheExpoPage";
 import CYESPage from "./pages/CYESPage";
 import CYESAwardsPage from "./pages/CYESAwardsPage";
 import CYESNominationsPage from "./pages/CYESNominationsPage";
+import CYESRegisterPage from "./pages/CYESRegisterPage";
 import CharityNightPage from "./pages/CharityNightPage";
 import Panache360Page from "./pages/Panache360Page";
+import Panache360RegisterPage from "./pages/Panache360RegisterPage";
 import FashionNightPage from "./pages/FashionNightPage";
+import FashionNightRegisterPage from "./pages/FashionNightRegisterPage";
 import { WorkshopsPage } from "./pages/WorkshopsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -29,16 +32,14 @@ const queryClient = new QueryClient({
   },
 });
 
-// Loading fallback
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="text-center">
-      <p className="text-xl text-gray-600">Loading...</p>
+      <p className="text-xl text-muted-foreground">Loading...</p>
     </div>
   </div>
 );
 
-// Error boundary
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: Error | null }
@@ -59,27 +60,20 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-red-50">
-          <div className="p-6 bg-white rounded-lg shadow-lg max-w-md">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Oops! Something went wrong</h1>
-            <p className="text-gray-700 mb-4">{this.state.error?.message}</p>
+        <div className="min-h-screen flex items-center justify-center bg-destructive/5">
+          <div className="p-6 bg-card rounded-lg shadow-lg max-w-md">
+            <h1 className="text-2xl font-bold text-destructive mb-4">Oops! Something went wrong</h1>
+            <p className="text-foreground mb-4">{this.state.error?.message}</p>
             <button
               onClick={() => window.location.reload()}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
             >
               Reload Page
             </button>
-            <details className="mt-4 text-xs text-gray-600">
-              <summary>Error Details</summary>
-              <pre className="mt-2 p-2 bg-gray-100 rounded overflow-auto">
-                {this.state.error?.stack}
-              </pre>
-            </details>
           </div>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
@@ -100,8 +94,11 @@ const App = () => (
               <Route path="/cyes" element={<CYESPage />} />
               <Route path="/cyes/awards" element={<CYESAwardsPage />} />
               <Route path="/cyes/nominations" element={<CYESNominationsPage />} />
+              <Route path="/cyes/register" element={<CYESRegisterPage />} />
               <Route path="/panache-360" element={<Panache360Page />} />
+              <Route path="/panache-360/register" element={<Panache360RegisterPage />} />
               <Route path="/panache-fashion-night" element={<FashionNightPage />} />
+              <Route path="/panache-fashion-night/register" element={<FashionNightRegisterPage />} />
               <Route path="/workshops" element={<WorkshopsPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/register" element={<RegisterPage />} />

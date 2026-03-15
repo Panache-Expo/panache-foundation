@@ -5,11 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
@@ -54,50 +50,25 @@ const allCategories = [...competitiveCategories, ...honoraryCategories];
 const CYESNominationsPage = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    nomineeName: "",
-    nomineeEmail: "",
-    nomineePhone: "",
-    category: "",
-    nominatorName: "",
-    nominatorEmail: "",
-    reason: "",
+    nomineeName: "", nomineeEmail: "", nomineePhone: "", category: "",
+    nominatorName: "", nominatorEmail: "", reason: "",
   });
 
   const selectedCategoryInfo = allCategories.find(c => c.value === formData.category);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.nomineeName || !formData.category || !formData.nominatorName || !formData.nominatorEmail || !formData.reason) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
+      toast({ title: "Missing fields", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
 
     const subject = encodeURIComponent(`CYECD Awards Nomination - ${formData.category}`);
     const body = encodeURIComponent(
-      `CYECD AWARDS NOMINATION\n\n` +
-      `Category: ${formData.category}\n\n` +
-      `--- Nominee Details ---\n` +
-      `Name: ${formData.nomineeName}\n` +
-      `Email: ${formData.nomineeEmail}\n` +
-      `Phone: ${formData.nomineePhone}\n\n` +
-      `--- Nominator Details ---\n` +
-      `Name: ${formData.nominatorName}\n` +
-      `Email: ${formData.nominatorEmail}\n\n` +
-      `--- Reason for Nomination ---\n` +
-      `${formData.reason}`
+      `CYECD AWARDS NOMINATION\n\nCategory: ${formData.category}\n\n--- Nominee Details ---\nName: ${formData.nomineeName}\nEmail: ${formData.nomineeEmail}\nPhone: ${formData.nomineePhone}\n\n--- Nominator Details ---\nName: ${formData.nominatorName}\nEmail: ${formData.nominatorEmail}\n\n--- Reason for Nomination ---\n${formData.reason}`
     );
-
     window.open(`mailto:${CYES_EMAIL}?subject=${subject}&body=${body}`, "_blank");
-
-    toast({
-      title: "Nomination prepared!",
-      description: "Your email client will open with the nomination details. Please send it to complete your submission.",
-    });
+    toast({ title: "Nomination prepared!", description: "Your email client will open. Please send to complete your submission." });
   };
 
   return (
@@ -105,13 +76,13 @@ const CYESNominationsPage = () => {
       <Header />
 
       {/* Hero */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary/20 to-secondary/20">
+      <section className="pt-24 pb-16 bg-gradient-to-br from-cyes-green/20 via-cyes-blue/10 to-cyes-yellow/10">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="w-16 h-16 bg-gradient-primary rounded-2xl mx-auto mb-6 flex items-center justify-center">
-            <Award className="w-8 h-8 text-primary-foreground" />
+          <div className="w-16 h-16 bg-cyes-green rounded-2xl mx-auto mb-6 flex items-center justify-center">
+            <Award className="w-8 h-8 text-cyes-white" />
           </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-primary mb-4">
-            CYECD Awards <span className="text-rose-gold">Nominations</span>
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+            CYECD Awards <span className="text-cyes-green">Nominations</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Cameroon Youths Entrepreneurial & Community Development Awards (CYECD) 2026.
@@ -124,122 +95,72 @@ const CYESNominationsPage = () => {
       <section className="py-16 px-6">
         <Card className="max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle className="font-display text-2xl text-primary">
-              Nomination Form
-            </CardTitle>
+            <CardTitle className="font-display text-2xl text-foreground">Nomination Form</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Category */}
               <div className="space-y-2">
                 <Label>Award Category *</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(val) => setFormData({ ...formData, category: val })}
-                >
+                <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem disabled value="__competitive_header__" className="font-bold text-primary">
-                      — Competitive Categories —
-                    </SelectItem>
+                    <SelectItem disabled value="__competitive_header__" className="font-bold text-cyes-green">— Competitive Categories —</SelectItem>
                     {competitiveCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.value}
-                      </SelectItem>
+                      <SelectItem key={cat.value} value={cat.value}>{cat.value}</SelectItem>
                     ))}
-                    <SelectItem disabled value="__honorary_header__" className="font-bold text-primary">
-                      — Honorary Categories (Board Selected) —
-                    </SelectItem>
+                    <SelectItem disabled value="__honorary_header__" className="font-bold text-cyes-yellow">— Honorary Categories (Board Selected) —</SelectItem>
                     {honoraryCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.value}
-                      </SelectItem>
+                      <SelectItem key={cat.value} value={cat.value}>{cat.value}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {selectedCategoryInfo && (
-                  <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 mt-2">
+                  <p className="text-sm text-muted-foreground bg-cyes-green/5 border border-cyes-green/20 rounded-lg p-3 mt-2">
                     <strong>Description:</strong> {selectedCategoryInfo.description}
                   </p>
                 )}
               </div>
 
-              {/* Nominee Details */}
               <div>
-                <h3 className="font-display text-lg font-semibold text-primary mb-4">Nominee Details</h3>
+                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Nominee Details</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Full Name *</Label>
-                    <Input
-                      value={formData.nomineeName}
-                      onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })}
-                      placeholder="Nominee's full name"
-                      maxLength={100}
-                    />
+                    <Input value={formData.nomineeName} onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })} placeholder="Nominee's full name" />
                   </div>
                   <div className="space-y-2">
                     <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={formData.nomineeEmail}
-                      onChange={(e) => setFormData({ ...formData, nomineeEmail: e.target.value })}
-                      placeholder="Nominee's email"
-                      maxLength={255}
-                    />
+                    <Input type="email" value={formData.nomineeEmail} onChange={(e) => setFormData({ ...formData, nomineeEmail: e.target.value })} placeholder="Nominee's email" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>Phone Number</Label>
-                    <Input
-                      value={formData.nomineePhone}
-                      onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })}
-                      placeholder="Nominee's phone number"
-                      maxLength={20}
-                    />
+                    <Input value={formData.nomineePhone} onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })} placeholder="Nominee's phone number" />
                   </div>
                 </div>
               </div>
 
-              {/* Nominator Details */}
               <div>
-                <h3 className="font-display text-lg font-semibold text-primary mb-4">Your Details</h3>
+                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Your Details</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Your Name *</Label>
-                    <Input
-                      value={formData.nominatorName}
-                      onChange={(e) => setFormData({ ...formData, nominatorName: e.target.value })}
-                      placeholder="Your full name"
-                      maxLength={100}
-                    />
+                    <Input value={formData.nominatorName} onChange={(e) => setFormData({ ...formData, nominatorName: e.target.value })} placeholder="Your full name" />
                   </div>
                   <div className="space-y-2">
                     <Label>Your Email *</Label>
-                    <Input
-                      type="email"
-                      value={formData.nominatorEmail}
-                      onChange={(e) => setFormData({ ...formData, nominatorEmail: e.target.value })}
-                      placeholder="Your email"
-                      maxLength={255}
-                    />
+                    <Input type="email" value={formData.nominatorEmail} onChange={(e) => setFormData({ ...formData, nominatorEmail: e.target.value })} placeholder="Your email" />
                   </div>
                 </div>
               </div>
 
-              {/* Reason */}
               <div className="space-y-2">
                 <Label>Reason for Nomination *</Label>
-                <Textarea
-                  value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                  placeholder="Explain why this person deserves to be nominated..."
-                  rows={5}
-                  maxLength={2000}
-                />
+                <Textarea value={formData.reason} onChange={(e) => setFormData({ ...formData, reason: e.target.value })} placeholder="Explain why this person deserves to be nominated..." rows={5} />
               </div>
 
-              <Button type="submit" variant="hero" className="w-full">
+              <Button type="submit" className="w-full bg-cyes-green hover:bg-cyes-green/90 text-cyes-white font-bold" size="lg">
                 Submit Nomination
               </Button>
             </form>

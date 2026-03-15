@@ -51,7 +51,7 @@ const FashionNightPage = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link to="/register">
+            <Link to="/panache-fashion-night/register">
               <Button variant="hero" size="lg">
                 Get Your Ticket
               </Button>
@@ -163,7 +163,7 @@ const FashionNightPage = () => {
           <p className="text-primary-foreground/80 mb-8 text-lg">
             Experience the finest in African fashion. Secure your spot today.
           </p>
-          <Link to="/register">
+          <Link to="/panache-fashion-night/register">
             <Button variant="hero" size="lg">
               Get Your Ticket
             </Button>

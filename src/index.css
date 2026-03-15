@@ -65,6 +65,13 @@ All colors MUST be HSL for proper theme support.
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
+    /* CYES Theme Colors */
+    --cyes-green: 145 63% 42%;
+    --cyes-red: 0 72% 51%;
+    --cyes-yellow: 45 93% 47%;
+    --cyes-blue: 210 79% 46%;
+    --cyes-white: 0 0% 100%;
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
