@@ -20,6 +20,8 @@ import { ContactPage } from "./pages/ContactPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import PanacheDorPage from "./pages/PanacheDorPage";
 import PanacheNominationsPage from "./pages/PanacheNominationsPage";
+import MissPanachePage from "./pages/MissPanachePage";
+import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 
@@ -103,6 +105,8 @@ const App = () => (
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/panache-dor" element={<PanacheDorPage />} />
+              <Route path="/miss-panache" element={<MissPanachePage />} />
+              <Route path="/miss-panache/register" element={<MissPanacheRegisterPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
