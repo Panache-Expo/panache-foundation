@@ -11,10 +11,10 @@ export const Footer = () => {
           {/* Brand */}
           <div className="md:col-span-1">
             <h3 className="font-display text-2xl font-bold mb-4">
-              Panache <span className="text-rose-gold">Expo</span>
+              Panache <span className="text-rose-gold">Foundation</span>
             </h3>
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
-              Celebrating Beauty, Fashion and Skincare through Workshops, Pageants and Prestigious Awards
+              Empowering communities through excellence in beauty, fashion, and youth entrepreneurship. Choose your path to discover our impactful initiatives.
             </p>
           </div>
           
@@ -67,6 +67,10 @@ export const Footer = () => {
               <li className="flex items-center text-sm text-primary-foreground/80">
                 <Mail className="w-4 h-4 mr-3" />
                 thepanacheexpo@gmail.com 
+              </li>
+              <li className="flex items-center text-sm text-primary-foreground/80">
+                <Mail className="w-4 h-4 mr-3" />
+                info.cyescyecdawards@gmail.com
               </li>
               <li className="flex items-center text-sm text-primary-foreground/80">
                 <Phone className="w-4 h-4 mr-3" />
