@@ -105,6 +105,8 @@ const App = () => (
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/panache-dor" element={<PanacheDorPage />} />
+              <Route path="/miss-panache" element={<MissPanachePage />} />
+              <Route path="/miss-panache/register" element={<MissPanacheRegisterPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
