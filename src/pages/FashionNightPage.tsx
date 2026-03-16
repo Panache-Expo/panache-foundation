@@ -82,9 +82,7 @@ const FashionNightPage = () => {
               About <span className="text-rose-gold">Fashion Night</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Panache Fashion Night is a premier fashion event that celebrates African creativity and
-              style. From breathtaking runway shows to exclusive designer showcases, this is the
-              ultimate evening for fashion lovers, industry professionals, and trendsetters.
+              Panache Fashion Night brings together talented fashion designers, models, stylists, and fashion enthusiasts for an unforgettable evening of creativity, style, and artistic expression. Selected designers present their collections on a competitive runway before a live audience, industry professionals, and media.
             </p>
           </div>
 
