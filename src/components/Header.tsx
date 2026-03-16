@@ -59,6 +59,11 @@ export const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/miss-panache" className="cursor-pointer">
+                    Miss Panache Expo
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/panache-expo/nominations" className="cursor-pointer">
                     Nominations
                   </Link>
