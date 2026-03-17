@@ -3,7 +3,7 @@ import { Hero } from "@/components/Hero";
 import { About } from "@/components/About";
 import { Gallery } from "@/components/Gallery";
 import { AwardsDropdown } from "@/components/AwardsDropdown";
-import { Sponsors } from "@/components/Sponsors";
+import { SponsorsMarquee } from "@/components/SponsorsMarquee";
 import { Founder } from "@/components/Founder";
 import { Footer } from "@/components/Footer";
 
@@ -15,7 +15,7 @@ const PanacheExpoPage = () => {
       <About />
       <AwardsDropdown />
       <Gallery />
-      <Sponsors variant="panache" />
+      <SponsorsMarquee />
       <Founder />
       <Footer />
     </div>
