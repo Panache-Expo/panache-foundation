@@ -53,7 +53,7 @@ export const SponsorsMarquee = () => {
           {[...sponsors, ...sponsors].map((sponsor, index) => (
             <div
               key={index}
-              className="flex-shrink-0 mx-6 w-36 h-24 rounded-xl bg-card border border-border/50 shadow-soft flex items-center justify-center p-4 grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-300"
+              className="flex-shrink-0 mx-6 w-36 h-24 rounded-xl bg-card border border-border/50 shadow-soft flex items-center justify-center p-4 grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-150"
             >
               <img
                 src={sponsor.logo}
