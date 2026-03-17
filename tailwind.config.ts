@@ -126,7 +126,7 @@ export default {
 				'fade-in': 'fade-in 0.6s ease-out',
 				'scale-in': 'scale-in 0.4s ease-out',
 				'float': 'float 3s ease-in-out infinite',
-				'marquee': 'marquee 30s linear infinite'
+				'marquee': 'marquee 50s linear infinite'
 			}
 		}
 	},
