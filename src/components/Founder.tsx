@@ -7,7 +7,8 @@ import akwo from "@/assets/akwo.jpeg";
 import prince from "@/assets/prince.jpeg";
 import sharon from "@/assets/sharon.jpeg";
 import yannick from "@/assets/yannick.jpeg";
-import victor from "@/assets/victor.jpeg";
+import victor from "@/assets/victor.png";
+import nana from "@/assets/nana.jpeg";
 
 const teamMembers = [
   {
@@ -51,6 +52,12 @@ const teamMembers = [
     title: "Legal Advisor",
     organization: "Panache Expo",
     photo: victor,
+  },
+  {
+    name: "Nana Sechere",
+    title: "Business and Marketing Strategist",
+    organization: "Panache Expo",
+    photo: nana,
   },
 ];
 
