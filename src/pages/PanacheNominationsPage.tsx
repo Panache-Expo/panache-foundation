@@ -27,7 +27,7 @@ const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
 const juryMembers = [
   {
     name: "Barr. Mafany Victor (Kinsman) Ngando",
-    title: "Legal Advisor",
+    title: "Founder/CEO Kinsmen Advocates Law Firm",
     photo: victor,
   },
   {

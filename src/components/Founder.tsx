@@ -49,7 +49,7 @@ const teamMembers = [
   },
   {
     name: "Barr. Mafany Victor (Kinsman) Ngando",
-    title: "Legal Advisor",
+    title: "Founder/CEO Kinsmen Advocates Law Firm",
     organization: "Panache Expo",
     photo: victor,
   },
