@@ -48,7 +48,7 @@ const teamMembers = [
     photo: yannick,
   },
   {
-    name: "Mafany Victor Ngando",
+    name: "Barr. Mafany Victor (Kinsman) Ngando",
     title: "Legal Advisor",
     organization: "Panache Expo",
     photo: victor,
