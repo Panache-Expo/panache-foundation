@@ -13,6 +13,7 @@ import chuo from "@/assets/chuo.png";
 import steve from "@/assets/stevenjang.png";
 import angwi from "@/assets/angwi.png";
 import nanalynn from "@/assets/nanalynn.png";
+import godlove from "@/assets/godlove.png";
 
 const competitiveCategories = [
   "Youth Entrepreneur of the Year",
@@ -78,6 +79,11 @@ const juryMembers = [
     title: "LinkedIn & Personal Brand Coach",
     photo: nanalynn,
   },
+  {
+      name: "Godlove Njisong",
+      title: "Founder GoMAD",
+      photo: godlove, 
+    },
 ];
 
 const honoraryCategories = [
@@ -257,7 +263,7 @@ const CYESAwardsPage = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {juryMembers.map((member) => (
               <div
                 key={member.name}

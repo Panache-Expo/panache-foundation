@@ -31,7 +31,7 @@ const teamMembers = [
   },
   {
     name: "Prince Enobi Mykel",
-    title: "Director / Chief Judge",
+    title: "Founder/President CIMFEST",
     organization: "Panache D'Or Awards",
     photo: prince,
   },

@@ -19,6 +19,7 @@ import chuo from "@/assets/chuo.png";
 import steve from "@/assets/stevenjang.png";
 import angwi from "@/assets/angwi.png";
 import nanalynn from "@/assets/nanalynn.png";
+import godlove from "@/assets/godlove.png";
 
 const CYES_EMAIL = "info.cyescyecdawards@gmail.com";
 
@@ -93,6 +94,11 @@ const juryMembers = [
     title: "LinkedIn & Personal Brand Coach",
     photo: nanalynn,
   },
+  {
+    name: "Godlove Njisong",
+    title: "Founder GoMAD",
+    photo: godlove, 
+  },
 ];
 
 const allCategories = [...competitiveCategories, ...honoraryCategories];
@@ -138,6 +144,27 @@ const CYESNominationsPage = () => {
             Nominate an outstanding individual, business, or initiative below.
           </p>
         </div>
+      </section>
+
+      {/* Eligibility */}
+      <section className="py-8 px-6">
+        <Card className="max-w-3xl mx-auto bg-muted/30">
+          <CardContent className="pt-6">
+            <h3 className="font-display text-lg font-semibold text-cyes-green mb-3">General Eligibility Requirements</h3>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Nominee must be a Cameroonian (by nationality or origin) or an individual/organization making a verifiable impact in Cameroon.</li>
+              <li>Nominee must be between 18 – 45 years old (except for special/honorary categories where applicable).</li>
+              <li>Nominee must be actively involved in entrepreneurship, business, innovation, leadership, or community development.</li>
+              <li>The nominee's work must demonstrate measurable impact, such as job creation, community transformation, innovation, or social value.</li>
+              <li>Achievements considered must fall within the last 12–24 months, unless otherwise specified.</li>
+              <li>Nominee must provide verifiable proof of work, including business registration (if applicable), portfolio, media presence, testimonials, or documented results.</li>
+              <li>Nominee must accept the nomination and submit all required documents within 72 hours of notification.</li>
+              <li>Nominee must uphold good ethical standards and must not be involved in any serious misconduct that could affect the credibility of the awards.</li>
+              <li>Organizations and startups must be operational for at least 6–12 months prior to nomination.</li>
+              <li>Nominees can apply or be nominated in multiple categories, but must meet the specific criteria for each category.</li>
+            </ul>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Form */}
@@ -229,7 +256,7 @@ const CYESNominationsPage = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {juryMembers.map((member) => (
               <div
                 key={member.name}

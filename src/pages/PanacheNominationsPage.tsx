@@ -22,6 +22,9 @@ import nkafu from "@/assets/nkafu.png";
 import prince from "@/assets/prince.jpeg";
 import florence from "@/assets/florence.jpeg";
 import Joan from "@/assets/joan.jpeg";
+import edith from "@/assets/edith.png";
+import nkeng from "@/assets/nkeng.jpeg";  
+import kellie from "@/assets/kellie.png";
 
 const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
 const juryMembers = [
@@ -37,18 +40,33 @@ const juryMembers = [
   },
   {
     name: "Prince Enobi Mykel",
-    title: "Director / Chief Judge",
+    title: "Founder/President CIMFEST",
     photo: prince,
   },
   {
     name: "Florence Tubuoh Nabi",
-    title: "Judge",
+    title: "Founder /CEO Nabi's Maq and Beauty Space",
     photo: florence,
   },
   {
     name: "Joan Ngomba",
-    title: "Judge",
+    title: "Entertainment Reporter and TV Host",
     photo: Joan,
+  },
+  {
+    name: "Dr. Edith F Gibson PhD",
+    title: "Founder and President of TDRTI",
+    photo: edith,
+  },
+  {
+    name: "Dr Nkeng Stephens ",
+    title: "Film Producer , Cinematographer , Director, Colorist",
+    photo: nkeng,
+  },
+  {
+    name: "Kellie Peace",
+    title: "Medical Aesthetician and the CEO of Kellie Peace Empire",
+    photo: kellie,
   },
 ];
 
@@ -300,7 +318,7 @@ const PanacheNominationsPage = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {juryMembers.map((member) => (
               <div
                 key={member.name}
