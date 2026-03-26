@@ -147,7 +147,7 @@ const PanacheNominationsPage = () => {
       {/* Hero */}
       <section className="pt-24 pb-16 relative min-h-[600px] overflow-hidden" style={{ backgroundColor: "#1a1100" }}>
         {/* 3-image collage background */}
-        <div className="absolute inset-0 grid grid-cols-3 h-full" style={{ filter: "blur(2px) brightness(0.45)", transform: "scale(1.05)" }}>
+        <div className="absolute inset-0 grid grid-cols-3 h-full" style={{ filter: "blur(0.75px) brightness(0.89)", transform: "scale(1.04)" }}>
           <div
             className="h-full bg-cover bg-center"
             style={{ backgroundImage: `url(${pananomination1})` }}
