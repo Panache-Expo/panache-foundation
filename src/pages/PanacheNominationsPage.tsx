@@ -309,7 +309,7 @@ const PanacheNominationsPage = () => {
       <section className="py-24 px-6 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <span className="text-rose-gold font-medium text-lg">Panache Expo 2026</span>
+            <span className="text-rose-gold font-medium text-lg">Panache D'or 2026</span>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-2 mb-4">
               Meet the <span className="text-rose-gold">Jury Committee</span>
             </h2>
