@@ -4,34 +4,47 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Sparkles, Star, Heart } from "lucide-react";
-
+import panache3601 from "@/assets/panache360-1.jpeg";
+import panache3603 from "@/assets/panache360-2.jpeg";
+import panache3602 from "@/assets/panache360-3.jpeg";
 const Panache360Page = () => {
   return (
     <div className="min-h-screen">
       <Header />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary/20 via-secondary/10 to-rose-gold/20">
-        <div className="max-w-7xl mx-auto px-6 text-center">
+      <section className="pt-24 pb-16 relative min-h-[600px] overflow-hidden" style={{ backgroundColor: "#1a1100" }}>
+        {/* 3-image collage background */}
+        <div className="absolute inset-0 grid grid-cols-3 h-full" style={{ filter: "blur(.5px) brightness(0.85)", transform: "scale(1.01)" }}>
+          <div
+            className="h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${panache3601})` }}
+          />
+          <div
+            className="h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${panache3602})` }}
+          />
+          <div
+            className="h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${panache3603})` }}
+          />
+        </div>
+        <div className="absolute inset-0" style={{ backgroundColor: "rgba(10, 5, 0, 0.5)" }} />
+        <div className="relative max-w-7xl mx-auto px-6 text-center flex flex-col items-center justify-center min-h-[400px]">
           <div className="inline-flex items-center gap-2 bg-rose-gold/20 px-4 py-2 rounded-full mb-6">
             <Sparkles className="w-4 h-4 text-rose-gold" />
             <span className="text-rose-gold text-sm font-medium">Part of Panache Expo</span>
           </div>
-          <h1 className="font-display text-4xl md:text-6xl font-bold text-primary mb-6">
+          <h1 className="font-display text-4xl md:text-6xl font-bold text-white mb-6">
             Panache <span className="text-rose-gold">360</span> Beauty <span className="text-rose-gold">Competition</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
             A flagship highlight of Panache Expo celebrating creativity, technical excellence, and innovation within the beauty industry. Compete on stage before a live audience and industry judges.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/panache-360/register">
               <Button variant="default" size="lg">
                 Register for Competition
-              </Button>
-            </Link>
-            <Link to="/panache-expo">
-              <Button variant="outline" size="lg">
-                Back to Panache Expo
               </Button>
             </Link>
           </div>

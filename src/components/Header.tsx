@@ -50,7 +50,7 @@ export const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/panache-expo/charity-night" className="cursor-pointer">
-                    Charity Night
+                    Charity Activities
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

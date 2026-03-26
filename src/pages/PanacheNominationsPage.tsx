@@ -16,6 +16,8 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles } from "lucide-react";
 import PanacheAwards from "@/assets/PanacheAwards.jpeg";
+import pananomination1 from "@/assets/pananomination-1.jpeg";
+import pananomination2 from "@/assets/pananomination-2.jpeg";
 import { MapPin, Calendar, User } from "lucide-react";
 import victor from "@/assets/victor.png";
 import nkafu from "@/assets/nkafu.png";
@@ -143,18 +145,23 @@ const PanacheNominationsPage = () => {
       <Header />
 
       {/* Hero */}
-      <section
-        className="pt-24 pb-16 relative min-h-[600px]"
-        style={{
-          backgroundImage: `url(${PanacheAwards})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center",
-          backgroundRepeat: "repeat",
-          backgroundColor: "#1a1100",
-        }}
-      >
-        <div className="absolute inset-0" style={{ backgroundColor: "rgba(20, 10, 0, 0.45)", mixBlendMode: "multiply" }} />
-        <div className="absolute inset-0" style={{ backgroundColor: "rgba(180, 130, 0, 0.18)" }} />
+      <section className="pt-24 pb-16 relative min-h-[600px] overflow-hidden" style={{ backgroundColor: "#1a1100" }}>
+        {/* 3-image collage background */}
+        <div className="absolute inset-0 grid grid-cols-3 h-full" style={{ filter: "blur(2px) brightness(0.45)", transform: "scale(1.05)" }}>
+          <div
+            className="h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${pananomination1})` }}
+          />
+          <div
+            className="h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${PanacheAwards})` }}
+          />
+          <div
+            className="h-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${pananomination2})` }}
+          />
+        </div>
+        <div className="absolute inset-0" style={{ backgroundColor: "rgba(10, 5, 0, 0.5)" }} />
         <div className="relative max-w-4xl mx-auto px-6 text-center flex flex-col items-center justify-center min-h-[400px]">
           <div className="w-16 h-16 bg-gradient-primary rounded-2xl mx-auto mb-6 flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-primary-foreground" />

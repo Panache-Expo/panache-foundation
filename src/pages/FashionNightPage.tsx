@@ -53,7 +53,7 @@ const FashionNightPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link to="/panache-fashion-night/register">
               <Button variant="hero" size="lg">
-                Get Your Ticket
+                Register Now
               </Button>
             </Link>
           </div>

@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import MissPanacheImage from "@/assets/MissPanache.jpeg";
+import MissPanacheImage from "@/assets/misspanache-2.jpg";
 import WinnersListImage from "@/assets/PanacheDorWinners.jpeg";
 
 const PanacheDorPage = () => {
