@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, MapPin, Calendar, AlertTriangle, Globe, Video, Star, Users } from "lucide-react";
+import businessCompBg from "@/assets/businesscomp.jpeg";
 
 const TARGET_EMAIL = "info.cyescyecdawards@gmail.com";
 
@@ -140,17 +141,12 @@ export const CYESPitchCompetitionPage = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 overflow-hidden" style={{ background: "linear-gradient(135deg, hsl(145 63% 12%) 0%, hsl(210 79% 15%) 40%, hsl(145 63% 10%) 70%, hsl(45 93% 15%) 100%)" }}>
-        {/* Animated blobs */}
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-[-5%] w-96 h-96 bg-cyes-green rounded-full blur-3xl opacity-30 animate-pulse" style={{ animationDuration: "4s" }} />
-          <div className="absolute top-[-10%] right-10 w-80 h-80 bg-cyes-blue rounded-full blur-3xl opacity-25 animate-pulse" style={{ animationDuration: "6s", animationDelay: "1s" }} />
-          <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-cyes-yellow rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDuration: "5s", animationDelay: "2s" }} />
-          <div className="absolute bottom-10 right-[-5%] w-64 h-64 bg-cyes-red rounded-full blur-3xl opacity-15 animate-pulse" style={{ animationDuration: "7s", animationDelay: "0.5s" }} />
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" style={{ backgroundImage: `url(${businessCompBg})`, backgroundSize: "cover", backgroundPosition: "center" }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-cyes-green/80 via-cyes-blue/80 to-cyes-green/80" />
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_35px,rgba(255,255,255,0.03)_35px,rgba(255,255,255,0.03)_70px)]" />
         </div>
-        {/* Subtle grid overlay */}
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "linear-gradient(hsl(145 63% 42% / 0.3) 1px, transparent 1px), linear-gradient(90deg, hsl(145 63% 42% / 0.3) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
-        <div className="relative max-w-4xl mx-auto text-center">
+        <div className="relative z-10 max-w-4xl mx-auto text-center px-6 pt-20">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-cyes-yellow rounded-full px-4 py-2 text-sm font-semibold mb-6 backdrop-blur-sm">
             <Trophy className="w-4 h-4" />
             CYES 2026
@@ -179,6 +175,11 @@ export const CYESPitchCompetitionPage = () => {
             Only 20 Slots Available
           </div>
         </div>
+
+        {/* Floating accent dots */}
+        <div className="absolute top-32 left-10 w-3 h-3 bg-cyes-yellow rounded-full animate-float opacity-60" />
+        <div className="absolute bottom-32 right-16 w-2 h-2 bg-cyes-red rounded-full animate-float opacity-40" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-48 right-20 w-2 h-2 bg-cyes-white rounded-full animate-float opacity-30" style={{ animationDelay: "2s" }} />
       </section>
 
       {/* About Section */}
