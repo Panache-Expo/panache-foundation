@@ -92,6 +92,11 @@ export const Header = () => {
                     Nominations
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/cyes/pitch-competition" className="cursor-pointer">
+                    CYES Business Pitch Competition
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -163,6 +168,9 @@ export const Header = () => {
                 </Link>
                 <Link to="/cyes/nominations" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Nominations
+                </Link>
+                <Link to="/cyes/pitch-competition" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  Business Pitch Competition
                 </Link>
               </div>
               <Link 

@@ -10,6 +10,7 @@ import CYESPage from "./pages/CYESPage";
 import CYESAwardsPage from "./pages/CYESAwardsPage";
 import CYESNominationsPage from "./pages/CYESNominationsPage";
 import CYESRegisterPage from "./pages/CYESRegisterPage";
+import CYESPitchCompetitionPage from "./pages/CYESPitchCompetitionPage";
 import CharityNightPage from "./pages/CharityNightPage";
 import Panache360Page from "./pages/Panache360Page";
 import Panache360RegisterPage from "./pages/Panache360RegisterPage";
@@ -97,6 +98,7 @@ const App = () => (
               <Route path="/cyes/awards" element={<CYESAwardsPage />} />
               <Route path="/cyes/nominations" element={<CYESNominationsPage />} />
               <Route path="/cyes/register" element={<CYESRegisterPage />} />
+              <Route path="/cyes/pitch-competition" element={<CYESPitchCompetitionPage />} />
               <Route path="/panache-360" element={<Panache360Page />} />
               <Route path="/panache-360/register" element={<Panache360RegisterPage />} />
               <Route path="/panache-fashion-night" element={<FashionNightPage />} />
