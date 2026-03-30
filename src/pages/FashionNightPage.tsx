@@ -3,8 +3,8 @@ import { Footer } from "@/components/Footer";
 import { SponsorsMarquee } from "@/components/SponsorsMarquee";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
 import { Sparkles, Shirt, Camera, Calendar, MapPin, Star, Scissors } from "lucide-react";
+import { competitionRegistrationLinks } from "@/lib/registration-links";
 import fashionNight from "@/assets/FashionNight.jpg";
 
 const highlights = [
@@ -51,11 +51,15 @@ const FashionNightPage = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link to="/panache-fashion-night/register">
-              <Button variant="hero" size="lg">
+            <Button asChild variant="hero" size="lg">
+              <a
+                href={competitionRegistrationLinks.fashionNight.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Register Now
-              </Button>
-            </Link>
+              </a>
+            </Button>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 text-primary-foreground/80 text-sm">
@@ -154,11 +158,15 @@ const FashionNightPage = () => {
           <p className="text-primary-foreground/80 mb-8 text-lg">
             Experience the finest in African fashion. Secure your spot today.
           </p>
-          <Link to="/panache-fashion-night/register">
-            <Button variant="hero" size="lg">
+          <Button asChild variant="hero" size="lg">
+            <a
+              href={competitionRegistrationLinks.fashionNight.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Get Your Ticket
-            </Button>
-          </Link>
+            </a>
+          </Button>
         </div>
       </section>
 
