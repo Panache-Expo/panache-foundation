@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { contactService, profileService, authService } from '@/integrations/supabase/services';
+import { contactService, profileService, authService, competitionApplicationService } from '@/integrations/supabase/services';
 
 // Query Keys (for cache management)
 export const queryKeys = {
   contact: {
     all: ['contact'] as const,
     submissions: (userId?: string) => [...queryKeys.contact.all, 'submissions', userId] as const,
+  },
+  competitions: {
+    all: ['competitions'] as const,
+    applications: ['competitions', 'applications'] as const,
   },
   profile: {
     all: ['profile'] as const,
@@ -35,6 +39,12 @@ export const useContactSubmissions = (userId?: string) => {
     queryKey: queryKeys.contact.submissions(userId),
     queryFn: () => contactService.getSubmissions(userId),
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useSubmitCompetitionApplication = () => {
+  return useMutation({
+    mutationFn: competitionApplicationService.submit,
   });
 };
 

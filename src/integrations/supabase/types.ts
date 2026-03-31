@@ -47,6 +47,90 @@ export type Database = {
         }
         Relationships: []
       }
+      competition_applications: {
+        Row: {
+          application_code: string
+          category: string | null
+          city: string | null
+          competition_slug: string
+          country: string | null
+          created_at: string
+          email: string
+          first_name: string
+          form_payload: Json
+          id: string
+          instagram_handle: string | null
+          last_name: string
+          motivation: string | null
+          payment_amount: number | null
+          payment_platform: string | null
+          payment_reference: string | null
+          payment_status: string
+          paid_at: string | null
+          phone: string
+          portfolio_url: string | null
+          review_notes: string | null
+          review_status: string
+          tiktok_handle: string | null
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          application_code: string
+          category?: string | null
+          city?: string | null
+          competition_slug: string
+          country?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          form_payload?: Json
+          id?: string
+          instagram_handle?: string | null
+          last_name: string
+          motivation?: string | null
+          payment_amount?: number | null
+          payment_platform?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          paid_at?: string | null
+          phone: string
+          portfolio_url?: string | null
+          review_notes?: string | null
+          review_status?: string
+          tiktok_handle?: string | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          application_code?: string
+          category?: string | null
+          city?: string | null
+          competition_slug?: string
+          country?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          form_payload?: Json
+          id?: string
+          instagram_handle?: string | null
+          last_name?: string
+          motivation?: string | null
+          payment_amount?: number | null
+          payment_platform?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          paid_at?: string | null
+          phone?: string
+          portfolio_url?: string | null
+          review_notes?: string | null
+          review_status?: string
+          tiktok_handle?: string | null
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

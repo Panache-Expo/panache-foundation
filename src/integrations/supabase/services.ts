@@ -4,18 +4,19 @@ import type { Database } from './types';
 // Type helpers for better DX
 export type Tables = Database['public']['Tables'];
 export type ContactSubmission = Tables['contact_submissions']['Row'];
+export type CompetitionApplication = Tables['competition_applications']['Row'];
 export type Profile = Tables['profiles']['Row'];
+export type CompetitionApplicationInsert = Tables['competition_applications']['Insert'];
 
 // Contact Submissions Service
 export const contactService = {
   async submit(data: Omit<ContactSubmission, 'id' | 'created_at'>) {
-    const { data: result, error } = await supabase
+    const { error } = await supabase
       .from('contact_submissions')
-      .insert([data])
-      .select();
+      .insert([data]);
     
     if (error) throw error;
-    return result?.[0];
+    return null;
   },
 
   async getSubmissions(userId?: string) {
@@ -37,6 +38,18 @@ export const contactService = {
       .eq('id', id);
     
     if (error) throw error;
+  },
+};
+
+// Competition Applications Service
+export const competitionApplicationService = {
+  async submit(data: CompetitionApplicationInsert) {
+    const { error } = await supabase
+      .from('competition_applications')
+      .insert([data]);
+
+    if (error) throw error;
+    return null;
   },
 };
 

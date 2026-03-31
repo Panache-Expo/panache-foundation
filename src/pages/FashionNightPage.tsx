@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Sparkles, Shirt, Camera, Calendar, MapPin, Star, Scissors } from "lucide-react";
+import { competitionRegistrationLinks } from "@/lib/registration-links";
 import fashionNight from "@/assets/FashionNight.jpg";
 
 const highlights = [
@@ -51,11 +52,11 @@ const FashionNightPage = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link to="/panache-fashion-night/register">
-              <Button variant="hero" size="lg">
+            <Button asChild variant="hero" size="lg">
+              <Link to={competitionRegistrationLinks.fashionNight.path}>
                 Register Now
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 text-primary-foreground/80 text-sm">
@@ -154,11 +155,11 @@ const FashionNightPage = () => {
           <p className="text-primary-foreground/80 mb-8 text-lg">
             Experience the finest in African fashion. Secure your spot today.
           </p>
-          <Link to="/panache-fashion-night/register">
-            <Button variant="hero" size="lg">
+          <Button asChild variant="hero" size="lg">
+            <Link to={competitionRegistrationLinks.fashionNight.path}>
               Get Your Ticket
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </section>
 

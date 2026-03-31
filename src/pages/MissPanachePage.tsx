@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Crown, Star, Users, Sparkles, Award, Heart, Camera, Mic } from "lucide-react";
+import { competitionRegistrationLinks } from "@/lib/registration-links";
 import MissPanacheImage from "@/assets/misspanacheupdate.jpg";
 
 const stages = [
@@ -71,11 +72,11 @@ const MissPanachePage = () => {
                 More than a traditional beauty contest — a platform designed to empower women, promote leadership, and showcase ambassadors who represent the vision of Panache Expo.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link to="/miss-panache/register">
-                  <Button variant="hero" size="lg">
+                <Button asChild variant="hero" size="lg">
+                  <Link to={competitionRegistrationLinks.missPanache.path}>
                     <Sparkles className="w-5 h-5 mr-2" /> Register Now
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 <Link to="/panache-expo">
                   <Button variant="outline" size="lg">
                     Back to Panache Expo
@@ -221,11 +222,11 @@ const MissPanachePage = () => {
           <p className="text-muted-foreground text-lg mb-8">
             Miss Panache Expo is more than a crown — it is an opportunity to become a leader, ambassador, and inspiration within the beauty and fashion community.
           </p>
-          <Link to="/miss-panache/register">
-            <Button variant="hero" size="lg">
+          <Button asChild variant="hero" size="lg">
+            <Link to={competitionRegistrationLinks.missPanache.path}>
               <Sparkles className="w-5 h-5 mr-2" /> Register Now
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </section>
 
