@@ -73,13 +73,9 @@ const MissPanachePage = () => {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button asChild variant="hero" size="lg">
-                  <a
-                    href={competitionRegistrationLinks.missPanache.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <Link to={competitionRegistrationLinks.missPanache.path}>
                     <Sparkles className="w-5 h-5 mr-2" /> Register Now
-                  </a>
+                  </Link>
                 </Button>
                 <Link to="/panache-expo">
                   <Button variant="outline" size="lg">
@@ -227,13 +223,9 @@ const MissPanachePage = () => {
             Miss Panache Expo is more than a crown — it is an opportunity to become a leader, ambassador, and inspiration within the beauty and fashion community.
           </p>
           <Button asChild variant="hero" size="lg">
-            <a
-              href={competitionRegistrationLinks.missPanache.href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link to={competitionRegistrationLinks.missPanache.path}>
               <Sparkles className="w-5 h-5 mr-2" /> Register Now
-            </a>
+            </Link>
           </Button>
         </div>
       </section>

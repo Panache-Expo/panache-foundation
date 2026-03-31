@@ -3,6 +3,7 @@ import { Footer } from "@/components/Footer";
 import { SponsorsMarquee } from "@/components/SponsorsMarquee";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 import { Sparkles, Shirt, Camera, Calendar, MapPin, Star, Scissors } from "lucide-react";
 import { competitionRegistrationLinks } from "@/lib/registration-links";
 import fashionNight from "@/assets/FashionNight.jpg";
@@ -52,13 +53,9 @@ const FashionNightPage = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Button asChild variant="hero" size="lg">
-              <a
-                href={competitionRegistrationLinks.fashionNight.href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <Link to={competitionRegistrationLinks.fashionNight.path}>
                 Register Now
-              </a>
+              </Link>
             </Button>
           </div>
 
@@ -159,13 +156,9 @@ const FashionNightPage = () => {
             Experience the finest in African fashion. Secure your spot today.
           </p>
           <Button asChild variant="hero" size="lg">
-            <a
-              href={competitionRegistrationLinks.fashionNight.href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link to={competitionRegistrationLinks.fashionNight.path}>
               Get Your Ticket
-            </a>
+            </Link>
           </Button>
         </div>
       </section>

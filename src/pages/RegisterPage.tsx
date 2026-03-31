@@ -10,21 +10,21 @@ const registrationOptions = [
   {
     title: competitionRegistrationLinks.missPanache.title,
     description: competitionRegistrationLinks.missPanache.description,
-    href: competitionRegistrationLinks.missPanache.href,
+    path: competitionRegistrationLinks.missPanache.path,
     icon: Crown,
     accent: "text-rose-gold",
   },
   {
     title: competitionRegistrationLinks.fashionNight.title,
     description: competitionRegistrationLinks.fashionNight.description,
-    href: competitionRegistrationLinks.fashionNight.href,
+    path: competitionRegistrationLinks.fashionNight.path,
     icon: Scissors,
     accent: "text-primary",
   },
   {
     title: competitionRegistrationLinks.panache360.title,
     description: competitionRegistrationLinks.panache360.description,
-    href: competitionRegistrationLinks.panache360.href,
+    path: competitionRegistrationLinks.panache360.path,
     icon: Sparkles,
     accent: "text-rose-gold",
   },
@@ -44,7 +44,7 @@ export const RegisterPage = () => {
             Choose Your <span className="text-rose-gold">Competition</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            All competition registrations are now handled through our official Ayati links. Select the experience you want to join below.
+            Start your application on the website first. Once your details are saved, you will continue to Ayati to complete payment.
           </p>
         </div>
       </section>
@@ -64,10 +64,10 @@ export const RegisterPage = () => {
                   {option.description}
                 </p>
                 <Button asChild variant="hero" className="mt-auto w-full">
-                  <a href={option.href} target="_blank" rel="noopener noreferrer">
-                    Register Now
+                  <Link to={option.path}>
+                    Start Application
                     <ArrowRight className="w-4 h-4" />
-                  </a>
+                  </Link>
                 </Button>
               </CardContent>
             </Card>

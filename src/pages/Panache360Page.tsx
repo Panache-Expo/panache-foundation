@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Workshops } from "@/components/Workshops";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Sparkles, Star, Heart } from "lucide-react";
 import { competitionRegistrationLinks } from "@/lib/registration-links";
 import panache3601 from "@/assets/panache360-1.jpeg";
@@ -43,13 +44,9 @@ const Panache360Page = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild variant="default" size="lg">
-              <a
-                href={competitionRegistrationLinks.panache360.href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <Link to={competitionRegistrationLinks.panache360.path}>
                 Register for Competition
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

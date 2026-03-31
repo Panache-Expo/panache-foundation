@@ -23,6 +23,7 @@ import PanacheDorPage from "./pages/PanacheDorPage";
 import PanacheNominationsPage from "./pages/PanacheNominationsPage";
 import MissPanachePage from "./pages/MissPanachePage";
 import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
+import ParticipantsDashboardPage from "./pages/ParticipantsDashboardPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 
@@ -109,6 +110,7 @@ const App = () => (
               <Route path="/panache-dor" element={<PanacheDorPage />} />
               <Route path="/miss-panache" element={<MissPanachePage />} />
               <Route path="/miss-panache/register" element={<MissPanacheRegisterPage />} />
+              <Route path="/admin/participants" element={<ParticipantsDashboardPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
