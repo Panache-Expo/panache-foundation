@@ -31,9 +31,19 @@ import kellie from "@/assets/kellie.png";
 const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
 const juryMembers = [
   {
-    name: "Barr. Mafany Victor (Kinsman) Ngando",
-    title: "Founder/CEO Kinsmen Advocates Law Firm",
-    photo: victor,
+    name: "Prince Enobi Mykel",
+    title: "Founder/President CIMFEST",
+    photo: prince,
+  },
+  {
+    name: "Kellie Peace",
+    title: "Medical Aesthetician and the CEO of Kellie Peace Empire",
+    photo: kellie,
+  },
+  {
+    name: "Dr. Edith F Gibson PhD",
+    title: "Founder and President of TDRTI",
+    photo: edith,
   },
   {
     name: "Nkafu Atemnkeng Sulet",
@@ -41,9 +51,14 @@ const juryMembers = [
     photo: nkafu,
   },
   {
-    name: "Prince Enobi Mykel",
-    title: "Founder/President CIMFEST",
-    photo: prince,
+    name: "Barr. Mafany Victor (Kinsman) Ngando",
+    title: "Founder/CEO Kinsmen Advocates Law Firm",
+    photo: victor,
+  },
+  {
+    name: "Dr Nkeng Stephens ",
+    title: "Film Producer , Cinematographer , Director, Colorist",
+    photo: nkeng,
   },
   {
     name: "Florence Tubuoh Nabi",
@@ -54,21 +69,6 @@ const juryMembers = [
     name: "Joan Ngomba",
     title: "Entertainment Reporter and TV Host",
     photo: Joan,
-  },
-  {
-    name: "Dr. Edith F Gibson PhD",
-    title: "Founder and President of TDRTI",
-    photo: edith,
-  },
-  {
-    name: "Dr Nkeng Stephens ",
-    title: "Film Producer , Cinematographer , Director, Colorist",
-    photo: nkeng,
-  },
-  {
-    name: "Kellie Peace",
-    title: "Medical Aesthetician and the CEO of Kellie Peace Empire",
-    photo: kellie,
   },
 ];
 
