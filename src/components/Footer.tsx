@@ -43,6 +43,11 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/panache-expo/exhibition-stands" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
+                  Exhibition Stands
+                </Link>
+              </li>
+              <li>
                 <Link to="/panache-dor" className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm">
                   Panache D'or
                 </Link>

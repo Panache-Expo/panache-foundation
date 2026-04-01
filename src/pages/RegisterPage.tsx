@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { competitionRegistrationLinks } from "@/lib/registration-links";
-import { ArrowRight, Crown, Scissors, Sparkles } from "lucide-react";
+import { ArrowRight, Crown, Scissors, Sparkles, Store } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const registrationOptions = [
@@ -84,6 +84,12 @@ export const RegisterPage = () => {
             For CYES attendance, workshop interest, sponsorships, or general event questions, use the pages below and the Panache team will direct you properly.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild variant="hero" size="lg">
+              <Link to={competitionRegistrationLinks.exhibitionStands.path}>
+                <Store className="w-4 h-4" />
+                Book Exhibition Stand
+              </Link>
+            </Button>
             <Button asChild variant="outline" size="lg">
               <Link to="/cyes/register">Register for CYES</Link>
             </Button>

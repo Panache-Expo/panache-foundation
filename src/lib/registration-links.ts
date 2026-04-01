@@ -1,4 +1,12 @@
 export const competitionRegistrationLinks = {
+  exhibitionStands: {
+    title: "Panache Expo 2026 Exhibition Stands",
+    description: "Reserve your stand on the website first, then continue to Ayati to complete payment.",
+    paymentHref: "https://ayati.me/kqhc",
+    path: "/panache-expo/exhibition-stands",
+    competitionSlug: "exhibition-stands",
+    codePrefix: "STAND",
+  },
   missPanache: {
     title: "Mademoiselle Panache",
     description: "Complete your contestant application on the website, then continue to Ayati for payment.",
