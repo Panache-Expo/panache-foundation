@@ -49,6 +49,11 @@ export const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/panache-expo/exhibition-stands" className="cursor-pointer">
+                    Exhibition Stands
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/panache-expo/charity-night" className="cursor-pointer">
                     Charity Activities
                   </Link>
@@ -141,6 +146,9 @@ export const Header = () => {
                 </Link>
                 <Link to="/panache-fashion-night" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Panache Fashion Night
+                </Link>
+                <Link to="/panache-expo/exhibition-stands" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  Exhibition Stands
                 </Link>
                 <Link to="/panache-expo/charity-night" className="block text-foreground hover:text-primary transition-colors py-1 pl-2" onClick={() => setIsMobileMenuOpen(false)}>
                   Charity Night

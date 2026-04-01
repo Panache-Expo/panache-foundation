@@ -62,6 +62,11 @@ import { useEffect, useState } from "react";
 
 const competitionTabs = [
   {
+    slug: competitionRegistrationLinks.exhibitionStands.competitionSlug,
+    title: competitionRegistrationLinks.exhibitionStands.title,
+    shortTitle: "Exhibition Stands",
+  },
+  {
     slug: competitionRegistrationLinks.panache360.competitionSlug,
     title: competitionRegistrationLinks.panache360.title,
     shortTitle: "Panache 360",
@@ -122,6 +127,26 @@ const formatJsonKeyLabel = (value: string) =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const getBusinessName = (application: CompetitionApplication) => {
+  if (!isRecord(application.form_payload)) {
+    return "";
+  }
+
+  const businessName = application.form_payload.business_name;
+  return typeof businessName === "string" ? businessName : "";
+};
+
+const getApplicantName = (application: CompetitionApplication) => {
+  if (
+    application.competition_slug ===
+    competitionRegistrationLinks.exhibitionStands.competitionSlug
+  ) {
+    return application.first_name || "Unnamed exhibitor";
+  }
+
+  return [application.first_name, application.last_name].filter(Boolean).join(" ");
+};
+
 const ParticipantsDashboardPage = () => {
   const { toast } = useToast();
   const [accessKeyInput, setAccessKeyInput] = useState("");
@@ -131,7 +156,7 @@ const ParticipantsDashboardPage = () => {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(
-    competitionTabs[0].slug
+    competitionRegistrationLinks.panache360.competitionSlug
   );
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -217,6 +242,7 @@ const ParticipantsDashboardPage = () => {
       application.application_code,
       application.first_name,
       application.last_name,
+      getBusinessName(application),
       application.email,
       application.phone,
       application.category || "",
@@ -365,7 +391,7 @@ const ParticipantsDashboardPage = () => {
           updatedApplication.payment_status === "paid"
             ? "Marked as paid"
             : "Moved back to pending",
-        description: `${updatedApplication.first_name} ${updatedApplication.last_name} has been updated.`,
+        description: `${getApplicantName(updatedApplication)} has been updated.`,
       });
     } catch (error) {
       toast({
@@ -653,8 +679,13 @@ const ParticipantsDashboardPage = () => {
                                 <TableCell>
                                   <div className="space-y-1">
                                     <p className="font-semibold text-primary">
-                                      {application.first_name} {application.last_name}
+                                      {getApplicantName(application)}
                                     </p>
+                                    {getBusinessName(application) ? (
+                                      <p className="text-xs text-muted-foreground">
+                                        {getBusinessName(application)}
+                                      </p>
+                                    ) : null}
                                     <p className="text-xs text-muted-foreground">
                                       {application.application_code}
                                     </p>
@@ -750,7 +781,7 @@ const ParticipantsDashboardPage = () => {
             <>
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl text-primary">
-                  {selectedApplication.first_name} {selectedApplication.last_name}
+                  {getApplicantName(selectedApplication)}
                 </DialogTitle>
                 <DialogDescription>
                   {getCompetitionTitle(selectedApplication.competition_slug)} ·{" "}
@@ -765,6 +796,11 @@ const ParticipantsDashboardPage = () => {
                       <p className="text-xs uppercase tracking-[0.24em] text-rose-gold mb-2">
                         Contact
                       </p>
+                      {getBusinessName(selectedApplication) ? (
+                        <p className="text-sm text-muted-foreground">
+                          {getBusinessName(selectedApplication)}
+                        </p>
+                      ) : null}
                       <p className="font-semibold text-primary">{selectedApplication.email}</p>
                       <p className="text-sm text-muted-foreground">
                         {selectedApplication.phone}
