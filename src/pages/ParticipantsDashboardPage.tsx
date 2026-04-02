@@ -62,6 +62,11 @@ import { useEffect, useState } from "react";
 
 const competitionTabs = [
   {
+    slug: competitionRegistrationLinks.cyesPitch.competitionSlug,
+    title: competitionRegistrationLinks.cyesPitch.title,
+    shortTitle: "CYES Pitch",
+  },
+  {
     slug: competitionRegistrationLinks.exhibitionStands.competitionSlug,
     title: competitionRegistrationLinks.exhibitionStands.title,
     shortTitle: "Exhibition Stands",

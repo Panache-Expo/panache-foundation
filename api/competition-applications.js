@@ -7,6 +7,7 @@ const SUPABASE_SERVICE_ROLE_KEY =
 const DASHBOARD_ACCESS_KEY = process.env.DASHBOARD_ACCESS_KEY || "";
 
 const ALLOWED_COMPETITION_SLUGS = new Set([
+  "cyes-pitch-competition",
   "panache-360",
   "fashion-night",
   "miss-panache",

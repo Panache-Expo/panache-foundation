@@ -1,4 +1,12 @@
 export const competitionRegistrationLinks = {
+  cyesPitch: {
+    title: "CYES Business Pitch Competition",
+    description: "Complete your application on the website first, then continue to Ayati to complete payment.",
+    paymentHref: "https://ayati.me/5see",
+    path: "/cyes/pitch-competition",
+    competitionSlug: "cyes-pitch-competition",
+    codePrefix: "CYESP",
+  },
   exhibitionStands: {
     title: "Panache Expo 2026 Exhibition Stands",
     description: "Reserve your stand on the website first, then continue to Ayati to complete payment.",
