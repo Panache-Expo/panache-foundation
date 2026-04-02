@@ -2,184 +2,157 @@ import nodemailer from "nodemailer";
 
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER;
-const REGISTRATION_SUPPORT_EMAIL =
-  process.env.REGISTRATION_SUPPORT_EMAIL || SMTP_USER;
+const SMTP_SECURE = String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false";
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
+const REGISTRATION_SUPPORT_EMAIL = process.env.REGISTRATION_SUPPORT_EMAIL || SMTP_USER || "";
 
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: SMTP_PORT === 465,
-  auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
-});
+const sendJson = (res, statusCode, payload) => {
+  res.statusCode = statusCode;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify(payload));
+};
 
-const escapeHtml = (value = "") =>
-  value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-
-const parseRequestBody = (body) => {
-  if (!body) {
-    return {};
+const parseBody = (req) => {
+  if (req.body && typeof req.body === "object") {
+    return req.body;
   }
-
-  if (typeof body === "string") {
+  if (typeof req.body === "string") {
     try {
-      return JSON.parse(body);
+      return JSON.parse(req.body);
     } catch {
       return {};
     }
   }
-
-  return body;
+  return {};
 };
 
-const buildTextBody = ({
-  applicantFirstName,
-  competitionTitle,
-  applicationCode,
-  category,
-  paymentHref,
-}) => {
-  const lines = [
-    `Hello ${applicantFirstName},`,
-    "",
-    `Your ${competitionTitle} application has been received by Panache Expo.`,
-    `Application code: ${applicationCode}`,
-  ];
-
-  if (category) {
-    lines.push(`Category: ${category}`);
+const normalizeText = (value) => {
+  if (value === undefined || value === null) {
+    return "";
   }
-
-  lines.push(
-    "",
-    "Your next step is to complete payment on Ayati using the link below:",
-    paymentHref,
-    "",
-    "Important: your registration will remain pending until payment is completed.",
-    "",
-    "If you need help, reply to this email or contact the Panache team.",
-    "",
-    "Panache Expo"
-  );
-
-  return lines.join("\n");
+  return String(value).trim();
 };
 
-const buildHtmlBody = ({
+const buildHtml = ({
   applicantFirstName,
   competitionTitle,
   applicationCode,
-  category,
   paymentHref,
+  category,
 }) => {
-  const safeFirstName = escapeHtml(applicantFirstName);
-  const safeCompetitionTitle = escapeHtml(competitionTitle);
-  const safeApplicationCode = escapeHtml(applicationCode);
-  const safeCategory = category ? escapeHtml(category) : "";
-  const safePaymentHref = escapeHtml(paymentHref);
-
+  const safeName = applicantFirstName || "there";
+  const categoryLine = category
+    ? `<p style="margin:0 0 12px;">Category: <strong>${category}</strong></p>`
+    : "";
   return `
-    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6; max-width: 640px; margin: 0 auto; padding: 24px;">
-      <p style="margin: 0 0 16px;">Hello ${safeFirstName},</p>
-      <p style="margin: 0 0 16px;">
-        Your <strong>${safeCompetitionTitle}</strong> application has been received by Panache Expo.
+    <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#111827;">
+      <h2 style="margin:0 0 16px;">Panache registration received</h2>
+      <p style="margin:0 0 12px;">Hello ${safeName},</p>
+      <p style="margin:0 0 12px;">
+        Your application for <strong>${competitionTitle}</strong> has been received successfully.
       </p>
-      <div style="margin: 24px 0; padding: 16px 20px; border-radius: 14px; background: #f8f4ef; border: 1px solid #eadfd2;">
-        <p style="margin: 0 0 8px;"><strong>Application code:</strong> ${safeApplicationCode}</p>
-        ${
-          safeCategory
-            ? `<p style="margin: 0;"><strong>Category:</strong> ${safeCategory}</p>`
-            : ""
-        }
-      </div>
-      <p style="margin: 0 0 16px;">
-        Your next step is to complete payment on Ayati using the button below.
+      <p style="margin:0 0 12px;">Application code: <strong>${applicationCode}</strong></p>
+      ${categoryLine}
+      <p style="margin:0 0 12px;">
+        Please complete your payment using the official link below:
       </p>
-      <p style="margin: 24px 0;">
-        <a
-          href="${safePaymentHref}"
-          style="display: inline-block; background: #8b5e3c; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 999px; font-weight: 700;"
-        >
-          Continue to Ayati
+      <p style="margin:0 0 20px;">
+        <a href="${paymentHref}" style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;">
+          Complete payment
         </a>
       </p>
-      <p style="margin: 0 0 16px;">
-        Important: your registration will remain pending until payment is completed.
+      <p style="margin:0 0 12px;">
+        Once your payment is confirmed, your status will be updated and the Panache team will continue reviewing your application.
       </p>
-      <p style="margin: 0;">If you need help, reply to this email or contact the Panache team.</p>
-      <p style="margin: 24px 0 0;">Panache Expo</p>
+      <p style="margin:0;">
+        If you need help, reply to this email or contact ${REGISTRATION_SUPPORT_EMAIL || "the Panache team"}.
+      </p>
     </div>
   `;
 };
 
 export default async function handler(req, res) {
+  if (req.method === "OPTIONS") {
+    res.setHeader("Allow", "POST,OPTIONS");
+    return sendJson(res, 200, { ok: true });
+  }
+
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return res.status(405).json({ message: "Method not allowed" });
+    res.setHeader("Allow", "POST,OPTIONS");
+    return sendJson(res, 405, { message: "Method not allowed." });
   }
 
   if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
-    return res.status(500).json({
-      message: "SMTP environment variables are missing.",
+    return sendJson(res, 500, {
+      message: "SMTP is not configured on the server.",
     });
   }
 
-  const body = parseRequestBody(req.body);
-  const {
-    applicantEmail,
-    applicantFirstName,
-    competitionTitle,
-    applicationCode,
-    category,
-    paymentHref,
-  } = body;
+  const body = parseBody(req);
+  const applicantEmail = normalizeText(body.applicantEmail);
+  const applicantFirstName = normalizeText(body.applicantFirstName);
+  const competitionTitle = normalizeText(body.competitionTitle);
+  const applicationCode = normalizeText(body.applicationCode);
+  const paymentHref = normalizeText(body.paymentHref);
+  const category = normalizeText(body.category);
 
-  if (
-    !applicantEmail ||
-    !applicantFirstName ||
-    !competitionTitle ||
-    !applicationCode ||
-    !paymentHref
-  ) {
-    return res.status(400).json({
-      message: "Missing email payload fields.",
+  if (!applicantEmail || !competitionTitle || !applicationCode || !paymentHref) {
+    return sendJson(res, 400, {
+      message:
+        "applicantEmail, competitionTitle, applicationCode, and paymentHref are required.",
     });
   }
+
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
 
   try {
     await transporter.sendMail({
       from: SMTP_FROM,
       to: applicantEmail,
-      replyTo: REGISTRATION_SUPPORT_EMAIL,
-      subject: `${competitionTitle} application received`,
-      text: buildTextBody({
+      replyTo: REGISTRATION_SUPPORT_EMAIL || undefined,
+      subject: `Panache registration received - ${applicationCode}`,
+      text: [
+        `Hello ${applicantFirstName || "there"},`,
+        "",
+        `Your application for ${competitionTitle} has been received successfully.`,
+        `Application code: ${applicationCode}`,
+        category ? `Category: ${category}` : "",
+        "",
+        `Complete payment here: ${paymentHref}`,
+        "",
+        "Once your payment is confirmed, your status will be updated.",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      html: buildHtml({
         applicantFirstName,
         competitionTitle,
         applicationCode,
-        category,
         paymentHref,
-      }),
-      html: buildHtmlBody({
-        applicantFirstName,
-        competitionTitle,
-        applicationCode,
         category,
-        paymentHref,
       }),
     });
-
-    return res.status(200).json({ ok: true });
   } catch (error) {
-    console.error("Failed to send registration email", error);
-    return res.status(500).json({
-      message: "Could not send registration email.",
+    return sendJson(res, 500, {
+      message:
+        error instanceof Error
+          ? error.message
+          : "Could not send the registration confirmation email.",
     });
   }
+
+  return sendJson(res, 200, {
+    ok: true,
+    message: "Registration confirmation email sent.",
+  });
 }

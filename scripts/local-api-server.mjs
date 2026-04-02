@@ -1,194 +1,191 @@
 import { createServer } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-const LOCAL_API_PORT = Number(process.env.LOCAL_API_PORT || 8787);
-const DEBUG_LOCAL_API = process.env.DEBUG_LOCAL_API === "true";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const repoRoot = path.resolve(__dirname, "..");
+const apiDir = path.join(repoRoot, "api");
+const port = Number(process.env.PORT || 8787);
 
-const loadEnvFile = (fileName) => {
-  const filePath = resolve(process.cwd(), fileName);
-
+const loadEnvFile = (filename) => {
+  const filePath = path.join(repoRoot, filename);
   if (!existsSync(filePath)) {
     return;
   }
 
-  const fileContent = readFileSync(filePath, "utf8");
-
-  for (const rawLine of fileContent.split(/\r?\n/)) {
+  const content = readFileSync(filePath, "utf8");
+  for (const rawLine of content.split(/\r?\n/)) {
     const line = rawLine.trim();
-
     if (!line || line.startsWith("#")) {
       continue;
     }
 
-    const equalsIndex = line.indexOf("=");
-
-    if (equalsIndex === -1) {
+    const separatorIndex = line.indexOf("=");
+    if (separatorIndex === -1) {
       continue;
     }
 
-    const key = line.slice(0, equalsIndex).trim();
-    const value = line.slice(equalsIndex + 1).trim().replace(/^['"]|['"]$/g, "");
-
-    if (!process.env[key]) {
-      process.env[key] = value;
+    const key = line.slice(0, separatorIndex).trim();
+    if (!key || process.env[key] !== undefined) {
+      continue;
     }
+
+    let value = line.slice(separatorIndex + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
   }
 };
 
 loadEnvFile(".env");
 loadEnvFile(".env.local");
 
-const { default: sendRegistrationEmailHandler } = await import(
-  "../api/send-registration-email.js"
-);
-const { default: dashboardApplicationsHandler } = await import(
-  "../api/dashboard-applications.js"
-);
-
-const parseBody = (rawBody) => {
-  if (!rawBody) {
-    return undefined;
+const sendJson = (res, statusCode, payload) => {
+  if (!res.headersSent) {
+    res.statusCode = statusCode;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
   }
-
-  try {
-    return JSON.parse(rawBody);
-  } catch {
-    return rawBody;
-  }
+  res.end(JSON.stringify(payload));
 };
 
-const createResponseAdapter = (res) => {
-  let statusCode = 200;
-
-  return {
-    setHeader(name, value) {
-      res.setHeader(name, value);
-    },
-    status(code) {
-      statusCode = code;
-      return this;
-    },
-    json(payload) {
-      if (!res.headersSent) {
-        res.statusCode = statusCode;
-        res.setHeader("Content-Type", "application/json");
-      }
-
-      res.end(JSON.stringify(payload));
-    },
-  };
-};
-
-const logRequest = ({ method, pathname, statusCode, durationMs }) => {
-  const timestamp = new Date().toISOString();
-  console.log(
-    `[${timestamp}] ${method} ${pathname} -> ${statusCode} (${durationMs}ms)`
+const setCorsHeaders = (req, res) => {
+  const origin = req.headers.origin || "*";
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, x-dashboard-key, x-dashboard-access-key"
   );
 };
 
-const logDebugRequest = ({ method, pathname, headers, body }) => {
-  if (!DEBUG_LOCAL_API) {
-    return;
-  }
+const parseBody = async (req) =>
+  await new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => {
+      const rawBody = Buffer.concat(chunks).toString("utf8");
+      if (!rawBody) {
+        resolve(undefined);
+        return;
+      }
 
-  console.log(`[local-api:debug] ${method} ${pathname}`);
-  console.log("[local-api:debug] headers", headers);
-  console.log("[local-api:debug] body", body);
+      try {
+        resolve(JSON.parse(rawBody));
+      } catch {
+        resolve(rawBody);
+      }
+    });
+    req.on("error", reject);
+  });
+
+const buildQueryObject = (url) => {
+  const query = {};
+  for (const [key, value] of url.searchParams.entries()) {
+    if (query[key] === undefined) {
+      query[key] = value;
+    } else if (Array.isArray(query[key])) {
+      query[key].push(value);
+    } else {
+      query[key] = [query[key], value];
+    }
+  }
+  return query;
 };
 
-const collectRequestBody = async (req) => {
-  const chunks = [];
-
-  for await (const chunk of req) {
-    chunks.push(chunk);
+const resolveHandlerModulePath = (pathname) => {
+  if (!pathname.startsWith("/api/")) {
+    return null;
   }
 
-  return Buffer.concat(chunks).toString("utf8");
+  const routeName = pathname.slice("/api/".length);
+  if (!routeName || routeName.includes("/")) {
+    return null;
+  }
+
+  const candidate = path.join(apiDir, `${routeName}.js`);
+  return existsSync(candidate) ? candidate : null;
+};
+
+const logRequest = (req, pathname, statusCode, startedAt) => {
+  const duration = Date.now() - startedAt;
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} ${pathname} -> ${statusCode} (${duration}ms)`
+  );
 };
 
 const server = createServer(async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-dashboard-key");
-
   const startedAt = Date.now();
+  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  const handlerPath = resolveHandlerModulePath(url.pathname);
+
+  setCorsHeaders(req, res);
+
+  res.on("finish", () => {
+    logRequest(req, url.pathname, res.statusCode, startedAt);
+  });
+
   if (req.method === "OPTIONS") {
     res.statusCode = 204;
     res.end();
-    logRequest({
-      method: req.method || "UNKNOWN",
-      pathname: req.url || "/",
-      statusCode: 204,
-      durationMs: Date.now() - startedAt,
-    });
     return;
   }
 
-  const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const rawBody =
-    req.method === "POST" || req.method === "PATCH"
-      ? await collectRequestBody(req)
-      : "";
-
-  req.body = parseBody(rawBody);
-  logDebugRequest({
-    method: req.method || "UNKNOWN",
-    pathname: url.pathname,
-    headers: req.headers,
-    body: req.body,
-  });
-  const response = createResponseAdapter(res);
+  if (!handlerPath) {
+    sendJson(res, 404, { message: "API route not found." });
+    return;
+  }
 
   try {
-    if (url.pathname === "/api/send-registration-email") {
-      await sendRegistrationEmailHandler(req, response);
-      logRequest({
-        method: req.method || "UNKNOWN",
-        pathname: url.pathname,
-        statusCode: res.statusCode || 200,
-        durationMs: Date.now() - startedAt,
-      });
+    const body = await parseBody(req);
+    const moduleUrl = pathToFileURL(handlerPath).href;
+    const imported = await import(moduleUrl);
+    const handler = imported.default;
+
+    if (typeof handler !== "function") {
+      sendJson(res, 500, { message: "API handler is invalid." });
       return;
     }
 
-    if (url.pathname === "/api/dashboard-applications") {
-      await dashboardApplicationsHandler(req, response);
-      logRequest({
-        method: req.method || "UNKNOWN",
-        pathname: url.pathname,
-        statusCode: res.statusCode || 200,
-        durationMs: Date.now() - startedAt,
-      });
-      return;
+    req.body = body;
+    req.query = buildQueryObject(url);
+
+    res.status = function status(code) {
+      this.statusCode = code;
+      return this;
+    };
+
+    res.json = function json(payload) {
+      sendJson(this, this.statusCode || 200, payload);
+      return this;
+    };
+
+    await handler(req, res);
+
+    if (!res.writableEnded) {
+      res.end();
     }
   } catch (error) {
-    console.error(`[local-api:error] ${req.method || "UNKNOWN"} ${url.pathname}`, error);
-    response.status(500).json({ message: "Local API server error." });
-    logRequest({
-      method: req.method || "UNKNOWN",
-      pathname: url.pathname,
-      statusCode: 500,
-      durationMs: Date.now() - startedAt,
-    });
-    return;
+    console.error("[local-api:error]", error);
+    if (!res.writableEnded) {
+      sendJson(res, 500, { message: "Local API server error." });
+    }
   }
-
-  response.status(404).json({ message: "Local API route not found." });
-  logRequest({
-    method: req.method || "UNKNOWN",
-    pathname: url.pathname,
-    statusCode: 404,
-    durationMs: Date.now() - startedAt,
-  });
 });
 
-server.listen(LOCAL_API_PORT, () => {
-  console.log(`Local API server running on http://localhost:${LOCAL_API_PORT}`);
+server.listen(port, () => {
+  console.log(`Local API server running on http://localhost:${port}`);
 });
 
-process.on("unhandledRejection", (reason) => {
-  console.error("[local-api:unhandledRejection]", reason);
+process.on("unhandledRejection", (error) => {
+  console.error("[local-api:unhandledRejection]", error);
 });
 
 process.on("uncaughtException", (error) => {
