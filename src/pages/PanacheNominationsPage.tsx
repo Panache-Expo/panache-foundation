@@ -65,11 +65,11 @@ const juryMembers = [
     title: "Founder /CEO Nabi's Maq and Beauty Space",
     photo: florence,
   },
-  {
-    name: "Joan Ngomba",
-    title: "Entertainment Reporter and TV Host",
-    photo: Joan,
-  },
+  // {
+  //   name: "Joan Ngomba",
+  //   title: "Entertainment Reporter and TV Host",
+  //   photo: Joan,
+  // },
 ];
 
 const categories = [
