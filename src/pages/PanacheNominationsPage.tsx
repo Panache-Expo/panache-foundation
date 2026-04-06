@@ -22,11 +22,11 @@ import { MapPin, Calendar, User } from "lucide-react";
 import victor from "@/assets/victor.png";
 import nkafu from "@/assets/nkafu.png";
 import prince from "@/assets/prince.jpeg";
-import florence from "@/assets/florence.jpeg";
-import Joan from "@/assets/joan.jpeg";
+import florence2026 from "@/assets/florence-2026-optimized.jpg";
 import edith from "@/assets/edith.png";
 import nkeng from "@/assets/nkeng.jpeg";  
 import kellie from "@/assets/kellie.png";
+import cliqEmpireOfficialSponsor from "@/assets/cliq-empire-official-sponsor.jpg";
 
 const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
 const juryMembers = [
@@ -63,7 +63,7 @@ const juryMembers = [
   {
     name: "Florence Tubuoh Nabi",
     title: "Founder /CEO Nabi's Maq and Beauty Space",
-    photo: florence,
+    photo: florence2026,
   },
   // {
   //   name: "Joan Ngomba",
@@ -349,6 +349,61 @@ const PanacheNominationsPage = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-rose-gold font-medium text-lg">Official Sponsor</span>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-2 mb-4">
+              Cliq <span className="text-rose-gold">Empire</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Panache D&apos;or Awards 2026 is proudly supported by Cliq Empire,
+              the official sponsor helping power this celebration of beauty,
+              fashion, and creativity.
+            </p>
+          </div>
+
+          <Card className="overflow-hidden border-border/60 shadow-elegant">
+            <CardContent className="p-0">
+              <div className="grid lg:grid-cols-[1.1fr,0.9fr]">
+                <div className="bg-[#17081f]">
+                  <img
+                    src={cliqEmpireOfficialSponsor}
+                    alt="Cliq Empire official sponsor artwork"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="p-8 md:p-10 flex flex-col justify-center bg-background">
+                  <p className="text-xs uppercase tracking-[0.3em] text-rose-gold mb-4">
+                    Panache D&apos;or 2026
+                  </p>
+                  <h3 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
+                    Official Sponsor
+                  </h3>
+                  <p className="text-2xl font-semibold text-foreground mb-4">
+                    Cliq Empire
+                  </p>
+                  <p className="text-muted-foreground leading-7 mb-6">
+                    Cliq Empire is a Cameroon-based event organizing, artists
+                    management, public relations, and advertising company,
+                    proudly standing behind this year&apos;s awards edition.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <span className="inline-flex items-center rounded-full bg-muted px-4 py-2 text-sm font-medium text-foreground">
+                      Official Panache D&apos;or Sponsor
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-muted px-4 py-2 text-sm font-medium text-foreground">
+                      Cameroon
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
