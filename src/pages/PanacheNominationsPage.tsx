@@ -26,7 +26,7 @@ import florence2026 from "@/assets/florence-2026-optimized.jpg";
 import edith from "@/assets/edith.png";
 import nkeng from "@/assets/nkeng.jpeg";  
 import kellie from "@/assets/kellie.png";
-import cliqEmpireOfficialSponsor from "@/assets/cliq-empire-official-sponsor.jpg";
+import cliqEmpireLogo from "@/assets/cliq-empire-logo.jpg";
 
 const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
 const juryMembers = [
@@ -369,11 +369,11 @@ const PanacheNominationsPage = () => {
           <Card className="overflow-hidden border-border/60 shadow-elegant">
             <CardContent className="p-0">
               <div className="grid lg:grid-cols-[1.1fr,0.9fr]">
-                <div className="bg-[#17081f]">
+                <div className="bg-white p-8 md:p-10 flex items-center justify-center">
                   <img
-                    src={cliqEmpireOfficialSponsor}
-                    alt="Cliq Empire official sponsor artwork"
-                    className="w-full h-full object-cover"
+                    src={cliqEmpireLogo}
+                    alt="Cliq Empire logo"
+                    className="w-full max-w-xl object-contain"
                   />
                 </div>
 
