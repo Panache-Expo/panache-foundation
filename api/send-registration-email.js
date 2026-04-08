@@ -2,11 +2,13 @@ import nodemailer from "nodemailer";
 
 const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
 const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
-const SMTP_SECURE = String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false";
+const SMTP_SECURE =
+  String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false";
 const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
-const REGISTRATION_SUPPORT_EMAIL = process.env.REGISTRATION_SUPPORT_EMAIL || SMTP_USER || "";
+const REGISTRATION_SUPPORT_EMAIL =
+  process.env.REGISTRATION_SUPPORT_EMAIL || SMTP_USER || "";
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
@@ -98,7 +100,12 @@ export default async function handler(req, res) {
   const paymentHref = normalizeText(body.paymentHref);
   const category = normalizeText(body.category);
 
-  if (!applicantEmail || !competitionTitle || !applicationCode || !paymentHref) {
+  if (
+    !applicantEmail ||
+    !competitionTitle ||
+    !applicationCode ||
+    !paymentHref
+  ) {
     return sendJson(res, 400, {
       message:
         "applicantEmail, competitionTitle, applicationCode, and paymentHref are required.",
