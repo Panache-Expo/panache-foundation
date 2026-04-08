@@ -42,7 +42,7 @@ const FashionNightPage = () => {
 
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6">
-            Panache <span className="text-rose-gold">Fashion Night</span>
+            Panache <span className="text-rose-gold">Runway Show</span>
           </h1>
           <p className="text-xl md:text-2xl text-primary-foreground/90 mb-4 font-light">
             A Competitive Runway Experience
