@@ -6,6 +6,39 @@
 All colors MUST be HSL for proper theme support.
 */
 
+@font-face {
+  font-family: "Reckless Neue";
+  font-style: normal;
+  font-weight: 300 900;
+  src:
+    local("Reckless Neue"),
+    local("RecklessNeue"),
+    url("/fonts/reckless-neue.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Matter";
+  font-style: normal;
+  font-weight: 100 900;
+  src:
+    local("Matter"),
+    local("Matter Regular"),
+    url("/fonts/matter-regular.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Matter";
+  font-style: italic;
+  font-weight: 100 900;
+  src:
+    local("Matter Italic"),
+    local("Matter-Italic"),
+    url("/fonts/matter-italic.woff2") format("woff2");
+  font-display: swap;
+}
+
 @layer base {
   :root {
     /* Core Background & Text */
@@ -20,10 +53,10 @@ All colors MUST be HSL for proper theme support.
     --popover: 320 25% 97%;
     --popover-foreground: 260 15% 15%;
 
-    /* Primary Brand - Deep Purple */
-    --primary: 260 60% 35%;
+    /* Primary Brand - Violet */
+    --primary: 272 47% 48%;
     --primary-foreground: 320 30% 98%;
-    --primary-glow: 260 70% 55%;
+    --primary-glow: 272 62% 64%;
 
     /* Secondary - Rose Gold */
     --secondary: 15 50% 85%;
@@ -46,7 +79,7 @@ All colors MUST be HSL for proper theme support.
     /* Borders & Inputs */
     --border: 320 20% 85%;
     --input: 320 20% 90%;
-    --ring: 260 60% 35%;
+    --ring: 272 47% 48%;
 
     --radius: 1rem;
 
@@ -99,7 +132,7 @@ All colors MUST be HSL for proper theme support.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 272 47% 48%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -135,5 +168,153 @@ All colors MUST be HSL for proper theme support.
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Matter", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Reckless Neue", "Times New Roman", Georgia, serif;
+    font-style: normal;
+    font-weight: 900;
+    leading-trim: none;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+}
+
+@layer components {
+  .liquid-nav {
+    --liquid-nav-x: 0px;
+    --liquid-nav-y: 0px;
+    --liquid-nav-width: 0px;
+    --liquid-nav-height: 44px;
+    --expo-nav-center-shift: 0px;
+    --expo-nav-scroll-progress: 0;
+    position: relative;
+    isolation: isolate;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.5)),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(244, 227, 218, 0.08));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -8px 18px rgba(90, 54, 35, 0.08),
+      0 14px 36px rgba(16, 10, 7, 0.18);
+    transform: translate3d(
+      calc(var(--expo-nav-center-shift) * var(--expo-nav-scroll-progress)),
+      0,
+      0
+    );
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    will-change: transform;
+  }
+
+  .liquid-nav::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.52),
+      rgba(255, 255, 255, 0.12) 42%,
+      rgba(255, 255, 255, 0.2)
+    );
+    opacity: 0.95;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .liquid-nav__indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--liquid-nav-width);
+    height: var(--liquid-nav-height);
+    border-radius: 999px;
+    transform: translate3d(var(--liquid-nav-x), var(--liquid-nav-y), 0);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.34));
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+      inset 2px 1px 0 -1px rgba(255, 255, 255, 0.95),
+      inset -2px -5px 0 -4px rgba(255, 255, 255, 0.55),
+      inset -1px 2px 4px -1px rgba(90, 54, 35, 0.16),
+      0 8px 22px rgba(16, 10, 7, 0.12);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    filter: url("#liquid-nav-filter");
+    opacity: 0;
+    transition:
+      transform 440ms cubic-bezier(1, 0, 0.4, 1),
+      width 440ms cubic-bezier(1, 0, 0.4, 1),
+      height 300ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 180ms ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .liquid-nav[data-ready="true"] .liquid-nav__indicator {
+    opacity: 1;
+  }
+
+  .liquid-nav__item {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 30px;
+    padding: 0 0.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    font: inherit;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+    transition:
+      color 180ms ease,
+      transform 180ms ease,
+      opacity 180ms ease;
+  }
+
+  .liquid-nav__item:hover {
+    transform: translateY(-1px);
+  }
+
+  .liquid-nav__item[data-state="open"] {
+    color: #120d0b;
+  }
+
+  .liquid-nav__item:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(93, 63, 211, 0.18);
+  }
+
+  .liquid-nav__cta {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+  }
+
+  .liquid-nav__filter {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
 }

@@ -1,62 +1,80 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-beauty.png";
-import { Link } from "react-router-dom";
 import { Calendar, MapPin } from "lucide-react";
-import panacheLogo from "@/assets/PanacheExpoLogo.png";
+import panacheLogo from "@/assets/PanacheHeroLogo.svg";
+import { Link } from "react-router-dom";
 
 export const Hero = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src={heroImage} 
-          alt="Panache Expo Beauty Event" 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/60 to-rose-gold/70"></div>
-      </div>
-      
-      {/* Content */}
-      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20 md:pt-0">
-        <img src={panacheLogo} alt="Panache Logo" className="w-44 h-44 md:w-56 md:h-56 object-cover mx-auto mb-6 rounded-full border-4 border-primary-foreground/30 shadow-elegant" />
-        <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-6 animate-fade-in">
-          Panache <span className="text-rose-gold">Expo</span>
-        </h1>
-        {/* Event Date - prominent placement */}
-        <div className="flex items-center justify-center gap-2 mb-8 animate-fade-in">
-          <Calendar className="w-6 h-6 text-rose-gold" />
-          <span className="text-2xl md:text-3xl font-semibold text-primary-foreground">July 16th - 18th 2026</span>
-        </div>
-        <div className="flex items-center justify-center gap-2 mb-8 animate-fade-in">
-          <MapPin className="w-6 h-6 text-rose-gold" />
-          <span className="text-2xl md:text-3xl font-semibold text-primary-foreground">Chariot Hotel - Buea, Cameroon</span>
+    <section className="bg-[#2d2a28] ">
+      <div className="mx-auto">
+        <div className="relative overflow-hidden bg-[#161311] ">
+          <img
+            src={heroImage}
+            alt="Panache Expo audience celebrating beauty, fashion, and skincare"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/65" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.28),transparent_34%)]" />
+
+          <div className="relative flex min-h-screen flex-col p-2 pb-24 md:p-4 md:pb-28 lg:p-6 lg:pb-32">
+            <div className="flex items-start gap-4">
+              <img
+                src={panacheLogo}
+                alt="Panache Expo logo"
+                className="h-14 w-auto object-contain md:h-16"
+              />
+
+              <div className="space-y-1 pt-1 text-white">
+                <p className="text-lg font-semibold md:text-xl">Panache Expo</p>
+                <div className="flex items-center gap-2 text-sm text-white/88 md:text-base">
+                  <Calendar className="h-4 w-4" />
+                  <span>July 16th - 18th 2026</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-white/80 md:text-base">
+                  <MapPin className="h-4 w-4" />
+                  <span>Chariot Hotel - Buea Cameroon</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-auto max-w-3xl pt-20 md:pt-28">
+              <h1 className="font-display text-5xl font-bold leading-[0.92] tracking-[-0.03em] text-white md:text-7xl lg:text-[5.4rem]">
+                Celebrating <span className="text-[#f4e93f]">Beauty,</span>
+                <br />
+                <span className="text-[#f4e93f]">Fashion &amp; Skincare</span>
+              </h1>
+
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/85 md:text-lg">
+                Workshops, pageants, prestigious awards, and unforgettable live moments
+                for beauty professionals, fashion creatives, and skincare lovers.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link to="/panache-expo/workshops">
+                  <Button
+                    size="lg"
+                    className="h-12 w-52 rounded-full bg-white px-7 text-base font-semibold text-[#211d1b] shadow-none hover:bg-white/90"
+                  >
+                    Secure Your Spot
+                  </Button>
+                </Link>
+                <Link to="/panache-expo/panache-dor">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-12 w-52 rounded-full border-white/60 bg-white/15 px-7 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-[#211d1b] hover:border-white hover:shadow-lg hover:shadow-white/20"
+                  >
+                    Explore
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+          {/* <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-black/90" /> */}
         </div>
 
-        <p className="text-xl md:text-2xl lg:text-3xl text-primary-foreground/90 mb-6 font-light leading-relaxed animate-fade-in">
-          Celebrating Beauty, Fashion and Skincare through 
-        </p>
-        <p className="text-lg md:text-xl text-primary-foreground/80 mb-12 animate-fade-in">
-          Workshops • Pageants • Prestigious Awards
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/workshops">
-            <Button variant="hero" size="lg">
-              Explore Workshops
-            </Button>
-          </Link>
-          <Link to="/panache-dor">
-            <Button variant="outline" size="lg" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
-              Panache D'or Winners
-            </Button>
-          </Link>
-        </div>
       </div>
-      
-      {/* Floating Elements */}
-      <div className="absolute top-20 left-10 w-3 h-3 bg-rose-gold rounded-full animate-float opacity-60"></div>
-      <div className="absolute bottom-32 right-16 w-2 h-2 bg-primary-foreground rounded-full animate-float opacity-40" style={{animationDelay: '1s'}}></div>
-      <div className="absolute top-1/3 right-8 w-4 h-4 bg-rose-gold/60 rounded-full animate-float" style={{animationDelay: '2s'}}></div>
     </section>
   );
 };
