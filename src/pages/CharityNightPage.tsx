@@ -52,7 +52,7 @@ const CharityNightPage = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link to="/register">
+            <Link to="/panache-expo/register">
               <Button variant="hero" size="lg">
                 Reserve Your Seat
               </Button>
@@ -157,7 +157,7 @@ const CharityNightPage = () => {
           <p className="text-primary-foreground/80 mb-8 text-lg">
             Your presence and contribution can transform lives. Reserve your seat today.
           </p>
-          <Link to="/register">
+          <Link to="/panache-expo/register">
             <Button variant="hero" size="lg">
               Reserve Your Seat
             </Button>

@@ -1,9 +1,21 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import {
+  ExpoPageHero,
+  ExpoSurface,
+} from "@/components/registration/ExpoPageShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { competitionRegistrationLinks } from "@/lib/registration-links";
-import { ArrowRight, Crown, Scissors, Sparkles, Store } from "lucide-react";
+import heroImage from "@/assets/hero-beauty.png";
+import { motion } from "motion/react";
+import {
+  ArrowRight,
+  Crown,
+  Scissors,
+  Sparkles,
+  Store,
+  Ticket,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 const registrationOptions = [
@@ -12,91 +24,166 @@ const registrationOptions = [
     description: competitionRegistrationLinks.missPanache.description,
     path: competitionRegistrationLinks.missPanache.path,
     icon: Crown,
-    accent: "text-rose-gold",
+    meta: "Contestant application",
+    accent: "from-[#f4e93f]/28 to-[#8241B6]/20",
   },
   {
     title: competitionRegistrationLinks.fashionNight.title,
     description: competitionRegistrationLinks.fashionNight.description,
     path: competitionRegistrationLinks.fashionNight.path,
     icon: Scissors,
-    accent: "text-primary",
+    meta: "Designer application",
+    accent: "from-[#8241B6]/18 to-[#171411]/8",
   },
   {
     title: competitionRegistrationLinks.panache360.title,
     description: competitionRegistrationLinks.panache360.description,
     path: competitionRegistrationLinks.panache360.path,
     icon: Sparkles,
-    accent: "text-rose-gold",
+    meta: "Competition application",
+    accent: "from-[#f4e93f]/24 to-[#171411]/10",
   },
 ];
 
 export const RegisterPage = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#f4f3ef]">
       <Header />
 
-      <section className="pt-24 pb-16 px-6 bg-gradient-card">
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-rose-gold mb-4">
-            Official Registration
-          </p>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-primary mb-6">
-            Choose Your <span className="text-rose-gold">Competition</span>
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Start your application on the website first. Once your details are saved, you will continue to Ayati to complete payment.
-          </p>
-        </div>
-      </section>
+      <ExpoPageHero
+        eyebrow="Panache registration"
+        title={
+          <>
+            Choose Your
+            <br />
+            <span className="font-display text-[#f4e93f]">Stage</span>
+          </>
+        }
+        description="Start your application on the website first, then continue to Ayati to complete payment. Every competition now uses the same clean two-step flow."
+        image={heroImage}
+        panelLabel="Registration Flow"
+        panelTitle="Start here. Pay after."
+        panelDescription="Pick the experience that fits you, save your application details, and continue straight into payment once your form is confirmed."
+        panelItems={[
+          { label: "Step 1", value: "Choose competition" },
+          { label: "Step 2", value: "Save application" },
+          { label: "Step 3", value: "Pay on Ayati" },
+        ]}
+      />
 
-      <section className="px-6 pb-16">
-        <div className="max-w-6xl mx-auto grid gap-6 md:grid-cols-3">
-          {registrationOptions.map((option) => (
-            <Card key={option.title} className="border-border/60 shadow-soft hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
-              <CardContent className="p-8 flex h-full flex-col">
-                <div className={`w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 ${option.accent}`}>
-                  <option.icon className="w-7 h-7" />
-                </div>
-                <h2 className="font-display text-2xl font-semibold text-primary mb-3">
-                  {option.title}
-                </h2>
-                <p className="text-muted-foreground leading-relaxed mb-8">
-                  {option.description}
-                </p>
-                <Button asChild variant="hero" className="mt-auto w-full">
-                  <Link to={option.path}>
-                    Start Application
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+      <section className="px-6 pb-20 pt-10 md:pb-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8 flex flex-col gap-3 text-center md:mb-10">
+            <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.26em] text-[#8241B6]">
+              Active entries
+            </p>
+            <h2 className="font-sans text-[clamp(2rem,4vw,3.8rem)] font-semibold leading-[0.94] tracking-[-0.05em] text-[#171411]">
+              Applications built for beauty, fashion, and stage presence.
+            </h2>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {registrationOptions.map((option, index) => (
+              <motion.article
+                key={option.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.7, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full"
+              >
+                <ExpoSurface className="flex h-full flex-col overflow-hidden">
+                  <div className={`absolute inset-x-6 top-0 h-32 rounded-b-[2rem] bg-gradient-to-b ${option.accent} opacity-80`} />
+                  <div className="relative">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#171411]/46">
+                        0{index + 1}
+                      </span>
+                      <div className="flex h-12 w-12 items-center justify-center rounded-[1.25rem] bg-[#171411] text-white shadow-[0_18px_35px_rgba(23,20,17,0.16)]">
+                        <option.icon className="h-5 w-5" />
+                      </div>
+                    </div>
+                    <p className="mt-8 font-sans text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8241B6]">
+                      {option.meta}
+                    </p>
+                    <h3 className="mt-3 font-sans text-[clamp(1.8rem,3vw,2.5rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                      {option.title}
+                    </h3>
+                    <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/68">
+                      {option.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-8 flex items-end justify-between gap-4 border-t border-black/8 pt-6">
+                    <span className="font-sans text-sm text-[#171411]/56">
+                      Website application first.
+                    </span>
+                    <Button
+                      asChild
+                      className="h-12 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white shadow-none hover:bg-[#171411]/92"
+                    >
+                      <Link to={option.path}>
+                        Start now
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </ExpoSurface>
+              </motion.article>
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="px-6 pb-20">
-        <div className="max-w-4xl mx-auto rounded-3xl border border-border/60 bg-card p-8 md:p-10 shadow-soft text-center">
-          <h2 className="font-display text-3xl font-bold text-primary mb-4">
-            Looking for another registration?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            For CYES attendance, workshop interest, sponsorships, or general event questions, use the pages below and the Panache team will direct you properly.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild variant="hero" size="lg">
-              <Link to={competitionRegistrationLinks.exhibitionStands.path}>
-                <Store className="w-4 h-4" />
-                Book Exhibition Stand
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link to="/cyes/register">Register for CYES</Link>
-            </Button>
-            <Button asChild variant="default" size="lg">
-              <Link to="/contact">Contact the Team</Link>
-            </Button>
-          </div>
+        <div className="mx-auto max-w-5xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[1fr,auto] lg:items-end">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.26em] text-[#8241B6]">
+                  Need another route?
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.9rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-[#171411]">
+                  Not applying for a competition?
+                </h2>
+                <p className="mt-3 max-w-2xl font-sans text-[0.98rem] leading-relaxed text-[#171411]/68">
+                  Use these direct paths for exhibition stands, CYES participation, or a quick conversation with the Panache team.
+                </p>
+              </div>
+              <div className="flex h-14 w-14 items-center justify-center rounded-[1.3rem] bg-[#171411] text-white">
+                <Ticket className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white shadow-none hover:bg-[#171411]/92"
+              >
+                <Link to={competitionRegistrationLinks.exhibitionStands.path}>
+                  <Store className="h-4 w-4" />
+                  Book Exhibition Stand
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 rounded-full border-black/12 bg-white/70 px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+              >
+                <Link to="/cyes/register">Register for CYES</Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 rounded-full border-black/12 bg-white/70 px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+              >
+                <Link to="/panache-expo/contact">Contact the Team</Link>
+              </Button>
+            </div>
+          </ExpoSurface>
         </div>
       </section>
 

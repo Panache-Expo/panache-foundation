@@ -95,6 +95,8 @@ const getHeaderConfig = (pathname: string): HeaderConfig => {
         { label: "Pitch Competition", to: "/cyes/pitch-competition" },
       ],
       contactTo: "/cyes/contact",
+      showGatewayLink: false,
+
       registerTo: "/cyes/register",
       registerLabel: "Register",
     };
@@ -127,9 +129,11 @@ export const Header = () => {
   const [showcaseNavCenterShift, setShowcaseNavCenterShift] = useState(0);
   const [showcaseNavScrollProgress, setShowcaseNavScrollProgress] = useState(0);
   const [hoveredLiquidNavKey, setHoveredLiquidNavKey] = useState<string | null>(null);
-  const [homeButtonScrollProgress, setHomeButtonScrollProgress] = useState(0);
+  const [isHomeButtonCollapsed, setIsHomeButtonCollapsed] = useState(false);
+  const [homeButtonSlotWidth, setHomeButtonSlotWidth] = useState(0);
   const showcaseNavTrackRef = useRef<HTMLDivElement | null>(null);
   const liquidNavRef = useRef<HTMLElement | null>(null);
+  const homeButtonContentRef = useRef<HTMLSpanElement | null>(null);
   const location = useLocation();
   const config = getHeaderConfig(location.pathname);
   const isPanacheExpoLanding = location.pathname === "/panache-expo";
@@ -202,38 +206,86 @@ export const Header = () => {
 
   useEffect(() => {
     let frame = 0;
-    const maxScrollDistance = 320;
+    const collapseTriggerDistance = 220;
+    const revealTriggerDistance = 24;
 
-    const syncHomeButtonScrollProgress = () => {
-      const progress = Math.min(window.scrollY / maxScrollDistance, 1);
-      setHomeButtonScrollProgress(progress);
+    setIsHomeButtonCollapsed(false);
+
+    const syncHomeButtonCollapse = () => {
+      if (window.scrollY <= revealTriggerDistance) {
+        setIsHomeButtonCollapsed(false);
+      } else if (window.scrollY >= collapseTriggerDistance) {
+        setIsHomeButtonCollapsed(true);
+      }
     };
 
-    const queueHomeButtonScrollProgress = () => {
+    const queueHomeButtonCollapse = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(syncHomeButtonScrollProgress);
+      frame = requestAnimationFrame(syncHomeButtonCollapse);
     };
 
-    queueHomeButtonScrollProgress();
-    window.addEventListener("scroll", queueHomeButtonScrollProgress, { passive: true });
+    queueHomeButtonCollapse();
+    window.addEventListener("scroll", queueHomeButtonCollapse, { passive: true });
 
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", queueHomeButtonScrollProgress);
+      window.removeEventListener("scroll", queueHomeButtonCollapse);
     };
-  }, []);
+  }, [location.pathname]);
 
-  const homeNavButtonFade = {
-    opacity: 1 - homeButtonScrollProgress,
-    // transform: `translateY(${homeButtonScrollProgress * 6}px)`,
+  const homeButtonVisibility = isHomeButtonCollapsed ? 0 : 1;
+  const resolvedHomeButtonSlotWidth = homeButtonSlotWidth || 104;
+  const homeNavButtonSlotStyle = {
+    width: `${resolvedHomeButtonSlotWidth * homeButtonVisibility}px`,
+    opacity: homeButtonVisibility,
+    marginInline: `${8 * homeButtonVisibility}px`,
+    transition:
+      "width 240ms cubic-bezier(0.22, 1, 0.36, 1), margin 240ms cubic-bezier(0.22, 1, 0.36, 1), opacity 240ms cubic-bezier(0.22, 1, 0.36, 1)",
+    pointerEvents: homeButtonVisibility > 0.05 ? "auto" : "none",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+  } as CSSProperties;
+  const homeNavButtonInnerStyle = {
+    opacity: homeButtonVisibility,
+    transform: `translateY(${isHomeButtonCollapsed ? 4 : 0}px) scale(${isHomeButtonCollapsed ? 0.96 : 1})`,
+    transformOrigin: "center right",
     transition:
       "opacity 240ms cubic-bezier(0.22, 1, 0.36, 1), transform 240ms cubic-bezier(0.22, 1, 0.36, 1)",
-    pointerEvents: homeButtonScrollProgress > 0.95 ? "none" : "auto",
-    display: homeButtonScrollProgress > 0.95 ? "none" : ("inline-flex" as const),
   } as CSSProperties;
 
   const navFontClassForItem = (label: string) =>
     /celebrating/i.test(label) ? "font-sans" : "";
+
+  useLayoutEffect(() => {
+    if (!homeButtonContentRef.current) {
+      return;
+    }
+
+    const content = homeButtonContentRef.current;
+    let frame = 0;
+
+    const syncHomeButtonSlotWidth = () => {
+      setHomeButtonSlotWidth(content.getBoundingClientRect().width);
+    };
+
+    const queueHomeButtonSlotWidth = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(syncHomeButtonSlotWidth);
+    };
+
+    const resizeObserver = new ResizeObserver(queueHomeButtonSlotWidth);
+
+    queueHomeButtonSlotWidth();
+    resizeObserver.observe(content);
+    window.addEventListener("resize", queueHomeButtonSlotWidth);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", queueHomeButtonSlotWidth);
+    };
+  }, [isShowcaseLanding, location.pathname]);
 
   useLayoutEffect(() => {
     if (!isShowcaseLanding || !showcaseNavTrackRef.current || !liquidNavRef.current) {
@@ -473,19 +525,22 @@ export const Header = () => {
                 </Link>
               ) : null}
 
-              <Link to="/" style={homeNavButtonFade}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-8 rounded-full px-4 text-sm font-semibold transition-all duration-300",
-                    homeButtonHoverClasses,
-                    "mx-2"
-                  )}
-                >
-                  Home
-                </Button>
-              </Link>
+              <span className="inline-flex" style={homeNavButtonSlotStyle}>
+                <span ref={homeButtonContentRef} className="inline-flex" style={homeNavButtonInnerStyle}>
+                  <Link to="/">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-8 rounded-full px-4 text-sm font-semibold transition-all duration-300",
+                        homeButtonHoverClasses
+                      )}
+                    >
+                      Home
+                    </Button>
+                  </Link>
+                </span>
+              </span>
 
               <Link to={config.registerTo} className="liquid-nav__cta">
                 <Button
@@ -562,19 +617,22 @@ export const Header = () => {
               </Link>
               ) : null}
 
-              <Link to="/" className="hidden sm:block" style={homeNavButtonFade}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-8 rounded-full px-4 text-sm font-semibold transition-all duration-300",
-                    homeButtonHoverClasses,
-                    "mx-2"
-                  )}
-                >
-                  Home
-                </Button>
-              </Link>
+              <span className="hidden sm:inline-flex" style={homeNavButtonSlotStyle}>
+                <span ref={homeButtonContentRef} className="inline-flex" style={homeNavButtonInnerStyle}>
+                  <Link to="/">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-8 rounded-full px-4 text-sm font-semibold transition-all duration-300",
+                        homeButtonHoverClasses
+                      )}
+                    >
+                      Home
+                    </Button>
+                  </Link>
+                </span>
+              </span>
 
               <Link to={config.registerTo}>
                 <Button variant="default" size="sm" className="p-2">

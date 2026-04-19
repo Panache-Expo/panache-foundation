@@ -9,7 +9,7 @@ import { Footer } from "@/components/Footer";
 
 const PanacheExpoPage = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       <Header />
       <Hero />
       <About />

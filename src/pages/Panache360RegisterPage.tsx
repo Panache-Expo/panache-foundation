@@ -1,6 +1,15 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { CompetitionPaymentRedirect } from "@/components/registration/CompetitionPaymentRedirect";
+import {
+  ExpoPageHero,
+  ExpoSidebarCard,
+  ExpoSurface,
+  expoCheckboxClasses,
+  expoInputClasses,
+  expoSelectTriggerClasses,
+  expoTextareaClasses,
+} from "@/components/registration/ExpoPageShell";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -15,12 +24,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useSubmitCompetitionApplication } from "@/hooks/useSupabase";
 import { useToast } from "@/hooks/use-toast";
+import panache360Backdrop from "@/assets/panache360-1.jpeg";
 import {
   buildCompetitionApplicationCode,
   competitionRegistrationLinks,
 } from "@/lib/registration-links";
 import { sendCompetitionRegistrationEmail } from "@/lib/send-registration-email";
-import { Sparkles } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const categories = [
@@ -152,7 +162,7 @@ export const Panache360RegisterPage = () => {
           : "A confirmation email has been sent. Redirecting you to Ayati to complete payment.",
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
         title: "We could not save your application",
         description:
@@ -167,187 +177,290 @@ export const Panache360RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#f4f3ef]">
       <Header />
 
-      <section className="pt-24 pb-16 px-6 bg-gradient-card">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="w-16 h-16 bg-primary/10 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-rose-gold" />
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-primary mb-4">
-            Panache <span className="text-rose-gold">360</span> Registration
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Submit your competition details here first. Once your application is saved, you will continue to Ayati to complete payment.
-          </p>
-        </div>
-      </section>
+      <ExpoPageHero
+        eyebrow="Panache 360 Beauty Contest"
+        title={
+          <>
+            Bring Your Craft
+            <br />
+            <span className="font-display text-[#f4e93f]">To The Floor</span>
+          </>
+        }
+        description="Apply for the Panache 360 competition, save your details, and continue directly into Ayati payment once your entry is confirmed."
+        image={panache360Backdrop}
+        panelLabel="Application Notes"
+        panelTitle="Live creativity meets structure."
+        panelDescription="Choose your category, tell us about your work, and submit a clean profile we can review quickly."
+        panelItems={[
+          { label: "Categories", value: "8 live contest tracks" },
+          { label: "Step After Submit", value: "Ayati payment" },
+          { label: "Review Status", value: "Saved as submitted" },
+        ]}
+      />
 
-      <section className="px-6 pb-20">
-        {submittedApplicationCode ? (
-          <CompetitionPaymentRedirect
-            applicationCode={submittedApplicationCode}
-            paymentHref={paymentConfig.paymentHref}
-            title="Panache 360 Application Received"
-            description="Your details are now stored in the Panache registration system. Complete your Ayati payment to finish the registration flow."
+      <section className="px-6 pb-20 pt-10 md:pb-24">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.84fr,1.16fr]">
+          <ExpoSidebarCard
+            eyebrow="Before you apply"
+            title="What to prepare."
+            description="A strong Panache 360 application is short, clear, and portfolio-driven. Use the form to show both your skill level and your creative angle."
+            points={[
+              "Select the category that best matches the live skill you want to compete in.",
+              "Add your Instagram or portfolio link so the review team can quickly assess your work.",
+              "Use the motivation field to explain why your style deserves a live Panache platform.",
+            ]}
+            footer={
+              <div className="rounded-[1.25rem] border border-black/10 bg-white/72 px-4 py-4">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="mt-0.5 h-4 w-4 text-[#8241B6]" />
+                  <div>
+                    <p className="font-sans text-sm font-semibold text-[#171411]">
+                      After you submit
+                    </p>
+                    <p className="mt-1 font-sans text-sm leading-relaxed text-[#171411]/64">
+                      Your application is saved first, then you are redirected to
+                      Ayati to complete payment.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            }
           />
-        ) : (
-          <div className="max-w-3xl mx-auto rounded-3xl border border-border/60 bg-card p-8 md:p-10 shadow-soft">
-            <form ref={formRef} className="space-y-6" onSubmit={handleSubmit}>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name *</Label>
-                  <Input id="firstName" name="firstName" className="mt-2" placeholder="Your first name" required />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name *</Label>
-                  <Input id="lastName" name="lastName" className="mt-2" placeholder="Your last name" required />
-                </div>
+
+          {submittedApplicationCode ? (
+            <CompetitionPaymentRedirect
+              applicationCode={submittedApplicationCode}
+              paymentHref={paymentConfig.paymentHref}
+              title="Panache 360 Application Received"
+              description="Your details are now stored in the Panache registration system. Complete your Ayati payment to finish the registration flow."
+            />
+          ) : (
+            <ExpoSurface>
+              <div className="mb-8">
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Competition form
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  Save your application.
+                </h2>
+                <p className="mt-3 max-w-2xl font-sans text-[0.98rem] leading-relaxed text-[#171411]/68">
+                  Complete the essentials below. We&apos;ll store your profile first
+                  and then move you into payment.
+                </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <form ref={formRef} className="space-y-8" onSubmit={handleSubmit}>
                 <div>
-                  <Label htmlFor="email">Email Address *</Label>
-                  <Input id="email" name="email" type="email" className="mt-2" placeholder="your.email@example.com" required />
+                  <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#171411]/44">
+                    Personal details
+                  </p>
+                  <div className="mt-5 grid gap-6 md:grid-cols-2">
+                    <div>
+                      <Label htmlFor="firstName" className="font-sans text-sm font-semibold text-[#171411]">
+                        First Name
+                      </Label>
+                      <Input id="firstName" name="firstName" className={expoInputClasses} placeholder="Your first name" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName" className="font-sans text-sm font-semibold text-[#171411]">
+                        Last Name
+                      </Label>
+                      <Input id="lastName" name="lastName" className={expoInputClasses} placeholder="Your last name" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="email" className="font-sans text-sm font-semibold text-[#171411]">
+                        Email Address
+                      </Label>
+                      <Input id="email" name="email" type="email" className={expoInputClasses} placeholder="your.email@example.com" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone" className="font-sans text-sm font-semibold text-[#171411]">
+                        Phone Number
+                      </Label>
+                      <Input id="phone" name="phone" type="tel" className={expoInputClasses} placeholder="+237 6XX XXX XXX" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="city" className="font-sans text-sm font-semibold text-[#171411]">
+                        City
+                      </Label>
+                      <Input id="city" name="city" className={expoInputClasses} placeholder="Buea" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="country" className="font-sans text-sm font-semibold text-[#171411]">
+                        Country
+                      </Label>
+                      <Input id="country" name="country" className={expoInputClasses} placeholder="Cameroon" required />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="phone">Phone Number *</Label>
-                  <Input id="phone" name="phone" type="tel" className="mt-2" placeholder="+237 6XX XXX XXX" required />
+
+                <div className="border-t border-black/8 pt-8">
+                  <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#171411]/44">
+                    Competition profile
+                  </p>
+                  <div className="mt-5 grid gap-6 md:grid-cols-2">
+                    <div>
+                      <Label className="font-sans text-sm font-semibold text-[#171411]">
+                        Competition Category
+                      </Label>
+                      <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <SelectTrigger className={expoSelectTriggerClasses}>
+                          <SelectValue placeholder="Select your category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="currentRole" className="font-sans text-sm font-semibold text-[#171411]">
+                        Current Role
+                      </Label>
+                      <Input
+                        id="currentRole"
+                        name="currentRole"
+                        className={expoInputClasses}
+                        placeholder="Professional barber, student, salon owner..."
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="yearsExperience" className="font-sans text-sm font-semibold text-[#171411]">
+                        Years of Experience
+                      </Label>
+                      <Input
+                        id="yearsExperience"
+                        name="yearsExperience"
+                        type="number"
+                        min="0"
+                        className={expoInputClasses}
+                        placeholder="e.g. 4"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="instagramHandle" className="font-sans text-sm font-semibold text-[#171411]">
+                        Instagram Handle
+                      </Label>
+                      <Input
+                        id="instagramHandle"
+                        name="instagramHandle"
+                        className={expoInputClasses}
+                        placeholder="@yourhandle"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="portfolioUrl" className="font-sans text-sm font-semibold text-[#171411]">
+                        Portfolio / Work Link
+                      </Label>
+                      <Input
+                        id="portfolioUrl"
+                        name="portfolioUrl"
+                        type="url"
+                        className={expoInputClasses}
+                        placeholder="https://instagram.com/... or portfolio link"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City *</Label>
-                  <Input id="city" name="city" className="mt-2" placeholder="Buea" required />
+                <div className="border-t border-black/8 pt-8">
+                  <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#171411]/44">
+                    Creative statement
+                  </p>
+                  <div className="mt-5 space-y-6">
+                    <div>
+                      <Label htmlFor="motivation" className="font-sans text-sm font-semibold text-[#171411]">
+                        Why do you want to compete?
+                      </Label>
+                      <Textarea
+                        id="motivation"
+                        name="motivation"
+                        className={expoTextareaClasses}
+                        placeholder="Tell us why you want to join Panache 360 and what makes your work stand out."
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="details" className="font-sans text-sm font-semibold text-[#171411]">
+                        Additional Details
+                      </Label>
+                      <Textarea
+                        id="details"
+                        name="details"
+                        className={expoTextareaClasses}
+                        rows={4}
+                        placeholder="Anything else the Panache team should know before reviewing your application."
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="country">Country *</Label>
-                  <Input id="country" name="country" className="mt-2" placeholder="Cameroon" required />
+
+                <div className="space-y-4 border-t border-black/8 pt-8">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="terms"
+                      className={expoCheckboxClasses}
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                    />
+                    <Label htmlFor="terms" className="font-sans text-sm leading-6 text-[#171411]/72">
+                      I confirm that the information provided is accurate and I understand that payment is required on Ayati after this form is submitted.
+                    </Label>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="newsletter"
+                      className={expoCheckboxClasses}
+                      checked={newsletterSubscription}
+                      onCheckedChange={(checked) => setNewsletterSubscription(checked === true)}
+                    />
+                    <Label htmlFor="newsletter" className="font-sans text-sm leading-6 text-[#171411]/72">
+                      Keep me updated about Panache Expo announcements and competition information.
+                    </Label>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <Label>Competition Category *</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Select your category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="currentRole">Current Role</Label>
-                  <Input
-                    id="currentRole"
-                    name="currentRole"
-                    className="mt-2"
-                    placeholder="Professional barber, student, salon owner..."
-                  />
+                <div className="flex flex-col gap-4 border-t border-black/8 pt-8 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="font-sans text-sm text-[#171411]/56">
+                    Saved applications immediately continue to payment.
+                  </p>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white shadow-none hover:bg-[#171411]/92"
+                      disabled={
+                        submitCompetitionApplication.isPending || isFinalizingSubmission
+                      }
+                    >
+                      {submitCompetitionApplication.isPending || isFinalizingSubmission
+                        ? "Saving application..."
+                        : "Save Application & Continue to Payment"}
+                    </Button>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="outline"
+                      className="h-12 rounded-full border-black/12 bg-white/72 px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                    >
+                      <a href={paymentConfig.paymentHref} target="_blank" rel="noopener noreferrer">
+                        View Ayati Page
+                        <ArrowUpRight className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="yearsExperience">Years of Experience</Label>
-                  <Input
-                    id="yearsExperience"
-                    name="yearsExperience"
-                    type="number"
-                    min="0"
-                    className="mt-2"
-                    placeholder="e.g. 4"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="instagramHandle">Instagram Handle</Label>
-                  <Input
-                    id="instagramHandle"
-                    name="instagramHandle"
-                    className="mt-2"
-                    placeholder="@yourhandle"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="portfolioUrl">Portfolio / Work Link</Label>
-                  <Input
-                    id="portfolioUrl"
-                    name="portfolioUrl"
-                    type="url"
-                    className="mt-2"
-                    placeholder="https://instagram.com/..."
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="motivation">Why do you want to compete? *</Label>
-                <Textarea
-                  id="motivation"
-                  name="motivation"
-                  className="mt-2 min-h-[120px]"
-                  placeholder="Tell us why you want to join Panache 360 and what makes your work stand out."
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="details">Additional Details</Label>
-                <Textarea
-                  id="details"
-                  name="details"
-                  className="mt-2"
-                  rows={4}
-                  placeholder="Anything else the Panache team should know before reviewing your application."
-                />
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="terms"
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
-                />
-                <Label htmlFor="terms" className="text-sm leading-6">
-                  I confirm that the information provided is accurate and I understand that payment is required on Ayati after this form is submitted.
-                </Label>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="newsletter"
-                  checked={newsletterSubscription}
-                  onCheckedChange={(checked) => setNewsletterSubscription(checked === true)}
-                />
-                <Label htmlFor="newsletter" className="text-sm leading-6">
-                  Keep me updated about Panache Expo announcements and competition information.
-                </Label>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={
-                  submitCompetitionApplication.isPending || isFinalizingSubmission
-                }
-              >
-                {submitCompetitionApplication.isPending || isFinalizingSubmission
-                  ? "Saving application..."
-                  : "Save Application & Continue to Payment"}
-              </Button>
-            </form>
-          </div>
-        )}
+              </form>
+            </ExpoSurface>
+          )}
+        </div>
       </section>
 
       <Footer />

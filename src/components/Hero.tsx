@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 export const Hero = () => {
   return (
-    <section className="bg-[#2d2a28] ">
+    <section className="bg-[#2d2a28] sticky top-0">
       <div className="mx-auto">
         <div className="relative overflow-hidden bg-[#161311] ">
           <img
@@ -39,16 +39,16 @@ export const Hero = () => {
             </div>
 
             <div className="mt-auto max-w-3xl pt-20 md:pt-28">
-              <h1 className="font-display text-5xl font-bold leading-[0.92] tracking-[-0.03em] text-white md:text-7xl lg:text-[5.4rem]">
-                Celebrating <span className="text-[#f4e93f]">Beauty,</span>
+              <h1 className=" font-sans text-5xl font-bold leading-[0.92] tracking-[-0.03em] text-white md:text-7xl lg:text-[5.4rem]">
+                Celebrating <span className="font-display text-[#f4e93f]">Beauty,</span>
                 <br />
-                <span className="text-[#f4e93f]">Fashion &amp; Skincare</span>
+                <span className=" font-display text-[#f4e93f]">Fashion &amp; Skincare</span>
               </h1>
 
-              <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/85 md:text-lg">
+              {/* <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/85 md:text-lg">
                 Workshops, pageants, prestigious awards, and unforgettable live moments
                 for beauty professionals, fashion creatives, and skincare lovers.
-              </p>
+              </p> */}
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link to="/panache-expo/workshops">
