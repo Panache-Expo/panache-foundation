@@ -1,16 +1,8 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Award, User } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Award, CalendarX2, Clock3, Info, User } from "lucide-react";
 import honDonald from "@/assets/HonDonald.jpeg";
 import nshala from "@/assets/Nshala.jpeg";
 import felix from "@/assets/felix.jpg";
@@ -20,39 +12,39 @@ import steve from "@/assets/stevenjang.png";
 import angwi from "@/assets/angwi.png";
 import nanalynn from "@/assets/nanalynn.png";
 import godlove from "@/assets/godlove.png";
-
-const CYES_EMAIL = "info.cyescyecdawards@gmail.com";
+import { Link } from "react-router-dom";
 
 const competitiveCategories = [
-  { value: "Youth Entrepreneur of the Year", description: "Outstanding young entrepreneur (under 35) who has built a sustainable and impactful business demonstrating leadership, measurable growth, and innovation." },
-  { value: "Startup of the Year", description: "Promising startup (less than 5 years old) showing innovation, scalability, strong market traction, and potential for long-term success." },
-  { value: "Technology Innovator of the Year", description: "Individual or company leveraging technology to solve problems, improve systems, or drive digital transformation with measurable impact." },
-  { value: "Agribusiness of the Year", description: "Business or entrepreneur making significant contributions to agriculture, agritech, food production, or rural economic development." },
-  { value: "Creative Entrepreneur of the Year", description: "Creative industry professional running a structured and impactful business in fashion, media, art, design, photography, or entertainment." },
-  { value: "Social Impact Business of the Year", description: "Business that combines profitability with purpose, actively addressing social or community challenges." },
-  { value: "Community Leader of the Year", description: "Individual who has demonstrated exceptional leadership in driving positive change within their community." },
-  { value: "NGO of the Year", description: "Registered non-profit organization making measurable and sustainable contributions to community development." },
-  { value: "Youth Empowerment Initiative of the Year", description: "Project or organization empowering young people through skills development, mentorship, or opportunity creation." },
-  { value: "Education Impact of the Year", description: "Individual or organization improving access to education, academic excellence, or mentorship programs." },
-  { value: "Health Impact of the Year", description: "Impactful work in healthcare, public health awareness, humanitarian medical support, or health innovation." },
-  { value: "Environmental Impact of the Year", description: "Initiatives promoting sustainability, environmental protection, climate awareness, or eco-friendly innovation." },
-  { value: "Corporate Impact of the Year", description: "Corporate organization demonstrating strong social responsibility, community investment, and sustainable impact." },
-  { value: "SME of the Year", description: "Small or medium-sized enterprise with strong growth, operational excellence, and measurable contribution to the economy." },
-  { value: "Financial Institution of the Year", description: "Financial institution supporting entrepreneurship, community development, and economic empowerment." },
-  { value: "Woman in Business of the Year", description: "Female business leader demonstrating excellence, resilience, and measurable business impact." },
-  { value: "Diaspora Impact of the Year", description: "Diaspora individual or organization contributing significantly to development and investment back home." },
-  { value: "Emerging Youth Leader of the Year", description: "Young leader demonstrating influence, integrity, and positive impact within their sector or community." },
-  { value: "Media & Advocacy of the Year", description: "Media personality or platform using their voice to promote awareness, development, or social change." },
-  { value: "Voice of the Generation Award", description: "Spoken word artist, poet, or youth voice using creative expression to inspire change and influence society." },
+  "Youth Entrepreneur of the Year",
+  "Startup of the Year",
+  "Technology Innovator of the Year",
+  "Agribusiness of the Year",
+  "Creative Entrepreneur of the Year",
+  "Social Impact Business of the Year",
+  "Community Leader of the Year",
+  "NGO of the Year",
+  "Youth Empowerment Initiative of the Year",
+  "Education Impact of the Year",
+  "Health Impact of the Year",
+  "Environmental Impact of the Year",
+  "Corporate Impact of the Year",
+  "SME of the Year",
+  "Financial Institution of the Year",
+  "Woman in Business of the Year",
+  "Diaspora Impact of the Year",
+  "Emerging Youth Leader of the Year",
+  "Media & Advocacy of the Year",
+  "Voice of the Generation Award",
 ];
 
 const honoraryCategories = [
-  { value: "Lifetime Achievement Award", description: "Individual with decades of sustained impact and outstanding contribution to community or national development." },
-  { value: "National Impact Award", description: "Distinguished personality whose work has significantly influenced national growth and transformation." },
-  { value: "Entrepreneurial Legacy Award", description: "Visionary business leader whose long-term work has shaped industries and inspired future generations." },
-  { value: "Youth Champion Award", description: "Individual or institution consistently supporting and advancing youth empowerment initiatives." },
-  { value: "Presidential Honor Award", description: "Special recognition presented by the Founder to an exceptional personality for outstanding service and strategic impact." },
+  "Lifetime Achievement Award",
+  "National Impact Award",
+  "Entrepreneurial Legacy Award",
+  "Youth Champion Award",
+  "Presidential Honor Award",
 ];
+
 const juryMembers = [
   {
     name: "Hon Donald Malomba Esembe",
@@ -97,153 +89,120 @@ const juryMembers = [
   {
     name: "Godlove Njisong",
     title: "Founder GoMAD",
-    photo: godlove, 
+    photo: godlove,
   },
 ];
 
-const allCategories = [...competitiveCategories, ...honoraryCategories];
-
 const CYESNominationsPage = () => {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    nomineeName: "", nomineeEmail: "", nomineePhone: "", category: "",
-    nominatorName: "", nominatorEmail: "", reason: "",
-  });
-
-  const selectedCategoryInfo = allCategories.find(c => c.value === formData.category);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.nomineeName || !formData.category || !formData.nominatorName || !formData.nominatorEmail || !formData.reason) {
-      toast({ title: "Missing fields", description: "Please fill in all required fields.", variant: "destructive" });
-      return;
-    }
-
-    const subject = encodeURIComponent(`CYECD Awards Nomination - ${formData.category}`);
-    const body = encodeURIComponent(
-      `CYECD AWARDS NOMINATION\n\nCategory: ${formData.category}\n\n--- Nominee Details ---\nName: ${formData.nomineeName}\nEmail: ${formData.nomineeEmail}\nPhone: ${formData.nomineePhone}\n\n--- Nominator Details ---\nName: ${formData.nominatorName}\nEmail: ${formData.nominatorEmail}\n\n--- Reason for Nomination ---\n${formData.reason}`
-    );
-    window.location.href = `mailto:${CYES_EMAIL}?subject=${subject}&body=${body}`;
-    toast({ title: "Nomination prepared!", description: "Your email client will open. Please send to complete your submission." });
-  };
   return (
     <div className="min-h-screen">
       <Header />
 
-      {/* Hero */}
       <section className="pt-24 pb-16 bg-gradient-to-br from-cyes-green/20 via-cyes-blue/10 to-cyes-yellow/10">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="w-16 h-16 bg-cyes-green rounded-2xl mx-auto mb-6 flex items-center justify-center">
+          <div className="w-16 h-16 bg-cyes-red rounded-2xl mx-auto mb-6 flex items-center justify-center">
             <Award className="w-8 h-8 text-cyes-white" />
           </div>
           <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-            CYECD Awards <span className="text-cyes-green">Nominations</span>
+            CYECD Awards <span className="text-cyes-red">Nominations Closed</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Cameroon Youths Entrepreneurial & Community Development Awards (CYECD) 2026.
-            Nominate an outstanding individual, business, or initiative below.
+            The deadline for CYECD Awards 2026 nominations has been reached.
+            Thank you to everyone who submitted nominations before the closing date.
           </p>
         </div>
       </section>
 
-      {/* Eligibility */}
-      <section className="py-8 px-6">
-        <Card className="max-w-3xl mx-auto bg-muted/30">
+      <section className="py-10 px-6">
+        <Card className="max-w-4xl mx-auto bg-background shadow-lg border border-cyes-red/20">
           <CardContent className="pt-6">
-            <h3 className="font-display text-lg font-semibold text-cyes-green mb-3">General Eligibility Requirements</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Nominee must be a Cameroonian (by nationality or origin) or an individual/organization making a verifiable impact in Cameroon.</li>
-              <li>Nominee must be between 18 – 45 years old (except for special/honorary categories where applicable).</li>
-              <li>Nominee must be actively involved in entrepreneurship, business, innovation, leadership, or community development.</li>
-              <li>The nominee's work must demonstrate measurable impact, such as job creation, community transformation, innovation, or social value.</li>
-              <li>Achievements considered must fall within the last 12–24 months, unless otherwise specified.</li>
-              <li>Nominee must provide verifiable proof of work, including business registration (if applicable), portfolio, media presence, testimonials, or documented results.</li>
-              <li>Nominee must accept the nomination and submit all required documents within 72 hours of notification.</li>
-              <li>Nominee must uphold good ethical standards and must not be involved in any serious misconduct that could affect the credibility of the awards.</li>
-              <li>Organizations and startups must be operational for at least 6–12 months prior to nomination.</li>
-              <li>Nominees can apply or be nominated in multiple categories, but must meet the specific criteria for each category.</li>
-            </ul>
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="rounded-2xl bg-cyes-red/10 p-5">
+                <CalendarX2 className="w-7 h-7 text-cyes-red mb-3" />
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  Deadline reached
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  New nominations are no longer being accepted for the 2026 CYECD Awards cycle.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-cyes-green/10 p-5">
+                <Clock3 className="w-7 h-7 text-cyes-green mb-3" />
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  What happens now
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  The jury committee continues with review, validation, and final award decisions.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-cyes-blue/10 p-5">
+                <Info className="w-7 h-7 text-cyes-blue mb-3" />
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  Stay involved
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  You can still register to attend and follow the awards program as it moves toward the event day.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </section>
 
-      {/* Form */}
       <section className="py-16 px-6">
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle className="font-display text-2xl text-foreground">Nomination Form</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label>Award Category *</Label>
-                <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem disabled value="__competitive_header__" className="font-bold text-cyes-green">— Competitive Categories —</SelectItem>
-                    {competitiveCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>{cat.value}</SelectItem>
-                    ))}
-                    <SelectItem disabled value="__honorary_header__" className="font-bold text-cyes-yellow">— Honorary Categories (Board Selected) —</SelectItem>
-                    {honoraryCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>{cat.value}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedCategoryInfo && (
-                  <p className="text-sm text-muted-foreground bg-cyes-green/5 border border-cyes-green/20 rounded-lg p-3 mt-2">
-                    <strong>Description:</strong> {selectedCategoryInfo.description}
-                  </p>
-                )}
+        <Card className="max-w-4xl mx-auto">
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-8">
+              <div>
+                <h2 className="font-display text-2xl text-foreground mb-3">Awards Categories</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  The nominations window is closed, but the 2026 awards categories remain below for reference.
+                </p>
               </div>
 
-              <div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Nominee Details</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Full Name *</Label>
-                    <Input value={formData.nomineeName} onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })} placeholder="Nominee's full name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input type="email" value={formData.nomineeEmail} onChange={(e) => setFormData({ ...formData, nomineeEmail: e.target.value })} placeholder="Nominee's email" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Phone Number</Label>
-                    <Input value={formData.nomineePhone} onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })} placeholder="Nominee's phone number" />
-                  </div>
+              <div className="grid gap-8 md:grid-cols-2">
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-cyes-green mb-4">
+                    Competitive Categories
+                  </h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    {competitiveCategories.map((category) => (
+                      <li key={category} className="rounded-xl bg-cyes-green/5 px-4 py-3">
+                        {category}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-cyes-yellow mb-4">
+                    Honorary Categories
+                  </h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    {honoraryCategories.map((category) => (
+                      <li key={category} className="rounded-xl bg-cyes-yellow/10 px-4 py-3">
+                        {category}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
 
-              <div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Your Details</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Your Name *</Label>
-                    <Input value={formData.nominatorName} onChange={(e) => setFormData({ ...formData, nominatorName: e.target.value })} placeholder="Your full name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Your Email *</Label>
-                    <Input type="email" value={formData.nominatorEmail} onChange={(e) => setFormData({ ...formData, nominatorEmail: e.target.value })} placeholder="Your email" />
-                  </div>
-                </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link to="/cyes/awards">
+                  <Button className="bg-cyes-green hover:bg-cyes-green/90 text-cyes-white font-bold">
+                    Back to Awards
+                  </Button>
+                </Link>
+                <Link to="/cyes/register">
+                  <Button variant="outline">Register to Attend</Button>
+                </Link>
               </div>
-
-              <div className="space-y-2">
-                <Label>Reason for Nomination *</Label>
-                <Textarea value={formData.reason} onChange={(e) => setFormData({ ...formData, reason: e.target.value })} placeholder="Explain why this person deserves to be nominated..." rows={5} />
-              </div>
-
-              <Button type="submit" className="w-full bg-cyes-green hover:bg-cyes-green/90 text-cyes-white font-bold" size="lg">
-                Submit Nomination
-              </Button>
-            </form>
+            </div>
           </CardContent>
         </Card>
       </section>
-      {/* Jury Committee Section */}
+
       <section className="py-24 px-6 bg-cyes-green/5">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
@@ -252,7 +211,7 @@ const CYESNominationsPage = () => {
               Meet the <span className="text-cyes-green">Jury Committee</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our distinguished panel of judges brings expertise, integrity, and passion to evaluating Cameroon's brightest young entrepreneurs.
+              Our distinguished panel of judges brings expertise, integrity, and passion to evaluating Cameroon&apos;s brightest young entrepreneurs.
             </p>
           </div>
 

@@ -121,7 +121,7 @@ const CYESAwardsPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link to="/cyes/nominations">
               <Button size="lg" className="bg-cyes-yellow text-foreground hover:bg-cyes-yellow/90 font-bold">
-                Nominate Now
+                Nominations Closed
               </Button>
             </Link>
             <Link to="/cyes/register">
@@ -294,14 +294,14 @@ const CYESAwardsPage = () => {
       <section className="py-16 px-6 bg-gradient-to-r from-cyes-green via-cyes-blue to-cyes-green">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-cyes-white mb-6">
-            Know Someone Who Deserves Recognition?
+            Nominations Have Now Closed
           </h2>
           <p className="text-cyes-white/80 mb-8 text-lg">
-            Submit your nomination today and help us celebrate outstanding young entrepreneurs.
+            The CYECD Awards nomination deadline has been reached. Thank you to everyone who submitted entries.
           </p>
           <Link to="/cyes/nominations">
             <Button size="lg" className="bg-cyes-yellow text-foreground hover:bg-cyes-yellow/90 font-bold">
-              Submit a Nomination
+              View deadline notice
             </Button>
           </Link>
         </div>
