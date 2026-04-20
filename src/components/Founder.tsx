@@ -249,7 +249,7 @@ export const Founder = () => {
               />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[22%] bg-gradient-to-t from-accent via-accent/78 to-transparent" />
             </div>
-            <div className="mt-8 space-y-4 text-left font-sans text-base leading-relaxed text-[#2a2521]/84">
+            <div className="mt-8 px-6 space-y-4 text-left font-sans text-base leading-relaxed text-[#2a2521]/84">
               {founderBio.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
