@@ -213,8 +213,18 @@ const awardHeroCards = [
   },
 ];
 
-const categoryCardClasses =
-  "rounded-[1.6rem] border border-black/8 bg-white/74 px-5 py-5 shadow-[0_16px_38px_rgba(17,16,14,0.05)]";
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <Link to="/cyes/nominations">
+              <Button size="lg" className="bg-cyes-yellow text-foreground hover:bg-cyes-yellow/90 font-bold">
+                Nominations Closed
+              </Button>
+            </Link>
+            <Link to="/cyes/register">
+              <Button variant="outline" size="lg" className="bg-cyes-white/10 text-cyes-white border-cyes-white/20 hover:bg-cyes-white/20">
+                Register to Attend
+              </Button>
+            </Link>
+          </div>
 
 const CYESAwardsPage = () => {
   const shouldReduceMotion = useReducedMotion();
@@ -402,58 +412,22 @@ const CYESAwardsPage = () => {
           </div>
         </section>
 
-        <section className="px-6 md:px-24">
-          <div className="mx-auto mt-20 max-w-6xl rounded-[2.2rem] border border-black/8 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(238,245,251,0.92))] px-6 py-8 shadow-[0_20px_50px_rgba(17,16,14,0.06)] md:px-8 md:py-10">
-            <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
-              <div>
-                <p className="font-sans text-[0.92rem] font-semibold uppercase tracking-[0.08em] text-[#CC2129]">
-                  Nominations closed
-                </p>
-                <h2 className="mt-4 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-[#171411]">
-                  The deadline has been reached, but you can still be in the room.
-                </h2>
-              </div>
-
-              <div>
-                <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/72">
-                  Public nominations for CYECD Awards 2026 are now closed. You can
-                  still register for the summit and awards event, or contact the
-                  team for partnership, media, or attendance enquiries.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link to="/cyes/register">
-                    <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
-                      Register for CYES
-                    </Button>
-                  </Link>
-                  <Link
-                    to="/cyes/contact"
-                    className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-[#f5f7f3]"
-                  >
-                    Contact the team
-                  </Link>
-                </div>
-
-                <div className="mt-6 grid gap-3 md:grid-cols-3">
-                  <div className="flex items-center gap-3 rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
-                    <Calendar className="h-4 w-4 text-[#156D3B]" />
-                    <span className="font-sans text-sm text-[#171411]/76">16 July 2026</span>
-                  </div>
-                  <div className="flex items-center gap-3 rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
-                    <MapPin className="h-4 w-4 text-[#1875D2]" />
-                    <span className="font-sans text-sm text-[#171411]/76">Buea</span>
-                  </div>
-                  <div className="flex items-center gap-3 rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
-                    <CheckCircle2 className="h-4 w-4 text-[#CC2129]" />
-                    <span className="font-sans text-sm text-[#171411]/76">Awards Night</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+      {/* Nomination CTA */}
+      <section className="py-16 px-6 bg-gradient-to-r from-cyes-green via-cyes-blue to-cyes-green">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-cyes-white mb-6">
+            Nominations Have Now Closed
+          </h2>
+          <p className="text-cyes-white/80 mb-8 text-lg">
+            The CYECD Awards nomination deadline has been reached. Thank you to everyone who submitted entries.
+          </p>
+          <Link to="/cyes/nominations">
+            <Button size="lg" className="bg-cyes-yellow text-foreground hover:bg-cyes-yellow/90 font-bold">
+              View deadline notice
+            </Button>
+          </Link>
+        </div>
+      </section>
 
       <Footer variant="cyes" />
     </div>

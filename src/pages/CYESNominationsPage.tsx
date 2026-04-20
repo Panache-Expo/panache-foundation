@@ -1,27 +1,50 @@
 import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
-import {
-  CYESInnerHero,
-  CYESSectionIntro,
-  cyesSurfaceClasses,
-} from "@/components/cyes/CYESPageShell";
 import { Button } from "@/components/ui/button";
-import cyesAwards from "@/assets/CYESCDAwards.jpeg";
-import cyesEvent from "@/assets/CYES.jpeg";
+import { Card, CardContent } from "@/components/ui/card";
+import { Award, CalendarX2, Clock3, Info, User } from "lucide-react";
 import honDonald from "@/assets/HonDonald.jpeg";
-import speaker2 from "@/assets/speaker2.jpeg";
-import {
-  Calendar,
-  CheckCircle2,
-  Clock3,
-  MapPin,
-  ShieldCheck,
-  Trophy,
-  Users,
-} from "lucide-react";
+import nshala from "@/assets/Nshala.jpeg";
+import felix from "@/assets/felix.jpg";
+import nervis from "@/assets/nervis.png";
+import chuo from "@/assets/chuo.png";
+import steve from "@/assets/stevenjang.png";
+import angwi from "@/assets/angwi.png";
+import nanalynn from "@/assets/nanalynn.png";
+import godlove from "@/assets/godlove.png";
 import { Link } from "react-router-dom";
 
-const nominationHeroCards = [
+const competitiveCategories = [
+  "Youth Entrepreneur of the Year",
+  "Startup of the Year",
+  "Technology Innovator of the Year",
+  "Agribusiness of the Year",
+  "Creative Entrepreneur of the Year",
+  "Social Impact Business of the Year",
+  "Community Leader of the Year",
+  "NGO of the Year",
+  "Youth Empowerment Initiative of the Year",
+  "Education Impact of the Year",
+  "Health Impact of the Year",
+  "Environmental Impact of the Year",
+  "Corporate Impact of the Year",
+  "SME of the Year",
+  "Financial Institution of the Year",
+  "Woman in Business of the Year",
+  "Diaspora Impact of the Year",
+  "Emerging Youth Leader of the Year",
+  "Media & Advocacy of the Year",
+  "Voice of the Generation Award",
+];
+
+const honoraryCategories = [
+  "Lifetime Achievement Award",
+  "National Impact Award",
+  "Entrepreneurial Legacy Award",
+  "Youth Champion Award",
+  "Presidential Honor Award",
+];
+
+const juryMembers = [
   {
     image: cyesAwards,
     alt: "CYES awards atmosphere",
@@ -78,180 +101,133 @@ const nextSteps = [
     cta: "Register now",
   },
   {
-    icon: Trophy,
-    title: "Review the awards platform",
-    description:
-      "See the award categories, honorary recognitions, and jury structure behind the CYECD Awards programme.",
-    to: "/cyes/awards",
-    cta: "View awards",
-  },
-  {
-    icon: CheckCircle2,
-    title: "Contact the team",
-    description:
-      "Reach us for partnership, press, sponsorship, or clarification on the current nomination and awards timeline.",
-    to: "/cyes/contact",
-    cta: "Contact CYES",
+    name: "Godlove Njisong",
+    title: "Founder GoMAD",
+    photo: godlove,
   },
 ];
 
 const CYESNominationsPage = () => {
   return (
-    <div className="min-h-screen bg-[#f7f8f3] text-[#171411]">
+    <div className="min-h-screen">
       <Header />
 
-      <main className="pb-20 md:pb-24">
-        <CYESInnerHero
-          eyebrow="CYECD nominations"
-          title={
-            <>
-              Nominations are
-              <br />
-              <span className="font-display text-[#CC2129]">now closed.</span>
-            </>
-          }
-          description="Sir Walters has closed public nominations for the CYECD Awards. The submission deadline has been reached, but the wider CYES experience is still active for registration, attendance, and direct enquiries."
-          actions={
-            <>
-              <Link to="/cyes/register">
-                <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
-                  Register for CYES
-                </Button>
-              </Link>
-              <Link
-                to="/cyes/awards"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/80 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
-              >
-                View awards
-              </Link>
-            </>
-          }
-          chips={[
-            {
-              label: "Status",
-              value: "Nominations closed",
-              accentClassName: "text-[#CC2129]",
-            },
-            {
-              label: "Awards date",
-              value: "16 July 2026",
-              accentClassName: "text-[#156D3B]",
-            },
-            {
-              label: "Venue",
-              value: "Chariot Hotel, Buea",
-              accentClassName: "text-[#1875D2]",
-            },
-          ]}
-          cards={nominationHeroCards}
-          mobileImage={cyesAwards}
-          mobileImageAlt="CYES awards crowd"
-          mobileImageClassName="rotate-[10deg]"
-        />
-
-        <section className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
-          <CYESSectionIntro
-            eyebrow="Current status"
-            title={
-              <>
-                What this
-                <span className="block font-display">means now</span>
-              </>
-            }
-            description="The nomination window is no longer open, but the awards platform is still moving forward. Existing entries remain under review, and the summit itself still offers multiple ways to participate."
-          />
-
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {statusCards.map((card) => {
-              const Icon = card.icon;
-
-              return (
-                <article key={card.title} className={cyesSurfaceClasses + " px-6 py-7"}>
-                  <Icon className={`h-9 w-9 ${card.accent}`} />
-                  <h3 className="mt-6 font-sans text-[1.28rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
-                    {card.title}
-                  </h3>
-                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/72">
-                    {card.description}
-                  </p>
-                </article>
-              );
-            })}
+      <section className="pt-24 pb-16 bg-gradient-to-br from-cyes-green/20 via-cyes-blue/10 to-cyes-yellow/10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="w-16 h-16 bg-cyes-red rounded-2xl mx-auto mb-6 flex items-center justify-center">
+            <Award className="w-8 h-8 text-cyes-white" />
           </div>
-        </section>
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+            CYECD Awards <span className="text-cyes-red">Nominations Closed</span>
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            The deadline for CYECD Awards 2026 nominations has been reached.
+            Thank you to everyone who submitted nominations before the closing date.
+          </p>
+        </div>
+      </section>
 
-        <section className="mx-auto mt-20 max-w-6xl px-6 md:px-24">
-          <CYESSectionIntro
-            eyebrow="Still open"
-            title={
-              <>
-                Choose your
-                <span className="block font-display">next step</span>
-              </>
-            }
-            description="If you were planning to engage with CYES through nominations, the best next move is to shift into attendance, visibility, or direct contact with the team."
-          />
-
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {nextSteps.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <article
-                  key={item.title}
-                  className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(238,245,251,0.9))] px-6 py-7 shadow-[0_18px_44px_rgba(17,16,14,0.06)]"
-                >
-                  <Icon className="h-9 w-9 text-[#156D3B]" />
-                  <h3 className="mt-6 font-sans text-[1.3rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
-                    {item.title}
-                  </h3>
-                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/72">
-                    {item.description}
-                  </p>
-                  <Link
-                    to={item.to}
-                    className="mt-7 inline-flex h-11 items-center justify-center rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#171411]/92"
-                  >
-                    {item.cta}
-                  </Link>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="px-6 md:px-24">
-          <div className="mx-auto mt-20 max-w-6xl rounded-[2.2rem] border border-black/8 bg-white/70 px-6 py-8 shadow-[0_18px_44px_rgba(17,16,14,0.05)] md:px-8 md:py-10">
-            <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
-              <div>
-                <p className="font-sans text-[0.92rem] font-semibold uppercase tracking-[0.08em] text-[#156D3B]">
-                  Need clarification?
+      <section className="py-10 px-6">
+        <Card className="max-w-4xl mx-auto bg-background shadow-lg border border-cyes-red/20">
+          <CardContent className="pt-6">
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="rounded-2xl bg-cyes-red/10 p-5">
+                <CalendarX2 className="w-7 h-7 text-cyes-red mb-3" />
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  Deadline reached
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  New nominations are no longer being accepted for the 2026 CYECD Awards cycle.
                 </p>
-                <h2 className="mt-4 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-[#171411]">
-                  We can still help you navigate the awards and summit flow.
-                </h2>
+              </div>
+              <div className="rounded-2xl bg-cyes-green/10 p-5">
+                <Clock3 className="w-7 h-7 text-cyes-green mb-3" />
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  What happens now
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  The jury committee continues with review, validation, and final award decisions.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-cyes-blue/10 p-5">
+                <Info className="w-7 h-7 text-cyes-blue mb-3" />
+                <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  Stay involved
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  You can still register to attend and follow the awards program as it moves toward the event day.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="py-16 px-6">
+        <Card className="max-w-4xl mx-auto">
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-8">
+              <div>
+                <h2 className="font-display text-2xl text-foreground mb-3">Awards Categories</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  The nominations window is closed, but the 2026 awards categories remain below for reference.
+                </p>
               </div>
 
-              <div>
-                <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/72">
-                  If you need help understanding the nomination closure, jury
-                  process, registration, or event participation, the CYES team can
-                  point you in the right direction quickly.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link to="/cyes/contact">
-                    <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
-                      Contact the team
-                    </Button>
-                  </Link>
-                  <Link
-                    to="/cyes/register"
-                    className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-[#f5f7f3]"
-                  >
-                    Register for CYES
-                  </Link>
+              <div className="grid gap-8 md:grid-cols-2">
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-cyes-green mb-4">
+                    Competitive Categories
+                  </h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    {competitiveCategories.map((category) => (
+                      <li key={category} className="rounded-xl bg-cyes-green/5 px-4 py-3">
+                        {category}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-cyes-yellow mb-4">
+                    Honorary Categories
+                  </h3>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    {honoraryCategories.map((category) => (
+                      <li key={category} className="rounded-xl bg-cyes-yellow/10 px-4 py-3">
+                        {category}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link to="/cyes/awards">
+                  <Button className="bg-cyes-green hover:bg-cyes-green/90 text-cyes-white font-bold">
+                    Back to Awards
+                  </Button>
+                </Link>
+                <Link to="/cyes/register">
+                  <Button variant="outline">Register to Attend</Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="py-24 px-6 bg-cyes-green/5">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-cyes-green font-medium text-lg">CYECD Awards 2026</span>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-2 mb-4">
+              Meet the <span className="text-cyes-green">Jury Committee</span>
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Our distinguished panel of judges brings expertise, integrity, and passion to evaluating Cameroon&apos;s brightest young entrepreneurs.
+            </p>
+          </div>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-3">
                   <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
