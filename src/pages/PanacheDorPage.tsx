@@ -1,92 +1,197 @@
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Card, CardContent } from "@/components/ui/card";
-import MissPanacheImage from "@/assets/misspanache-2.jpg";
+import { Header } from "@/components/Header";
+import {
+  ExpoPageHero,
+  ExpoSurface,
+} from "@/components/registration/ExpoPageShell";
+import { Button } from "@/components/ui/button";
+import PanacheAwards from "@/assets/PanacheAwards.jpeg";
+import MissPanacheImage from "@/assets/misspanacheupdate.jpg";
 import WinnersListImage from "@/assets/PanacheDorWinners.jpeg";
+import { Award, ArrowRight, Crown, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const recognitionCards = [
+  {
+    icon: Crown,
+    title: "Miss Panache D'or",
+    description:
+      "The crown that carries the public face of Panache elegance, discipline, and ambassadorial presence.",
+  },
+  {
+    icon: Award,
+    title: "Craft winners",
+    description:
+      "Beauty, fashion, and creative professionals recognised for the kind of work that stands out across the industry.",
+  },
+  {
+    icon: Sparkles,
+    title: "Visible prestige",
+    description:
+      "Panache D'or exists to make excellent work feel seen, documented, and remembered beyond one event night.",
+  },
+];
 
 const PanacheDorPage = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#f4f3ef]">
       <Header />
-      
-      {/* Hero Section */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-primary/20 to-secondary/20">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="font-display text-4xl md:text-6xl font-bold text-primary mb-6">
-            Panache <span className="text-rose-gold">D'or</span> Winners
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Celebrating excellence in beauty, fashion, and skincare through our prestigious awards program
-          </p>
-        </div>
-      </section>
 
-      {/* Miss Panache Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-              Miss Panache
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Our crowned beauty representing elegance and grace
-            </p>
+      <ExpoPageHero
+        eyebrow="Panache D'or"
+        title={
+          <>
+            Panache D&apos;or
+            <br />
+            <span className="font-display text-[#f4e93f]">Winners</span>
+          </>
+        }
+        description="A clearer archive of the faces, titles, and recognitions that define Panache prestige. This is where the crown, the winners, and the wider awards story all sit together."
+        image={PanacheAwards}
+        panelLabel="Awards Archive"
+        panelTitle="Where excellence is made visible."
+        panelDescription="Panache D'or celebrates winners who represent more than one good night. The platform is meant to document beauty leadership, creative discipline, and brand visibility over time."
+        panelItems={[
+          { label: "Flagship crown", value: "Miss Panache D'or" },
+          { label: "Focus", value: "Beauty, fashion, craft" },
+          { label: "Use this page for", value: "Winners + archive" },
+        ]}
+      />
+
+      <main className="px-6 pb-20 pt-10 md:pb-24">
+        <section className="mx-auto max-w-6xl">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {recognitionCards.map((card) => {
+              const Icon = card.icon;
+
+              return (
+                <ExpoSurface key={card.title} className="h-full">
+                  <Icon className="h-9 w-9 text-[#8241B6]" />
+                  <h2 className="mt-6 font-sans text-[1.45rem] font-semibold leading-[1.02] tracking-[-0.05em] text-[#171411]">
+                    {card.title}
+                  </h2>
+                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/68">
+                    {card.description}
+                  </p>
+                </ExpoSurface>
+              );
+            })}
           </div>
-          
-          <Card className="max-w-4xl mx-auto">
-            <CardContent className="p-8">
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center mb-6">
-                <img src={MissPanacheImage} alt = "Miss Panache" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-display text-2xl font-semibold text-primary mb-2">
-                  Current Miss Panache
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Introducing the remarkable Miss Djoulhida Soule, our shining star as Miss Panache D’Or 2025 and the proud Ambassador of Panache Expo!
-                  As the CEO of Charisma Beauty Skincare, Miss Soule is not just a certified chemist in cosmetic production; she is a visionary hair stylist and an incredible makeup artist. Her passion for beauty, skincare, and style radiates in everything she does.
-                  
-                  At Charisma Beauty, she inspires confidence by merging glamour with self-care, showing that every individual deserves to shine!
-                  With her elegance and intelligence, Miss Soule is truly a beacon of empowerment and sophistication.
+        </section>
 
-                  As the representative of Panache Expo 2025, she perfectly embodies the fusion of beauty and intelligence.
-                  Let’s give a warm welcome to @misspanachedor as she joins the vibrant Panache family!
+        <section className="mx-auto mt-10 grid max-w-6xl gap-8 lg:grid-cols-2">
+          <ExpoSurface className="overflow-hidden">
+            <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+              Current titleholder
+            </p>
+            <h2 className="mt-3 font-sans text-[clamp(2rem,3.2vw,2.8rem)] font-semibold leading-[0.94] tracking-[-0.05em] text-[#171411]">
+              Miss Panache D&apos;or 2025
+            </h2>
+
+            <div className="mt-7 overflow-hidden rounded-[1.8rem] border border-black/8">
+              <img
+                src={MissPanacheImage}
+                alt="Miss Panache D'or 2025"
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="mt-7 space-y-4">
+              <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/72">
+                Djoulhida Soule represents the Panache vision with a mix of
+                technical beauty knowledge, stage presence, and brand leadership.
+                As CEO of Charisma Beauty Skincare, she reflects the Panache
+                ideal that elegance should still be grounded in real work,
+                discipline, and ambition.
+              </p>
+              <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/72">
+                The Miss Panache D&apos;or title is not only ceremonial. It
+                signals visibility, responsibility, and the ability to carry the
+                wider Panache story into the public eye with confidence.
+              </p>
+            </div>
+          </ExpoSurface>
+
+          <ExpoSurface className="overflow-hidden">
+            <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+              Winners archive
+            </p>
+            <h2 className="mt-3 font-sans text-[clamp(2rem,3.2vw,2.8rem)] font-semibold leading-[0.94] tracking-[-0.05em] text-[#171411]">
+              A visual record of the people Panache has recognised.
+            </h2>
+
+            <div className="mt-7 overflow-hidden rounded-[1.8rem] border border-black/8 bg-white">
+              <img
+                src={WinnersListImage}
+                alt="Panache D'or winners collage"
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[1.3rem] border border-black/8 bg-[#f8f2e8] px-4 py-4">
+                <p className="font-sans text-sm font-semibold text-[#171411]">
+                  Recognition scope
+                </p>
+                <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
+                  Winners span beauty, fashion, entrepreneurship, and category-specific craft.
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Winners List Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-              List of Winners
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Our hall of fame celebrating all Panache D'or recipients
-            </p>
-          </div>
-          
-          <Card className="max-w-4xl mx-auto">
-            <CardContent className="p-8">
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center mb-6">
-                <img src={WinnersListImage} alt="Panache D'or Winners" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-display text-2xl font-semibold text-primary mb-4">
-                  Past Winners & Recipients
-                </h3>
-                <p className="text-muted-foreground mb-6">
-                  A comprehensive list of all our distinguished winners will be displayed here
+              <div className="rounded-[1.3rem] border border-black/8 bg-[#f8f2e8] px-4 py-4">
+                <p className="font-sans text-sm font-semibold text-[#171411]">
+                  Next action
                 </p>
+                <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
+                  Explore nominations or contact the team if you want award clarification.
+                </p>
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.92fr,1.08fr] lg:items-end">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Keep following the awards story
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3.2vw,2.9rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  Looking for the next recognition cycle?
+                </h2>
+              </div>
+
+              <div className="lg:ml-auto lg:max-w-[38rem]">
+                <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  Use the nominations route to submit outstanding work, or contact
+                  the team if you need clarification about categories, eligibility,
+                  or how the Panache D&apos;or platform is structured.
+                </p>
+
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    asChild
+                    className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                  >
+                    <Link to="/panache-expo/nominations">
+                      Open nominations
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                  >
+                    <Link to="/panache-expo/contact">Contact the team</Link>
+                  </Button>
                 </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
+      </main>
 
       <Footer />
     </div>

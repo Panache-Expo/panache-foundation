@@ -1,3 +1,14 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  motion,
+  useAnimationFrame,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  useVelocity,
+} from "motion/react";
 import sponsor1 from "@/assets/sponsors/sponsor1.jpeg";
 import sponsor2 from "@/assets/sponsors/sponsor2.jpeg";
 import sponsor3 from "@/assets/sponsors/sponsor3.jpeg";
@@ -32,28 +43,158 @@ const sponsors = [
   { name: "Sponsor 15", logo: sponsor15 },
 ];
 
-export const SponsorsMarquee = () => {
+const sponsorsLoop = [...sponsors, ...sponsors];
+
+type SponsorsMarqueeVariant = "panache" | "cyes";
+
+type SponsorsMarqueeProps = {
+  variant?: SponsorsMarqueeVariant;
+};
+
+export const SponsorsMarquee = ({
+  variant = "panache",
+}: SponsorsMarqueeProps) => {
+  const shouldReduceMotion = useReducedMotion();
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [singleLoopWidth, setSingleLoopWidth] = useState(0);
+  const baseX = useMotionValue(0);
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, {
+    damping: 42,
+    stiffness: 280,
+  });
+  const velocityFactor = useTransform(
+    smoothVelocity,
+    [-2800, -1600, 0, 1600, 2800],
+    [-2.8, -1.35, 0, 1.35, 2.8],
+  );
+  const directionFactor = useRef(1);
+  const x = useTransform(baseX, (value) => {
+    if (!singleLoopWidth) {
+      return "0px";
+    }
+
+    const wrappedOffset =
+      ((value % singleLoopWidth) + singleLoopWidth) % singleLoopWidth;
+
+    return `${-wrappedOffset}px`;
+  });
+  const isCyesVariant = variant === "cyes";
+  const sectionBackgroundClassName = isCyesVariant
+    ? "bg-[#f7f8f3]"
+    : "bg-accent";
+  const fadeGradientClassName = isCyesVariant
+    ? "from-[#f7f8f3] to-transparent"
+    : "from-muted/30 to-transparent";
+  const sponsorCardClassName = isCyesVariant
+    ? "bg-white/88 shadow-[0_16px_36px_rgba(17,16,14,0.07)]"
+    : "bg-white";
+
+  useEffect(() => {
+    if (!trackRef.current) {
+      return;
+    }
+
+    const track = trackRef.current;
+    let frame = 0;
+
+    const syncLoopWidth = () => {
+      setSingleLoopWidth(track.scrollWidth / 2);
+    };
+
+    const queueLoopWidth = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(syncLoopWidth);
+    };
+
+    const resizeObserver = new ResizeObserver(queueLoopWidth);
+
+    queueLoopWidth();
+    resizeObserver.observe(track);
+    window.addEventListener("resize", queueLoopWidth);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", queueLoopWidth);
+    };
+  }, []);
+
+  useAnimationFrame((_, delta) => {
+    if (shouldReduceMotion || !singleLoopWidth) {
+      return;
+    }
+
+    const velocity = velocityFactor.get();
+
+    if (velocity < -0.05) {
+      directionFactor.current = -1;
+    } else if (velocity > 0.05) {
+      directionFactor.current = 1;
+    }
+
+    const speed = Math.abs(velocity + directionFactor.current*0.5) * 145;
+
+    if (speed < 2) {
+      return;
+    }
+
+    const moveBy = directionFactor.current * speed * (delta / 1000);
+    const next = baseX.get() + moveBy;
+
+    if (next <= -singleLoopWidth) {
+      baseX.set(next + singleLoopWidth);
+    } else if (next >= singleLoopWidth) {
+      baseX.set(next - singleLoopWidth);
+    } else {
+      baseX.set(next);
+    }
+  });
+
   return (
-    <section className="py-16 bg-muted/30 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 mb-10 text-center">
-        <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-3">
-          Our <span className="text-rose-gold">Sponsors</span> & Partners
-        </h2>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Proudly supported by leading organizations championing beauty, fashion, and youth empowerment.
+    <section
+      className={`relative overflow-hidden py-16 ${sectionBackgroundClassName}`}
+    >
+      {/* {isCyesVariant ? (
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(21,109,59,0.1),transparent_24%),radial-gradient(circle_at_83%_22%,rgba(24,117,210,0.12),transparent_26%),radial-gradient(circle_at_48%_88%,rgba(255,178,0,0.1),transparent_22%),linear-gradient(180deg,rgba(247,248,243,0.92)_0%,rgba(247,248,243,1)_100%)]" />
+      ) : null} */}
+      <div className="mx-auto mb-14 flex max-w-7xl flex-col gap-8 px-6 md:mb-16 md:flex-row md:items-start md:justify-between md:gap-16">
+        <div className="max-w-[34rem]">
+          <h2 className="text-[#11100e]">
+            <span className="block font-sans text-[clamp(3rem,7vw,4.75rem)] font-semibold leading-[0.92] tracking-[-0.05em]">
+              Sponsors
+            </span>
+            <span className="block font-display text-[clamp(3.1rem,7.2vw,5rem)] font-bold leading-[0.88] tracking-[-0.045em]">
+              &amp; Partners
+            </span>
+          </h2>
+        </div>
+
+        <p className="max-w-[34rem] font-sans text-[clamp(1.35rem,2.8vw,2rem)] font-medium leading-[1.2] tracking-[-0.03em] text-[#11100e] md:pt-2">
+          Proudly supported by leading organizations championing beauty,
+          fashion, and youth empowerment.
         </p>
       </div>
 
       <div className="relative">
         {/* Gradient fades on edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-muted/30 to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-muted/30 to-transparent z-10 pointer-events-none" />
+        <div
+          className={`pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-24 bg-gradient-to-r ${fadeGradientClassName}`}
+        />
+        <div
+          className={`pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-24 bg-gradient-to-l ${fadeGradientClassName}`}
+        />
 
-        <div className="flex w-max animate-marquee">
-          {[...sponsors, ...sponsors].map((sponsor, index) => (
+        <motion.div
+          ref={trackRef}
+          className="flex w-max"
+          style={shouldReduceMotion ? undefined : { x }}
+        >
+          {sponsorsLoop.map((sponsor, index) => (
             <div
               key={index}
-              className="flex-shrink-0 mx-6 w-36 h-24 rounded-xl bg-card border border-border/50 shadow-soft flex items-center justify-center p-4 grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-150"
+              className={`mx-6 flex h-24 w-36 flex-shrink-0 items-center justify-center rounded-xl p-2 opacity-70 grayscale transition-all duration-150 hover:opacity-100 hover:grayscale-0 ${sponsorCardClassName}`}
             >
               <img
                 src={sponsor.logo}
@@ -62,7 +203,7 @@ export const SponsorsMarquee = () => {
               />
             </div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import React, { Suspense } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import React, { Suspense, useEffect } from "react";
 import FoundationHome from "./pages/FoundationHome";
 import PanacheExpoPage from "./pages/PanacheExpoPage";
 import CYESPage from "./pages/CYESPage";
@@ -44,6 +44,16 @@ const LoadingFallback = () => (
     </div>
   </div>
 );
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
+};
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -90,6 +100,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<FoundationHome />} />
@@ -97,21 +108,22 @@ const App = () => (
               <Route path="/panache-expo/exhibition-stands" element={<ExhibitionStandsPage />} />
               <Route path="/panache-expo/charity-night" element={<CharityNightPage />} />
               <Route path="/panache-expo/nominations" element={<PanacheNominationsPage />} />
+              <Route path="/panache-expo/panache-360" element={<Panache360Page />} />
+              <Route path="/panache-expo/panache-360/register" element={<Panache360RegisterPage />} />
+              <Route path="/panache-expo/panache-fashion-night" element={<FashionNightPage />} />
+              <Route path="/panache-expo/panache-fashion-night/register" element={<FashionNightRegisterPage />} />
+              <Route path="/panache-expo/miss-panache" element={<MissPanachePage />} />
+              <Route path="/panache-expo/miss-panache/register" element={<MissPanacheRegisterPage />} />
+              <Route path="/panache-expo/panache-dor" element={<PanacheDorPage />} />
+              <Route path="/panache-expo/workshops" element={<WorkshopsPage />} />
+              <Route path="/panache-expo/contact" element={<ContactPage />} />
+              <Route path="/panache-expo/register" element={<RegisterPage />} />
               <Route path="/cyes" element={<CYESPage />} />
               <Route path="/cyes/awards" element={<CYESAwardsPage />} />
               <Route path="/cyes/nominations" element={<CYESNominationsPage />} />
               <Route path="/cyes/register" element={<CYESRegisterPage />} />
               <Route path="/cyes/pitch-competition" element={<CYESPitchCompetitionPage />} />
-              <Route path="/panache-360" element={<Panache360Page />} />
-              <Route path="/panache-360/register" element={<Panache360RegisterPage />} />
-              <Route path="/panache-fashion-night" element={<FashionNightPage />} />
-              <Route path="/panache-fashion-night/register" element={<FashionNightRegisterPage />} />
-              <Route path="/workshops" element={<WorkshopsPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/panache-dor" element={<PanacheDorPage />} />
-              <Route path="/miss-panache" element={<MissPanachePage />} />
-              <Route path="/miss-panache/register" element={<MissPanacheRegisterPage />} />
+              <Route path="/cyes/contact" element={<ContactPage />} />
               <Route path="/admin/participants" element={<ParticipantsDashboardPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

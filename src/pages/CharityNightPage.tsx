@@ -1,171 +1,210 @@
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { SponsorsMarquee } from "@/components/SponsorsMarquee";
+import { Header } from "@/components/Header";
+import {
+  ExpoPageHero,
+  ExpoSidebarCard,
+  ExpoSurface,
+} from "@/components/registration/ExpoPageShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { Heart, Music, Utensils, Calendar, MapPin, Star, Users } from "lucide-react";
 import charityNight from "@/assets/CharityNight.jpg";
+import { ArrowRight, Heart, Music, Sparkles, Star, Utensils, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const highlights = [
+const highlightCards = [
   {
     icon: Heart,
-    title: "Charitable Giving",
-    description: "All proceeds go towards supporting youth entrepreneurial programs across Cameroon",
+    title: "Charitable giving",
+    description:
+      "The night is built to raise support for youth-focused entrepreneurial programmes and opportunities.",
   },
   {
     icon: Music,
-    title: "Live Entertainment",
-    description: "Enjoy performances from celebrated artists and cultural showcases",
+    title: "Live entertainment",
+    description:
+      "Guests experience a full evening atmosphere with performances, culture, and thoughtful programming.",
   },
   {
     icon: Utensils,
-    title: "Gala Dinner",
-    description: "An exquisite dining experience with curated cuisine from top chefs",
+    title: "Gala dinner",
+    description:
+      "A more polished social setting where conversation, hospitality, and contribution all share the room.",
   },
   {
     icon: Star,
-    title: "Awards & Recognition",
-    description: "Honoring individuals and organizations making a difference in youth empowerment",
+    title: "Recognition moments",
+    description:
+      "The night honours people and organisations creating real movement around youth empowerment.",
+  },
+];
+
+const eveningFlow = [
+  {
+    step: "01",
+    title: "Guests gather for an elevated social room.",
+    description:
+      "The tone is warm, intentional, and built around the people who care about impact, visibility, and support.",
+  },
+  {
+    step: "02",
+    title: "Programming mixes dining, performance, and recognition.",
+    description:
+      "The night should feel elegant without losing the purpose behind why everyone came into the room.",
+  },
+  {
+    step: "03",
+    title: "The giving remains tied to real youth-focused work.",
+    description:
+      "What matters is not only the event itself, but what it helps create after the evening is over.",
   },
 ];
 
 const CharityNightPage = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#f4f3ef]">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" style={{ backgroundImage: `url(${charityNight})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/70 to-rose-gold/70"></div>
+      <ExpoPageHero
+        eyebrow="Panache Charity Night"
+        title={
+          <>
+            Panache
+            <br />
+            <span className="font-display text-[#f4e93f]">Charity Night</span>
+          </>
+        }
+        description="An evening built around generosity, elegance, and practical impact. Panache Charity Night brings together guests, supporters, and partners around youth-focused entrepreneurial support."
+        image={charityNight}
+        panelLabel="Evening overview"
+        panelTitle="A social room with a real purpose."
+        panelDescription="The night is designed to feel elevated, but the point remains clear: create visibility and support around the people and programmes shaping opportunity."
+        panelItems={[
+          { label: "Date", value: "16 July 2026" },
+          { label: "Venue", value: "Chariot Hotel, Buea" },
+          { label: "Best for", value: "Guests, partners, supporters" },
+        ]}
+      />
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6">
-            Panache <span className="text-rose-gold">Charity Night</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-primary-foreground/90 mb-4 font-light">
-            An Evening of Elegance, Impact & Generosity
-          </p>
-          <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Join us for an unforgettable gala evening dedicated to raising funds and awareness
-            for youth entrepreneurial initiatives across Cameroon.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link to="/register">
-              <Button variant="hero" size="lg">
-                Reserve Your Seat
+      <main className="px-6 pb-20 pt-10 md:pb-24">
+        <section className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.82fr,1.18fr]">
+          <ExpoSidebarCard
+            eyebrow="Why the night matters"
+            title="Elegance should still lead somewhere."
+            description="Panache Charity Night is not built as decorative programming. The event exists to gather the right people, create visibility around the work, and direct support toward meaningful youth-focused entrepreneurship."
+            points={[
+              "The room is social, but the purpose stays visible.",
+              "Guests, partners, and supporters all share the same live setting.",
+              "The evening should feel memorable because the impact is real.",
+            ]}
+            footer={
+              <Button
+                asChild
+                className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+              >
+                <Link to="/panache-expo/register">
+                  Reserve your seat
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </Button>
-            </Link>
+            }
+          />
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {highlightCards.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <ExpoSurface key={item.title} className="h-full">
+                  <Icon className="h-9 w-9 text-[#8241B6]" />
+                  <h2 className="mt-6 font-sans text-[1.45rem] font-semibold leading-[1.02] tracking-[-0.05em] text-[#171411]">
+                    {item.title}
+                  </h2>
+                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/68">
+                    {item.description}
+                  </p>
+                </ExpoSurface>
+              );
+            })}
           </div>
+        </section>
 
-          <div className="flex flex-wrap justify-center gap-6 text-primary-foreground/80 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>July 16th 2026</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>Chariot Hotel - Buea, Cameroon</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute top-32 left-10 w-3 h-3 bg-rose-gold rounded-full animate-float opacity-60"></div>
-        <div className="absolute bottom-32 right-16 w-2 h-2 bg-primary-foreground rounded-full animate-float opacity-40" style={{ animationDelay: "1s" }}></div>
-      </section>
-
-      {/* About Section */}
-      <section className="py-24 px-6 bg-background">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary mb-6">
-              About the <span className="text-rose-gold">Charity Night</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              The CYES Charity Night is an exclusive gala event that brings together business leaders,
-              philanthropists, and change-makers for an evening of fine dining, live entertainment,
-              and meaningful contributions to youth empowerment in Cameroon.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-primary rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-elegant group-hover:scale-110 transition-transform duration-300">
-                <Heart className="w-10 h-10 text-primary-foreground" />
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.86fr,1.14fr] lg:items-start">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Evening flow
+                </p>
+                <h2 className="mt-3 max-w-[10ch] font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  The format is simple, but the room should feel full.
+                </h2>
               </div>
-              <h3 className="font-display text-2xl font-semibold text-primary mb-4">Give Back</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Support programs that provide mentorship, training, and resources to aspiring young entrepreneurs.
-              </p>
-            </div>
 
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-secondary rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-rose group-hover:scale-110 transition-transform duration-300">
-                <Users className="w-10 h-10 text-primary-foreground" />
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-primary mb-4">Connect</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Network with influential leaders and like-minded individuals passionate about youth development.
-              </p>
-            </div>
-
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-primary rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-elegant group-hover:scale-110 transition-transform duration-300">
-                <Star className="w-10 h-10 text-primary-foreground" />
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-primary mb-4">Celebrate</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Honor outstanding contributions to youth empowerment and entrepreneurial development.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Highlights */}
-      <section className="py-24 px-6 bg-gradient-card">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary mb-6">
-              Evening <span className="text-rose-gold">Highlights</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {highlights.map((item, index) => (
-              <Card key={index} className="text-center hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <div className="w-14 h-14 bg-gradient-primary rounded-xl mx-auto mb-4 flex items-center justify-center">
-                    <item.icon className="w-7 h-7 text-primary-foreground" />
+              <div className="grid gap-4">
+                {eveningFlow.map((item) => (
+                  <div
+                    key={item.step}
+                    className="rounded-[1.6rem] border border-black/8 bg-white/74 px-5 py-5"
+                  >
+                    <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#8241B6]/78">
+                      {item.step}
+                    </p>
+                    <h3 className="mt-3 font-sans text-[1.18rem] font-semibold leading-[1.14] tracking-[-0.04em] text-[#171411]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 font-sans text-[0.95rem] leading-relaxed text-[#171411]/66">
+                      {item.description}
+                    </p>
                   </div>
-                  <h3 className="font-display text-lg font-semibold text-primary mb-2">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                ))}
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
 
-      {/* CTA */}
-      <section className="py-16 px-6 bg-primary">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-6">
-            Be Part of Something Meaningful
-          </h2>
-          <p className="text-primary-foreground/80 mb-8 text-lg">
-            Your presence and contribution can transform lives. Reserve your seat today.
-          </p>
-          <Link to="/register">
-            <Button variant="hero" size="lg">
-              Reserve Your Seat
-            </Button>
-          </Link>
-        </div>
-      </section>
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.92fr,1.08fr] lg:items-end">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Join the evening
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  Come into the room with purpose.
+                </h2>
+              </div>
 
-      <SponsorsMarquee />
+              <div className="lg:ml-auto lg:max-w-[38rem]">
+                <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  Charity Night works best when the audience includes people who
+                  are ready to support, connect, and help the wider Panache story
+                  become more useful beyond the event itself.
+                </p>
+
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    asChild
+                    className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                  >
+                    <Link to="/panache-expo/register">
+                      Reserve your seat
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                  >
+                    <Link to="/panache-expo/contact">Talk to the team</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
+      </main>
+
       <Footer />
     </div>
   );

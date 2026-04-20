@@ -1,123 +1,263 @@
-import { useState } from "react";
-import { ChevronDown, Award, Trophy, Crown, Star, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useRef, useState } from "react";
 
-const awardCategories = [
+import { Button } from "@/components/ui/button";
+import awardOneImage from "@/assets/Award1.jpeg";
+import awardTwoImage from "@/assets/Award2.jpeg";
+import awardThreeImage from "@/assets/award3.jpeg";
+import makeupImage from "@/assets/Makeup.jpg";
+import missPanacheImage from "@/assets/MissPanache.jpeg";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "motion/react";
+import { Link } from "react-router-dom";
+
+type AwardHighlight = {
+  title: string;
+  description: string;
+  image: string;
+};
+
+type AwardCardProps = AwardHighlight & {
+  featuredIndex: number;
+  index: number;
+  progress: MotionValue<number>;
+  shouldReduceMotion: boolean;
+};
+
+const awardHighlights: AwardHighlight[] = [
   {
-    icon: Crown,
-    title: "Miss Panache D'or",
-    description: "Celebrating elegance, intelligence, and grace"
-  },
-  {
-    icon: Trophy,
-    title: "Best Makeup Artist",
-    description: "Excellence in makeup artistry and creativity"
-  },
-  {
-    icon: Star,
     title: "Best Hair Stylist",
-    description: "Outstanding achievement in hair styling"
+    description: "Outstanding achievement in hair styling",
+    image: awardOneImage,
   },
   {
-    icon: Award,
+    title: "Miss Panache D'or",
+    description: "Celebrating elegance, intelligence, and grace",
+    image: missPanacheImage,
+  },
+  {
+    title: "Best Makeup Artist",
+    description: "Excellence in makeup artistry and creativity",
+    image: makeupImage,
+  },
+  {
     title: "Best Nail Technician",
-    description: "Mastery in nail art and design"
+    description: "Mastery in nail art and design",
+    image: awardTwoImage,
   },
   {
-    icon: Sparkles,
     title: "Best Skincare Specialist",
-    description: "Excellence in skincare and beauty treatments"
+    description: "Excellence in skincare and beauty treatments",
+    image: awardThreeImage,
   },
-  {
-    icon: Trophy,
-    title: "Rising Star Award",
-    description: "Recognizing emerging talents in the beauty industry"
-  }
 ];
 
-export const AwardsDropdown = () => {
+const shuffleAwards = (awards: AwardHighlight[]) => {
+  const shuffledAwards = [...awards];
+
+  for (let index = shuffledAwards.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffledAwards[index], shuffledAwards[swapIndex]] = [
+      shuffledAwards[swapIndex],
+      shuffledAwards[index],
+    ];
+  }
+
+  return shuffledAwards;
+};
+
+const springOptions = {
+  stiffness: 180,
+  damping: 24,
+  mass: 0.3,
+};
+
+const baseCardFlexBasis = "clamp(16rem, 22vw, 21rem)";
+
+const clampProgress = (value: number) => Math.min(1, Math.max(0, value));
+
+const mapScrollToFeaturedFlexBasis = (progress: number, shouldReduceMotion: boolean) => {
+  if (shouldReduceMotion) {
+    return baseCardFlexBasis;
+  }
+
+  const normalized = clampProgress((progress - 0.08) / 0.78);
+
+  return `calc(${baseCardFlexBasis} + ${normalized} * (100vw - ${baseCardFlexBasis}))`;
+};
+
+const AwardCard = ({
+  title,
+  description,
+  image,
+  featuredIndex,
+  index,
+  progress,
+  shouldReduceMotion,
+}: AwardCardProps) => {
+  const distance = index - featuredIndex;
+  const isFeatured = distance === 0;
+  const direction = distance === 0 ? 0 : distance / Math.abs(distance);
+  const smoothProgress = useSpring(progress, springOptions);
+  const featuredFlexBasis = useTransform(smoothProgress, (value) =>
+    mapScrollToFeaturedFlexBasis(value, shouldReduceMotion),
+  );
+
+  const cardX = useSpring(
+    useTransform(smoothProgress, (value) => {
+      if (shouldReduceMotion || isFeatured) {
+        return 0;
+      }
+
+      const normalized = clampProgress((value - 0.18) / 0.68);
+      const travel = Math.abs(distance) === 1 ? 120 : 260;
+
+      return direction * travel * normalized;
+    }),
+    springOptions,
+  );
+  const cardY = useSpring(
+    useTransform(
+      smoothProgress,
+      [0, 0.26, 0.74, 1],
+      shouldReduceMotion ? [0, 0, 0, 0] : isFeatured ? [0, -8, -18, -22] : [0, 0, 10, 18],
+    ),
+    springOptions,
+  );
+  const cardOpacity = useSpring(
+    useTransform(
+      smoothProgress,
+      [0, 0.42, 0.7, 1],
+      shouldReduceMotion ? [1, 1, 1, 1] : isFeatured ? [1, 1, 1, 1] : [1, 1, 0.22, 0],
+    ),
+    springOptions,
+  );
+  const imageScale = useSpring(
+    useTransform(
+      smoothProgress,
+      [0, 0.3, 0.74, 1],
+      shouldReduceMotion ? [1, 1, 1, 1] : isFeatured ? [1, 1.02, 1.08, 1.1] : [1, 1, 1.02, 1.04],
+    ),
+    springOptions,
+  );
+  const captionOpacity = useSpring(
+    useTransform(
+      smoothProgress,
+      [0, 0.46, 0.74, 1],
+      shouldReduceMotion ? [1, 1, 1, 1] : isFeatured ? [1, 1, 0.32, 0] : [1, 0.8, 0.1, 0],
+    ),
+    springOptions,
+  );
+
   return (
-    <section className="py-24 px-6 bg-gradient-card">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-6">
-            Panache D'or <span className="text-rose-gold">Awards</span>
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
-            Honoring excellence in beauty, fashion, and skincare through our prestigious awards program.
+    <motion.div
+      style={{
+        flexBasis: isFeatured ? featuredFlexBasis : baseCardFlexBasis,
+        x: cardX,
+        y: cardY,
+        opacity: cardOpacity,
+        zIndex: isFeatured ? 30 : 20 - Math.abs(distance),
+      }}
+      className="relative aspect-video shrink-0 grow-0 overflow-hidden bg-black"
+    >
+      <Link to="/panache-expo/panache-dor" className="group block h-full w-full">
+        <motion.img
+          src={image}
+          alt={title}
+          style={{ scale: imageScale }}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/18 to-transparent" />
+        <motion.div
+          style={{ opacity: captionOpacity }}
+          className="absolute inset-x-0 bottom-0 z-10 p-4 text-left text-white sm:p-5"
+        >
+          <h3 className="font-sans text-base font-semibold leading-tight sm:text-lg">{title}</h3>
+          <p className="mt-1 max-w-[18rem] font-sans text-xs leading-snug text-white/84 sm:text-[0.82rem]">
+            {description}
           </p>
+        </motion.div>
+      </Link>
+    </motion.div>
+  );
+};
 
-          {/* Awards Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="lg" className="min-w-[280px]">
-                <Award className="w-5 h-5 mr-2" />
-                View Award Categories
-                <ChevronDown className="w-4 h-4 ml-2" />
+export const AwardsDropdown = () => {
+  const sceneRef = useRef<HTMLElement | null>(null);
+  const [shuffledAwards] = useState(() => shuffleAwards(awardHighlights));
+  const featuredIndex = Math.floor(shuffledAwards.length / 2);
+  const shouldReduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: sceneRef,
+    offset: ["start start", "end end"],
+  });
+
+  return (
+    <section className="relative z-20 bg-[#f4f3ef] px-0 py-24 md:py-28 lg:py-32">
+      <div className="mx-auto max-w-5xl px-6 text-center">
+        <h2 className="font-display text-[clamp(2.75rem,5vw,4.8rem)] font-bold leading-[0.95] tracking-[-0.04em] text-[#13110f]">
+          Panache D&apos;or Awards
+        </h2>
+        <p className="mx-auto mt-6 max-w-3xl font-sans text-[clamp(1.2rem,2.2vw,2rem)] font-medium leading-[1.28] tracking-[-0.03em] text-[#1d1a18]">
+          Honoring excellence in beauty, fashion, and skincare through our prestigious awards
+          program.
+        </p>
+      </div>
+
+      <div
+        ref={sceneRef}
+        className={[
+          "relative mt-14",
+          shouldReduceMotion ? "h-auto" : "h-[205svh] md:h-[220svh] lg:h-[235svh]",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "overflow-hidden",
+            shouldReduceMotion ? "min-h-[32rem]" : "sticky top-0 h-screen",
+          ].join(" ")}
+        >
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#f4f3ef] to-transparent md:h-28" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f4f3ef] to-transparent md:h-32" />
+
+          <div className="relative flex h-full w-full items-center justify-center gap-4">
+            {shuffledAwards.map((award, index) => (
+              <AwardCard
+                key={award.title}
+                {...award}
+                featuredIndex={featuredIndex}
+                index={index}
+                progress={scrollYProgress}
+                shouldReduceMotion={shouldReduceMotion}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto mt-12 flex max-w-6xl justify-end px-6">
+        <div className="max-w-md">
+          <p className="font-sans text-lg font-medium leading-[1.35] text-[#171411] md:text-[1.55rem]">
+            Creativity for every stage. Join us and be part of our winners.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <Link to="/panache-expo/register">
+              <Button className="h-12 rounded-full bg-black px-7 font-sans text-sm font-semibold text-white hover:bg-black/85">
+                Register for Awards
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80 bg-background border border-border shadow-elegant z-50">
-              <DropdownMenuLabel className="text-primary font-display text-lg">
-                Award Categories
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {awardCategories.map((category, index) => (
-                <DropdownMenuItem key={index} className="py-3 cursor-pointer hover:bg-muted">
-                  <category.icon className="w-5 h-5 mr-3 text-rose-gold" />
-                  <div>
-                    <p className="font-medium text-foreground">{category.title}</p>
-                    <p className="text-xs text-muted-foreground">{category.description}</p>
-                  </div>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <div className="p-2">
-                <Link to="/panache-dor">
-                  <Button variant="rose" size="sm" className="w-full">
-                    View All Winners
-                  </Button>
-                </Link>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Award Cards Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {awardCategories.map((category, index) => (
-            <div
-              key={index}
-              className="group bg-background rounded-2xl p-6 shadow-soft hover:shadow-elegant transition-all duration-300 hover:-translate-y-1 border border-border"
+            </Link>
+            {/* <Link
+              to="/panache-expo/panache-dor"
+              className="font-sans text-sm font-semibold text-[#171411] underline-offset-4 transition-colors hover:text-black/70 hover:underline"
             >
-              <div className="w-14 h-14 bg-gradient-primary rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <category.icon className="w-7 h-7 text-primary-foreground" />
-              </div>
-              <h3 className="font-display text-xl font-semibold text-primary mb-2">
-                {category.title}
-              </h3>
-              <p className="text-muted-foreground text-sm">
-                {category.description}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Register CTA */}
-        <div className="text-center mt-12">
-          <Link to="/register">
-            <Button variant="default" size="lg">
-              Register for Awards
-            </Button>
-          </Link>
+              View All Winners
+            </Link> */}
+          </div>
         </div>
       </div>
     </section>

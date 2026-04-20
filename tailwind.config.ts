@@ -91,8 +91,8 @@ export default {
 				'soft': 'var(--shadow-soft)'
 			},
 			fontFamily: {
-				'display': ['Playfair Display', 'serif'],
-				'sans': ['Inter', 'sans-serif']
+				'display': ['Reckless Neue', 'serif'],
+				'sans': ['Matter', 'sans-serif']
 			},
 			keyframes: {
 				'accordion-down': {

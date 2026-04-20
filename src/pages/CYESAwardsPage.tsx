@@ -1,10 +1,14 @@
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
+import {
+  CYESInnerHero,
+  CYESSectionIntro,
+  cyesSurfaceClasses,
+} from "@/components/cyes/CYESPageShell";
+import { PeopleSpreadShowcase, type SpreadShowcaseMember } from "@/components/PeopleSpreadShowcase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { Award, Trophy, Star, Users, Calendar, MapPin, User } from "lucide-react";
 import cyesCDAwards from "@/assets/CYESCDAwards.jpeg";
+import cyesEvent from "@/assets/CYES.jpeg";
 import honDonald from "@/assets/HonDonald.jpeg";
 import nshala from "@/assets/Nshala.jpeg";
 import felix from "@/assets/felix.jpg";
@@ -14,6 +18,9 @@ import steve from "@/assets/stevenjang.png";
 import angwi from "@/assets/angwi.png";
 import nanalynn from "@/assets/nanalynn.png";
 import godlove from "@/assets/godlove.png";
+import { Award, Calendar, CheckCircle2, MapPin, Trophy, User, Users } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import { Link } from "react-router-dom";
 
 const competitiveCategories = [
   "Youth Entrepreneur of the Year",
@@ -38,6 +45,14 @@ const competitiveCategories = [
   "Voice of the Generation Award",
 ];
 
+const honoraryCategories = [
+  "Lifetime Achievement Award",
+  "National Impact Award",
+  "Entrepreneurial Legacy Award",
+  "Youth Champion Award",
+  "Presidential Honor Award",
+];
+
 const juryMembers = [
   {
     name: "Hon Donald Malomba Esembe",
@@ -60,63 +75,143 @@ const juryMembers = [
     photo: nervis,
   },
   {
-    name: "Barr. Chuo Angabua ",
-    title: "Founding Partner | Prime Time Law offices",
+    name: "Barr. Chuo Angabua",
+    title: "Founding Partner | Prime Time Law Offices",
     photo: chuo,
   },
   {
     name: "Steve Njang",
-    title: "Founder of Nexdim Empire, Award-winning Blogger/ Content creator",
+    title: "Founder of Nexdim Empire",
     photo: steve,
   },
   {
     name: "Angwi Njamah",
-    title: "Journalist /Public Relations Officer PCC Business Units/Certified Virtual Assistant",
+    title: "Journalist and Public Relations Officer",
     photo: angwi,
   },
   {
-    name: "Miss Nana Lynn ",
+    name: "Miss Nana Lynn",
     title: "LinkedIn & Personal Brand Coach",
     photo: nanalynn,
   },
   {
-      name: "Godlove Njisong",
-      title: "Founder GoMAD",
-      photo: godlove, 
-    },
+    name: "Godlove Njisong",
+    title: "Founder, GoMAD",
+    photo: godlove,
+  },
 ];
 
-const honoraryCategories = [
-  "Lifetime Achievement Award",
-  "National Impact Award",
-  "Entrepreneurial Legacy Award",
-  "Youth Champion Award",
-  "Presidential Honor Award",
+const juryShowcaseMembers: SpreadShowcaseMember[] = [
+  {
+    ...juryMembers[2],
+    targetX: -520,
+    targetY: 132,
+    targetRotate: -20,
+    layer: 10,
+  },
+  {
+    ...juryMembers[3],
+    targetX: -396,
+    targetY: 102,
+    targetRotate: -15,
+    layer: 12,
+  },
+  {
+    ...juryMembers[4],
+    targetX: -262,
+    targetY: 74,
+    targetRotate: -10,
+    layer: 14,
+  },
+  {
+    ...juryMembers[1],
+    targetX: -128,
+    targetY: 42,
+    targetRotate: -6,
+    layer: 16,
+  },
+  {
+    ...juryMembers[0],
+    targetX: 0,
+    targetY: 18,
+    targetRotate: 0,
+    layer: 24,
+    isPrimary: true,
+    alwaysShowCopy: true,
+  },
+  {
+    ...juryMembers[5],
+    targetX: 128,
+    targetY: 42,
+    targetRotate: 6,
+    layer: 16,
+  },
+  {
+    ...juryMembers[6],
+    targetX: 262,
+    targetY: 74,
+    targetRotate: 10,
+    layer: 14,
+  },
+  {
+    ...juryMembers[7],
+    targetX: 396,
+    targetY: 102,
+    targetRotate: 15,
+    layer: 12,
+  },
+  {
+    ...juryMembers[8],
+    targetX: 520,
+    targetY: 132,
+    targetRotate: 20,
+    layer: 10,
+  },
 ];
 
-const CYESAwardsPage = () => {
-  return (
-    <div className="min-h-screen">
-      <Header />
+const awardValueCards = [
+  {
+    icon: Trophy,
+    title: "Recognition",
+    description:
+      "A platform that spotlights youth entrepreneurship, leadership, and visible community impact.",
+  },
+  {
+    icon: Users,
+    title: "Credibility",
+    description:
+      "A jury-led process that gives the awards real weight and puts strong work in front of the right audience.",
+  },
+  {
+    icon: Award,
+    title: "Visibility",
+    description:
+      "A public stage for entrepreneurs, institutions, and changemakers whose work deserves wider attention.",
+  },
+];
 
-      {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" style={{ backgroundImage: `url(${cyesCDAwards})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-cyes-green/80 via-cyes-blue/80 to-cyes-green/80"></div>
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_35px,rgba(255,255,255,0.03)_35px,rgba(255,255,255,0.03)_70px)]"></div>
-        </div>
-
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-cyes-white mb-6">
-            CYECD <span className="text-cyes-yellow">Awards</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-cyes-white/90 mb-4 font-light">
-            Cameroon Youths Entrepreneurial & Community Development Awards 2026
-          </p>
-          <p className="text-lg text-cyes-white/80 mb-8 max-w-2xl mx-auto">
-            Recognizing outstanding individuals, businesses, institutions, and initiatives contributing
-            to youth empowerment, entrepreneurship, innovation, and community development.
-          </p>
+const awardHeroCards = [
+  {
+    image: cyesCDAwards,
+    alt: "CYECD Awards audience",
+    className: "left-[18%] top-[8%] z-20 w-[43%] rotate-[-4deg]",
+  },
+  {
+    image: honDonald,
+    alt: "Jury member portrait",
+    className: "left-[60%] top-[18%] z-10 w-[28%] rotate-[7deg]",
+  },
+  {
+    image: felix,
+    alt: "Committee portrait",
+    className: "left-[28%] top-[60%] z-30 w-[23%] rotate-[-8deg]",
+  },
+  {
+    image: cyesEvent,
+    alt: "Awards atmosphere",
+    className: "left-[52%] top-[56%] z-20 w-[34%] rotate-[9deg]",
+  },
+];
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link to="/cyes/nominations">
@@ -131,164 +226,191 @@ const CYESAwardsPage = () => {
             </Link>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6 text-cyes-white/80 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>July 16th 2026</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>Chariot Hotel - Buea, Cameroon</span>
-            </div>
-          </div>
-        </div>
+const CYESAwardsPage = () => {
+  const shouldReduceMotion = useReducedMotion();
 
-        <div className="absolute top-32 left-10 w-3 h-3 bg-cyes-yellow rounded-full animate-float opacity-60"></div>
-        <div className="absolute bottom-32 right-16 w-2 h-2 bg-cyes-red rounded-full animate-float opacity-40" style={{ animationDelay: "1s" }}></div>
-      </section>
+  return (
+    <div className="min-h-screen bg-[#f7f8f3] text-[#171411]">
+      <Header />
 
-      {/* About Section */}
-      <section className="py-24 px-6 bg-background">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">
-              About the <span className="text-cyes-green">CYECD Awards</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              The CYECD Awards celebrate the brightest young entrepreneurs in Cameroon.
-              From tech innovators to social impact leaders, we recognize those who are
-              driving change and building a better future for their communities.
-            </p>
-          </div>
+      <main className="pb-20 md:pb-24">
+        <CYESInnerHero
+          eyebrow="CYECD Awards 2026"
+          title={
+            <>
+              Awards that honour
+              <br />
+              <span className="font-display text-[#156D3B]">
+                enterprise, leadership,
+              </span>
+              <br />
+              and community impact.
+            </>
+          }
+          description="The CYECD Awards recognise outstanding young entrepreneurs, community leaders, businesses, and institutions shaping meaningful change across Cameroon. Nominations are now closed, but the awards platform and live event remain open to the public."
+          actions={
+            <>
+              <Link to="/cyes/register">
+                <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
+                  Register to Attend
+                </Button>
+              </Link>
+              <Link
+                to="/cyes/contact"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/76 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
+              >
+                Contact the team
+              </Link>
+            </>
+          }
+          chips={[
+            { label: "Event Date", value: "16 July 2026", accentClassName: "text-[#156D3B]" },
+            { label: "Venue", value: "Chariot Hotel, Buea", accentClassName: "text-[#1875D2]" },
+            { label: "Awards", value: "25 total categories", accentClassName: "text-[#CC2129]" },
+          ]}
+          cards={awardHeroCards}
+          mobileImage={cyesCDAwards}
+          mobileImageAlt="CYECD Awards event"
+          mobileImageClassName="rotate-[10deg]"
+        />
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-cyes-green rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Trophy className="w-10 h-10 text-cyes-white" />
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-foreground mb-4">Recognition</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Honoring exceptional achievements in youth entrepreneurship across multiple categories.
-              </p>
-            </div>
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-cyes-red rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Users className="w-10 h-10 text-cyes-white" />
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-foreground mb-4">Community</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Building a network of inspiring young leaders and changemakers across Cameroon.
-              </p>
-            </div>
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-cyes-blue rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Star className="w-10 h-10 text-cyes-white" />
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-foreground mb-4">Excellence</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Setting the standard for entrepreneurial excellence and innovation in Cameroon.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+        <section className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
+          <CYESSectionIntro
+            eyebrow="Awards overview"
+            title={
+              <>
+                What the
+                <span className="block font-display">platform recognises</span>
+              </>
+            }
+            description="CYECD is designed to reward visible excellence, measurable community contribution, and the kind of youth-led ambition that creates real momentum. It is not just a ceremony. It is a public recognition structure."
+          />
 
-      {/* Competitive Categories */}
-      <section className="py-24 px-6 bg-cyes-green/5">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">
-              Competitive <span className="text-cyes-green">Categories</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              20 categories celebrating different aspects of entrepreneurship and community development.
-            </p>
-          </div>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {awardValueCards.map((item) => {
+              const Icon = item.icon;
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {competitiveCategories.map((category, index) => {
-              const colors = ['bg-cyes-green', 'bg-cyes-blue', 'bg-cyes-red', 'bg-cyes-yellow'];
               return (
-                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                  <CardContent className="p-6">
-                    <div className={`w-14 h-14 ${colors[index % 4]} rounded-xl mx-auto mb-4 flex items-center justify-center`}>
-                      <Award className="w-7 h-7 text-cyes-white" />
-                    </div>
-                    <h3 className="font-display text-sm font-semibold text-foreground">{category}</h3>
-                  </CardContent>
-                </Card>
+                <article key={item.title} className={cyesSurfaceClasses + " px-6 py-7"}>
+                  <Icon className="h-9 w-9 text-[#156D3B]" />
+                  <h3 className="mt-6 font-sans text-[1.35rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/72">
+                    {item.description}
+                  </p>
+                </article>
               );
             })}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Honorary Categories */}
-      <section className="py-24 px-6 bg-background">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">
-              Honorary <span className="text-cyes-yellow">Categories</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              5 special awards selected by the Board for outstanding lifetime contributions.
-            </p>
-          </div>
+        <section className="mx-auto mt-20 max-w-6xl overflow-x-clip px-6 md:px-24">
+          <CYESSectionIntro
+            eyebrow="20 categories"
+            title={
+              <>
+                Competitive
+                <span className="block font-display">categories</span>
+              </>
+            }
+            description="The main awards field honours a broad range of youth entrepreneurship, innovation, social impact, and institution-building across Cameroon."
+          />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {honoraryCategories.map((category, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 border-cyes-yellow/30">
-                <CardContent className="p-6">
-                  <div className="w-14 h-14 bg-cyes-yellow rounded-xl mx-auto mb-4 flex items-center justify-center">
-                    <Trophy className="w-7 h-7 text-foreground" />
-                  </div>
-                  <h3 className="font-display text-base font-semibold text-foreground">{category}</h3>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Jury Committee Section */}
-      <section className="py-24 px-6 bg-cyes-green/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="text-cyes-green font-medium text-lg">CYECD Awards 2026</span>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-2 mb-4">
-              Meet the <span className="text-cyes-green">Jury Committee</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our distinguished panel of judges brings expertise, integrity, and passion to evaluating Cameroon's brightest young entrepreneurs.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {juryMembers.map((member) => (
-              <div
-                key={member.name}
-                className="flex flex-col items-center text-center p-6 rounded-2xl bg-background shadow-lg border border-border/40 hover:shadow-xl transition-shadow"
-              >
-                <div className="w-28 h-28 rounded-full overflow-hidden mb-4 bg-muted flex items-center justify-center border-2 border-cyes-green/30">
-                  {member.photo ? (
-                    <img
-                      src={member.photo}
-                      alt={member.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-muted-foreground/40" />
-                  )}
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {competitiveCategories.map((category) => (
+              <article key={category} className={categoryCardClasses}>
+                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#eef5fb]">
+                  <Award className="h-5 w-5 text-[#1875D2]" />
                 </div>
-                <h3 className="font-display text-xl font-bold text-foreground mb-1">
-                  {member.name}
+                <h3 className="mt-5 font-sans text-[1.05rem] font-semibold leading-[1.12] tracking-[-0.04em] text-[#171411]">
+                  {category}
                 </h3>
-                <p className="text-cyes-green font-medium text-sm mb-1">{member.title}</p>
-              </div>
+              </article>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section className="mx-auto mt-20 max-w-6xl px-6 md:px-24">
+          <CYESSectionIntro
+            eyebrow="Board selected"
+            title={
+              <>
+                Honorary
+                <span className="block font-display">awards</span>
+              </>
+            }
+            description="These special recognitions celebrate sustained influence, exceptional service, and national or generational impact beyond standard nomination categories."
+          />
+
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {honoraryCategories.map((category) => (
+              <article
+                key={category}
+                className="rounded-[1.7rem] border border-[#FFB200]/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,242,204,0.72))] px-5 py-6 shadow-[0_16px_38px_rgba(17,16,14,0.05)]"
+              >
+                <Trophy className="h-8 w-8 text-[#FFB200]" />
+                <h3 className="mt-5 font-sans text-[1.02rem] font-semibold leading-[1.12] tracking-[-0.04em] text-[#171411]">
+                  {category}
+                </h3>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-20 max-w-6xl px-6 md:px-24">
+          <CYESSectionIntro
+            eyebrow="Jury committee"
+            title={
+              <>
+                Meet the
+                <span className="block font-display">jury</span>
+              </>
+            }
+            description="Our jury brings together public leadership, entrepreneurship, innovation, media, and professional expertise to evaluate nominees with credibility and context."
+          />
+
+          <div className="mt-12 hidden md:block">
+            <PeopleSpreadShowcase
+              members={juryShowcaseMembers}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+          </div>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 md:hidden xl:grid-cols-3">
+            {juryMembers.map((member) => (
+              <article
+                key={member.name}
+                className="rounded-[2rem] border border-black/8 bg-white/74 p-6 shadow-[0_16px_40px_rgba(17,16,14,0.06)]"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-[1.4rem] bg-[#eef2f6]">
+                    {member.photo ? (
+                      <img
+                        src={member.photo}
+                        alt={member.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <User className="h-8 w-8 text-[#171411]/35" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="font-sans text-[1.2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-[#171411]">
+                      {member.name}
+                    </h3>
+                    <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
+                      {member.title}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
       {/* Nomination CTA */}
       <section className="py-16 px-6 bg-gradient-to-r from-cyes-green via-cyes-blue to-cyes-green">
@@ -307,7 +429,7 @@ const CYESAwardsPage = () => {
         </div>
       </section>
 
-      <Footer />
+      <Footer variant="cyes" />
     </div>
   );
 };

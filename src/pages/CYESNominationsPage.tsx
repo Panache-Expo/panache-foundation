@@ -1,4 +1,3 @@
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,44 +46,59 @@ const honoraryCategories = [
 
 const juryMembers = [
   {
-    name: "Hon Donald Malomba Esembe",
-    title: "MP Buea Urban Constituency",
-    photo: honDonald,
+    image: cyesAwards,
+    alt: "CYES awards atmosphere",
+    className: "left-[20%] top-[8%] z-20 w-[42%] rotate-[-4deg]",
   },
   {
-    name: "Mr Nshal Mpeng Abwa Bernard Takang",
-    title: "Regional President Cameroon National Youth Council Southwest",
-    photo: nshala,
+    image: speaker2,
+    alt: "CYES portrait card",
+    className: "left-[60%] top-[16%] z-10 w-[28%] rotate-[7deg]",
   },
   {
-    name: "Felix Fomengia",
-    title: "Digital Innovation Expert and Cybersecurity Professional",
-    photo: felix,
+    image: honDonald,
+    alt: "Jury portrait",
+    className: "left-[30%] top-[58%] z-30 w-[23%] rotate-[-8deg]",
   },
   {
-    name: "Nzometiah Nervis",
-    title: "CEO, Nervtek",
-    photo: nervis,
+    image: cyesEvent,
+    alt: "CYES summit moment",
+    className: "left-[54%] top-[54%] z-20 w-[33%] rotate-[9deg]",
+  },
+];
+
+const statusCards = [
+  {
+    icon: Clock3,
+    title: "Deadline reached",
+    description:
+      "Public nominations for CYECD Awards 2026 are now closed and no new entries are being accepted.",
+    accent: "text-[#CC2129]",
   },
   {
-    name: "Barr. Chuo Angabua ",
-    title: "Founding Partner | Prime Time Law offices",
-    photo: chuo,
+    icon: ShieldCheck,
+    title: "Review continues",
+    description:
+      "Submitted nominations continue through internal review and jury evaluation ahead of the awards programme.",
+    accent: "text-[#156D3B]",
   },
   {
-    name: "Steve Njang",
-    title: "Founder of Nexdim Empire, Award-winning Blogger/ Content creator",
-    photo: steve,
+    icon: Users,
+    title: "The event is still open",
+    description:
+      "Attendance, partnership, media, and general summit participation remain open through the CYES registration flow.",
+    accent: "text-[#1875D2]",
   },
+];
+
+const nextSteps = [
   {
-    name: "Angwi Njamah",
-    title: "Journalist /Public Relations Officer PCC Business Units/Certified Virtual Assistant",
-    photo: angwi,
-  },
-  {
-    name: "Miss Nana Lynn ",
-    title: "LinkedIn & Personal Brand Coach",
-    photo: nanalynn,
+    icon: Calendar,
+    title: "Register for the summit",
+    description:
+      "Secure your place for the summit and awards experience, including networking, sessions, and the recognition night.",
+    to: "/cyes/register",
+    cta: "Register now",
   },
   {
     name: "Godlove Njisong",
@@ -215,34 +229,35 @@ const CYESNominationsPage = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {juryMembers.map((member) => (
-              <div
-                key={member.name}
-                className="flex flex-col items-center text-center p-6 rounded-2xl bg-background shadow-lg border border-border/40 hover:shadow-xl transition-shadow"
-              >
-                <div className="w-28 h-28 rounded-full overflow-hidden mb-4 bg-muted flex items-center justify-center border-2 border-cyes-green/30">
-                  {member.photo ? (
-                    <img
-                      src={member.photo}
-                      alt={member.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-muted-foreground/40" />
-                  )}
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
+                    <p className="font-sans text-sm text-[#171411]/76">
+                      Awards ceremony
+                    </p>
+                    <p className="mt-1 font-sans text-sm font-semibold text-[#171411]">
+                      16 July 2026
+                    </p>
+                  </div>
+                  <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
+                    <p className="font-sans text-sm text-[#171411]/76">Location</p>
+                    <p className="mt-1 font-sans text-sm font-semibold text-[#171411]">
+                      Buea
+                    </p>
+                  </div>
+                  <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
+                    <p className="font-sans text-sm text-[#171411]/76">Status</p>
+                    <p className="mt-1 font-sans text-sm font-semibold text-[#171411]">
+                      Closed submissions
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-display text-xl font-bold text-foreground mb-1">
-                  {member.name}
-                </h3>
-                <p className="text-cyes-green font-medium text-sm mb-1">{member.title}</p>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      <Footer />
+      <Footer variant="cyes" />
     </div>
   );
 };

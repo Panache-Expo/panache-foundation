@@ -1,169 +1,211 @@
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { SponsorsMarquee } from "@/components/SponsorsMarquee";
+import { Header } from "@/components/Header";
+import {
+  ExpoPageHero,
+  ExpoSidebarCard,
+  ExpoSurface,
+} from "@/components/registration/ExpoPageShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { Sparkles, Shirt, Camera, Calendar, MapPin, Star, Scissors } from "lucide-react";
-import { competitionRegistrationLinks } from "@/lib/registration-links";
 import fashionNight from "@/assets/FashionNight.jpg";
+import { competitionRegistrationLinks } from "@/lib/registration-links";
+import { ArrowRight, Camera, Scissors, Shirt, Sparkles, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const highlights = [
+const runwayHighlights = [
   {
     icon: Shirt,
-    title: "Limited Selection",
-    description: "Only selected designers chosen through application review for quality and exclusivity",
+    title: "Designer selection",
+    description:
+      "Applications are reviewed before entry, so the runway keeps a stronger level of coherence and quality.",
   },
   {
     icon: Scissors,
-    title: "Professional Runway",
-    description: "Cohesive collections presented with professional models and styling",
+    title: "Collection presentation",
+    description:
+      "Designers are judged on concept strength, styling discipline, silhouette control, and stage execution.",
   },
   {
     icon: Camera,
-    title: "Media Exposure",
-    description: "Full media coverage providing valuable brand visibility and recognition",
+    title: "Press and media value",
+    description:
+      "The night creates visuals, audience memory, and useful content for designers building public visibility.",
   },
   {
-    icon: Star,
-    title: "Industry Networking",
-    description: "Connect with designers, stylists, photographers, and fashion professionals",
+    icon: Users,
+    title: "Industry room",
+    description:
+      "Fashion Night gathers designers, stylists, photographers, buyers, and fashion-interested audiences in one space.",
+  },
+];
+
+const runwayFlow = [
+  {
+    step: "01",
+    title: "Apply with the collection you want the room to remember.",
+    description:
+      "A clearer point of view always reads better than trying to show everything at once.",
+  },
+  {
+    step: "02",
+    title: "Prepare the final runway edit with styling and model direction.",
+    description:
+      "The strongest presentations look considered from silhouette to pace to final reveal.",
+  },
+  {
+    step: "03",
+    title: "Present live at Panache and let the collection speak.",
+    description:
+      "This is where craftsmanship, styling discipline, and brand clarity come under real attention.",
   },
 ];
 
 const FashionNightPage = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#f4f3ef]">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" style={{ backgroundImage: `url(${fashionNight})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/70 to-rose-gold/70"></div>
+      <ExpoPageHero
+        eyebrow="Panache Runway Show"
+        title={
+          <>
+            Panache
+            <br />
+            <span className="font-display text-[#f4e93f]">Runway Show</span>
+          </>
+        }
+        description="A sharper runway format built for collections that deserve real attention. Panache Runway Show brings designers into a competitive stage where presentation, coherence, and creative conviction all matter."
+        image={fashionNight}
+        panelLabel="Runway Night"
+        panelTitle="Collections, judged in the room."
+        panelDescription="This is not a loose showcase. Designers are selected, the presentation has structure, and the room is built to notice both styling and discipline."
+        panelItems={[
+          { label: "Date", value: "18 July 2026" },
+          { label: "Venue", value: "Chariot Hotel, Buea" },
+          { label: "Entry route", value: "Designer application" },
+        ]}
+      />
 
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto pt-20">
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6">
-            Panache <span className="text-rose-gold">Runway Show</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-primary-foreground/90 mb-4 font-light">
-            A Competitive Runway Experience
-          </p>
-          <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            One of the most anticipated highlights of Panache Expo, celebrating creativity, innovation, and excellence within the fashion industry through a prestigious competitive runway.
-          </p>
+      <main className="px-6 pb-20 pt-10 md:pb-24">
+        <section className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.82fr,1.18fr]">
+          <ExpoSidebarCard
+            eyebrow="What the night rewards"
+            title="Runway clarity, not noise."
+            description="Panache Runway Show is for designers who want more than a photo opportunity. The night is built to reward cohesive collections, clear styling decisions, and work that can hold public attention from first look to last walk."
+            points={[
+              "Collections need a visible point of view, not random look-building.",
+              "Presentation quality matters as much as garment detail.",
+              "The room should understand your design language before the night ends.",
+            ]}
+            footer={
+              <Button
+                asChild
+                className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+              >
+                <Link to={competitionRegistrationLinks.fashionNight.path}>
+                  Apply as a designer
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            }
+          />
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Button asChild variant="hero" size="lg">
-              <Link to={competitionRegistrationLinks.fashionNight.path}>
-                Register Now
-              </Link>
-            </Button>
+          <div className="grid gap-4 md:grid-cols-2">
+            {runwayHighlights.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <ExpoSurface key={item.title} className="h-full">
+                  <Icon className="h-9 w-9 text-[#8241B6]" />
+                  <h2 className="mt-6 font-sans text-[1.45rem] font-semibold leading-[1.02] tracking-[-0.05em] text-[#171411]">
+                    {item.title}
+                  </h2>
+                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/68">
+                    {item.description}
+                  </p>
+                </ExpoSurface>
+              );
+            })}
           </div>
+        </section>
 
-          <div className="flex flex-wrap justify-center gap-6 text-primary-foreground/80 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>July 18th 2026</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span>Chariot Hotel - Buea, Cameroon</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute top-32 left-10 w-3 h-3 bg-rose-gold rounded-full animate-float opacity-60"></div>
-        <div className="absolute bottom-32 right-16 w-2 h-2 bg-primary-foreground rounded-full animate-float opacity-40" style={{ animationDelay: "1s" }}></div>
-      </section>
-
-      {/* About Section */}
-      <section className="py-24 px-6 bg-background">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary mb-6">
-              About <span className="text-rose-gold">Fashion Night</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Panache Fashion Night brings together talented fashion designers, models, stylists, and fashion enthusiasts for an unforgettable evening of creativity, style, and artistic expression. Selected designers present their collections on a competitive runway before a live audience, industry professionals, and media.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-primary rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-elegant group-hover:scale-110 transition-transform duration-300">
-                <Sparkles className="w-10 h-10 text-primary-foreground" />
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.86fr,1.14fr] lg:items-start">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Runway format
+                </p>
+                <h2 className="mt-3 max-w-[10ch] font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  A cleaner route from application to final walk.
+                </h2>
               </div>
-              <h3 className="font-display text-2xl font-semibold text-primary mb-4">Competitive Platform</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Selected designers present collections on a competitive runway before judges and industry professionals.
-              </p>
-            </div>
 
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-secondary rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-rose group-hover:scale-110 transition-transform duration-300">
-                <Shirt className="w-10 h-10 text-primary-foreground" />
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-primary mb-4">Creative Showcase</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Professional runway presentations highlighting creativity, originality, and design philosophy.
-              </p>
-            </div>
-
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-gradient-primary rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-elegant group-hover:scale-110 transition-transform duration-300">
-                <Star className="w-10 h-10 text-primary-foreground" />
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-primary mb-4">Awards & Recognition</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Outstanding designers recognized for creativity, innovation, and craftsmanship excellence.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Highlights */}
-      <section className="py-24 px-6 bg-gradient-card">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary mb-6">
-              Event <span className="text-rose-gold">Highlights</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {highlights.map((item, index) => (
-              <Card key={index} className="text-center hover:shadow-elegant transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <div className="w-14 h-14 bg-gradient-primary rounded-xl mx-auto mb-4 flex items-center justify-center">
-                    <item.icon className="w-7 h-7 text-primary-foreground" />
+              <div className="grid gap-4">
+                {runwayFlow.map((item) => (
+                  <div
+                    key={item.step}
+                    className="rounded-[1.6rem] border border-black/8 bg-white/74 px-5 py-5"
+                  >
+                    <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#8241B6]/78">
+                      {item.step}
+                    </p>
+                    <h3 className="mt-3 font-sans text-[1.18rem] font-semibold leading-[1.14] tracking-[-0.04em] text-[#171411]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 font-sans text-[0.95rem] leading-relaxed text-[#171411]/66">
+                      {item.description}
+                    </p>
                   </div>
-                  <h3 className="font-display text-lg font-semibold text-primary mb-2">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                ))}
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
 
-      {/* CTA */}
-      <section className="py-16 px-6 bg-primary">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-6">
-            Don't Miss Panache Fashion Night
-          </h2>
-          <p className="text-primary-foreground/80 mb-8 text-lg">
-            Experience the finest in African fashion. Secure your spot today.
-          </p>
-          <Button asChild variant="hero" size="lg">
-            <Link to={competitionRegistrationLinks.fashionNight.path}>
-              Get Your Ticket
-            </Link>
-          </Button>
-        </div>
-      </section>
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.92fr,1.08fr] lg:items-end">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Final call
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  If the collection is ready, the stage is ready too.
+                </h2>
+              </div>
 
-      <SponsorsMarquee />
+              <div className="lg:ml-auto lg:max-w-[38rem]">
+                <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  Panache Runway Show is where your collection meets an audience,
+                  a judging room, and the kind of visibility that can push a brand
+                  into its next phase.
+                </p>
+
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    asChild
+                    className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                  >
+                    <Link to={competitionRegistrationLinks.fashionNight.path}>
+                      Start application
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                  >
+                    <Link to="/panache-expo/contact">Talk to the team</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
+      </main>
+
       <Footer />
     </div>
   );

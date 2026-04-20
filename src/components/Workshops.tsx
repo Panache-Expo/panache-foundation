@@ -87,7 +87,7 @@ export const Workshops = () => {
         </div>
         
         <div className="text-center mt-16">
-          <Link to="/register">
+          <Link to="/panache-expo/register">
             <Button variant="hero" size="lg">
               Register for Workshops
             </Button>
