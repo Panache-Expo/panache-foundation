@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { PeopleSpreadShowcase, type SpreadShowcaseMember } from "@/components/PeopleSpreadShowcase";
 import { Instagram } from "lucide-react";
 import {
   motion,
@@ -30,8 +31,9 @@ type TeamShowcaseMember = TeamMember & {
   targetY: number;
   targetRotate: number;
   layer: number;
-  isFounder?: boolean;
-  instagramHref?: string;
+  isPrimary?: boolean;
+  alwaysShowCopy?: boolean;
+  ctaContent?: ReactNode;
 };
 
 const teamMembers = [
@@ -85,7 +87,7 @@ const teamMembers = [
   },
 ];
 
-const teamShowcaseMembers: TeamShowcaseMember[] = [
+const teamShowcaseMembers: SpreadShowcaseMember[] = [
   {
     ...teamMembers[5],
     targetX: -520,
@@ -123,8 +125,20 @@ const teamShowcaseMembers: TeamShowcaseMember[] = [
     targetY: 50,
     targetRotate: 0,
     layer: 30,
-    isFounder: true,
-    instagramHref: "https://instagram.com/ekie_walters",
+    isPrimary: true,
+    alwaysShowCopy: true,
+    ctaContent: (
+      <a
+        href="https://instagram.com/ekie_walters"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Button className="h-11 rounded-full bg-white px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white/90">
+          <Instagram className="mr-2 h-5 w-5" />
+          Follow on Instagram
+        </Button>
+      </a>
+    ),
   },
   {
     ...teamMembers[0],
@@ -166,202 +180,9 @@ const founderBio = [
   "Through Panache Expo, he continues to bridge the gap between traditional beauty practices and modern techniques, fostering a community that celebrates diversity, creativity, and professional excellence.",
 ];
 
-type TeamSpreadCardProps = {
-  member: TeamShowcaseMember;
-  index: number;
-  startX: number;
-  shouldReduceMotion: boolean;
-  delay: number;
-  hoveredMemberName: string | null;
-  hoveredMemberIndex: number | null;
-  onHoverChange: (name: string | null) => void;
-};
-
-const TeamSpreadCard = ({
-  member,
-  index,
-  startX,
-  shouldReduceMotion,
-  delay,
-  hoveredMemberName,
-  hoveredMemberIndex,
-  onHoverChange,
-}: TeamSpreadCardProps) => {
-  const isHovered = hoveredMemberName === member.name;
-  const isDimmed =
-    hoveredMemberName !== null && hoveredMemberName !== member.name;
-  const hoverDistance =
-    hoveredMemberIndex === null ? null : Math.abs(index - hoveredMemberIndex);
-  const hoverDirection =
-    hoveredMemberIndex === null ? 0 : Math.sign(index - hoveredMemberIndex);
-  const hoverPush =
-    hoverDistance === null || hoverDistance === 0
-      ? 0
-      : hoverDirection * (52 / hoverDistance);
-  const hoverScale = shouldReduceMotion
-    ? 1
-    : isHovered
-      ? member.isFounder
-        ? 1.05
-        : 1.08
-      : isDimmed
-        ? 0.965
-        : 1;
-  const hoverY = shouldReduceMotion
-    ? 0
-    : isHovered
-      ? member.isFounder
-        ? -12
-        : -18
-      : isDimmed
-        ? Math.min(10, hoverDistance ? hoverDistance * 2 : 0)
-        : 0;
-  const hoverOpacity = shouldReduceMotion
-    ? 1
-    : isDimmed
-      ? Math.max(0.6, 0.92 - (hoverDistance ?? 0) * 0.08)
-      : 1;
-  const hoverFilter =
-    shouldReduceMotion || !isDimmed
-      ? "none"
-      : `saturate(${Math.max(0.72, 0.9 - (hoverDistance ?? 0) * 0.06)}) brightness(${Math.max(0.78, 0.95 - (hoverDistance ?? 0) * 0.05)})`;
-  const initialRotate = useMemo(
-    () =>
-      member.isFounder ? 0 : Math.round((Math.random() * 16 - 8) * 10) / 10,
-    [member.isFounder],
-  );
-  const spreadState = {
-    x: member.targetX,
-    y: member.targetY,
-    rotate: member.targetRotate,
-    opacity: 1,
-    scale: 1,
-  };
-  const stackedState = shouldReduceMotion
-    ? spreadState
-    : {
-        x: startX,
-        y: 48,
-        rotate: initialRotate,
-        opacity: 1,
-        scale: 0.94,
-      };
-
-  return (
-    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <motion.div
-        className="pointer-events-auto h-[clamp(15rem,49vw,34rem)] aspect-[336/589]"
-        style={{ zIndex: isHovered ? 60 : member.layer }}
-        initial={stackedState}
-        whileInView={spreadState}
-        viewport={{ once: true, amount: 0.95 }}
-        transition={
-          shouldReduceMotion
-            ? { duration: 0 }
-            : {
-                duration: 0.95,
-                delay,
-                ease: [0.22, 1, 0.36, 1],
-              }
-        }
-        onHoverStart={() => onHoverChange(member.name)}
-        onHoverEnd={() => onHoverChange(null)}
-        onFocus={() => onHoverChange(member.name)}
-        onBlur={() => onHoverChange(null)}
-      >
-        <motion.div
-          className="relative h-full w-full overflow-hidden rounded-[2.35rem] bg-[#d9d2c8]"
-          animate={
-            shouldReduceMotion
-              ? { x: 0, scale: 1, y: 0, opacity: 1, filter: "none" }
-              : {
-                  x: hoverPush,
-                  scale: hoverScale,
-                  y: hoverY,
-                  opacity: hoverOpacity,
-                  filter: hoverFilter,
-                }
-          }
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <img
-            src={member.photo}
-            alt={member.name}
-            className="h-full w-full object-cover"
-          />
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/12 to-transparent"
-            animate={
-              shouldReduceMotion
-                ? { opacity: 1 }
-                : isHovered
-                  ? { opacity: 0.88 }
-                  : isDimmed
-                    ? { opacity: 0.72 }
-                    : { opacity: 1 }
-            }
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          />
-          <motion.div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4 text-left text-white md:p-5"
-            animate={
-              shouldReduceMotion || member.isFounder
-                ? { opacity: 1, y: 0 }
-                : isHovered
-                  ? { opacity: 1, y: 0 }
-                  : { opacity: 0, y: 10 }
-            }
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <p
-              className={
-                member.isFounder
-                  ? "font-sans text-[clamp(1.6rem,2vw,2.6rem)] font-semibold tracking-[-0.03em]"
-                  : "font-sans text-sm font-semibold md:text-base"
-              }
-            >
-              {member.name}
-            </p>
-            <p
-              className={
-                member.isFounder
-                  ? "mt-2 font-sans text-sm text-white/82 md:text-base"
-                  : "mt-1 font-sans text-xs text-white/78 md:text-sm"
-              }
-            >
-              {member.title}
-            </p>
-            {member.isFounder && member.instagramHref ? (
-              <a
-                href={member.instagramHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex"
-              >
-                <Button className="h-11 rounded-full bg-white px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white/90">
-                  Follow on Instagram
-                </Button>
-              </a>
-            ) : null}
-          </motion.div>
-        </motion.div>
-      </motion.div>
-    </div>
-  );
-};
-
 export const Founder = () => {
   const founderIntroRef = useRef<HTMLDivElement | null>(null);
   const shouldReduceMotion = useReducedMotion();
-  const [hoveredTeamMemberName, setHoveredTeamMemberName] = useState<
-    string | null
-  >(null);
-  const hoveredTeamMemberIndex =
-    hoveredTeamMemberName === null
-      ? null
-      : teamShowcaseMembers.findIndex(
-          (member) => member.name === hoveredTeamMemberName,
-        );
   const { scrollYProgress: founderIntroProgress } = useScroll({
     target: founderIntroRef,
     offset: ["start end", "end start"],
@@ -569,23 +390,43 @@ export const Founder = () => {
             </h2>
           </div>
 
-          <div
-            className="relative left-1/2 mt-14 h-[34rem] w-[min(190vw-1rem,104rem)] -translate-x-1/2 overflow-hidden sm:h-[38rem] md:h-[46rem] lg:h-[54rem] xl:h-[56rem]"
-            onPointerLeave={() => setHoveredTeamMemberName(null)}
-          >
-            {teamShowcaseMembers.map((member, index) => (
-              <TeamSpreadCard
+          <div className="mt-12 space-y-4 md:hidden">
+            {teamMembers.map((member) => (
+              <article
                 key={member.name}
-                member={member}
-                index={index}
-                startX={stackedOffsets[index]}
-                shouldReduceMotion={shouldReduceMotion}
-                delay={index * 0.01}
-                hoveredMemberName={hoveredTeamMemberName}
-                hoveredMemberIndex={hoveredTeamMemberIndex}
-                onHoverChange={setHoveredTeamMemberName}
-              />
+                className="rounded-[2rem] border border-black/8 bg-white/74 p-5 shadow-[0_16px_40px_rgba(17,16,14,0.06)]"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-[1.4rem] bg-[#eef2f6]">
+                    <img
+                      src={member.photo}
+                      alt={member.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="font-sans text-[1.2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-[#171411]">
+                      {member.name}
+                    </h3>
+                    <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
+                      {member.title}
+                    </p>
+                    <p className="mt-1 font-sans text-xs uppercase tracking-[0.08em] text-[#171411]/46">
+                      {member.organization}
+                    </p>
+                  </div>
+                </div>
+              </article>
             ))}
+          </div>
+
+          <div className="hidden md:block">
+            <PeopleSpreadShowcase
+              members={teamShowcaseMembers}
+              shouldReduceMotion={shouldReduceMotion}
+              stackedOffsets={stackedOffsets}
+            />
           </div>
         </div>
       </div>

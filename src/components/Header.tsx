@@ -136,8 +136,8 @@ export const Header = () => {
   const homeButtonContentRef = useRef<HTMLSpanElement | null>(null);
   const location = useLocation();
   const config = getHeaderConfig(location.pathname);
-  const isPanacheExpoLanding = location.pathname === "/panache-expo";
-  const isCYESLanding = location.pathname === "/cyes";
+  const isPanacheExpoLanding = location.pathname.startsWith("/panache-expo");
+  const isCYESLanding = location.pathname.startsWith("/cyes");
   const isShowcaseLanding = isPanacheExpoLanding || isCYESLanding;
 
   useEffect(() => {
@@ -147,6 +147,7 @@ export const Header = () => {
 
   const isExactActive = (to: string) => location.pathname === to;
   const isGatewayLink = location.pathname !== "/";
+  const shouldOfferHomepageLink = location.pathname !== "/";
   const shouldShowGatewayLink = isGatewayLink && (config.showGatewayLink ?? true);
   const shouldShowContactInNav = config.showContactInNav ?? true;
   const isDropdownActive = config.dropdownLinks?.some((item) => isExactActive(item.to)) ?? false;
@@ -256,6 +257,12 @@ export const Header = () => {
 
   const navFontClassForItem = (label: string) =>
     /celebrating/i.test(label) ? "font-sans" : "";
+  const mobileToggleButtonClassName =
+    config.variant === "cyes"
+      ? "md:hidden p-2 text-[#171411]"
+      : isShowcaseLanding
+        ? "md:hidden p-2 text-white"
+        : "md:hidden p-2";
 
   useLayoutEffect(() => {
     if (!homeButtonContentRef.current) {
@@ -532,7 +539,7 @@ export const Header = () => {
                       variant="outline"
                       size="sm"
                       className={cn(
-                        "h-8 rounded-full px-4 text-sm font-semibold transition-all duration-300",
+                        "h-8 rounded-full px-4 text-sm font-semibold transition-all duration-300 border-black text-black",
                         homeButtonHoverClasses
                       )}
                     >
@@ -643,7 +650,7 @@ export const Header = () => {
         )}
 
         <button
-          className={isShowcaseLanding ? "md:hidden p-2 text-white" : "md:hidden p-2"}
+          className={mobileToggleButtonClassName}
           onClick={() => setIsMobileMenuOpen((open) => !open)}
           aria-label="Toggle menu"
         >
@@ -659,6 +666,21 @@ export const Header = () => {
             }
           >
             <nav className="flex flex-col p-6 gap-4">
+              {shouldOfferHomepageLink ? (
+                <Link
+                  to="/"
+                  className={cn(
+                    isShowcaseLanding
+                      ? "flex items-center gap-2 text-white hover:text-white/80 transition-colors"
+                      : "flex items-center gap-2 text-foreground hover:text-primary transition-colors",
+                    navFontClassForItem("Homepage")
+                  )}
+                >
+                  <Home className="w-4 h-4" />
+                  Homepage
+                </Link>
+              ) : null}
+
               {isShowcaseLanding ? (
                 <>
                   {shouldShowGatewayLink ? (

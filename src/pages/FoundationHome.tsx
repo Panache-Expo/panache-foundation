@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
 import foundationLogo from "@/assets/foundationlogo.jpeg";
@@ -27,10 +27,23 @@ const flagshipEvents = [
   },
 ];
 
+const WHATSAPP_BOT_NUMBER = "+237674230406";
+const WHATSAPP_BOT_HREF = "https://wa.me/237674230406";
+
 const FoundationHome = () => {
   return (
     <div className="min-h-screen bg-[#eef2f6] text-[#14110f]">
       <main className="relative overflow-hidden">
+        <a
+          href={WHATSAPP_BOT_HREF}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-3 rounded-full bg-[#171411] px-5 py-3 font-sans text-sm font-semibold text-white shadow-[0_18px_42px_rgba(17,16,14,0.24)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#171411]/92"
+        >
+          <MessageCircle className="h-5 w-5 text-[#25D366]" />
+          Chat on WhatsApp
+        </a>
+
         <div className="mx-auto w-full bg-[#f7f9fc] pb-16 lg:pb-24 ">
           <div className="flex items-start justify-start px-12">
             <img
@@ -40,18 +53,7 @@ const FoundationHome = () => {
             />
           </div>
 
-          <section className="relative mx-auto flex min-h-[50svh] max-w-5xl items-center justify-center py-14 text-center sm:min-h-[58svh] lg:min-h-[62svh]">
-            <div className="max-w-4xl">
-              <h1 className="font-display text-[clamp(2.4rem,5vw,4.9rem)] font-bold leading-[0.92] tracking-[-0.055em] text-[#11100e]">
-                Panache Expo Foundation
-              </h1>
-              <p className="mx-auto mt-4 max-w-3xl font-sans text-[clamp(1.15rem,2vw,2rem)] font-medium leading-[1.18] tracking-[-0.03em] text-[#11100e]/92">
-                Empowering communities through excellence in beauty, fashion, and
-                youth entrepreneurship. Choose your path to discover our impactful
-                initiatives.
-              </p>
-            </div>
-          </section>
+          
 
           <section className="relative py-14 sm:py-20">
             <img
@@ -104,6 +106,53 @@ const FoundationHome = () => {
                   </Link>
                 </article>
               ))}
+            </div>
+          </section>
+
+          <section className="mx-auto max-w-5xl px-6 pb-6 text-center sm:px-10">
+            <div className="rounded-[2rem] border border-black/8 bg-white/78 px-6 py-7 shadow-[0_18px_40px_rgba(17,16,14,0.06)] md:px-8">
+              <p className="font-sans text-[0.8rem] font-semibold uppercase tracking-[0.18em] text-[#11100e]/52">
+                Prefer the fast route?
+              </p>
+              <h1 className="mt-3 font-display text-[clamp(2.2rem,4.6vw,4.4rem)] font-bold leading-[0.92] tracking-[-0.055em] text-[#11100e]">
+                Go straight to the WhatsApp bot.
+              </h1>
+              <p className="mx-auto mt-4 max-w-3xl font-sans text-[clamp(1rem,2vw,1.45rem)] font-medium leading-[1.24] tracking-[-0.03em] text-[#11100e]/78">
+                If you do not want to browse the full website, the Panache
+                WhatsApp bot can help with both Panache and CYES registration,
+                support, and quick direction.
+              </p>
+
+              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <a
+                  href={WHATSAPP_BOT_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex"
+                >
+                  <Button className="h-12 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
+                    <MessageCircle className="mr-2 h-4 w-4 text-[#25D366]" />
+                    Open WhatsApp bot
+                  </Button>
+                </a>
+
+                <span className="font-sans text-sm font-medium text-[#11100e]/62">
+                  {WHATSAPP_BOT_NUMBER}
+                </span>
+              </div>
+            </div>
+          </section>
+
+           <section className="relative mx-auto flex min-h-[50svh] max-w-5xl items-center justify-center py-14 text-center sm:min-h-[58svh] lg:min-h-[62svh]">
+            <div className="max-w-4xl">
+              <h1 className="font-display text-[clamp(2.4rem,5vw,4.9rem)] font-bold leading-[0.92] tracking-[-0.055em] text-[#11100e]">
+                Panache Expo Foundation
+              </h1>
+              <p className="mx-auto mt-4 max-w-3xl font-sans text-[clamp(1.15rem,2vw,2rem)] font-medium leading-[1.18] tracking-[-0.03em] text-[#11100e]/92">
+                Empowering communities through excellence in beauty, fashion, and
+                youth entrepreneurship. Choose your path to discover our impactful
+                initiatives.
+              </p>
             </div>
           </section>
 

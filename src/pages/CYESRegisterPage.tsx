@@ -199,7 +199,7 @@ export const CYESRegisterPage = () => {
           cards={registrationHeroCards}
           mobileImage={cyesEvent}
           mobileImageAlt="CYES event stage"
-          mobileImageClassName="rotate-[14deg]"
+          mobileImageClassName="rotate-[10deg]"
         />
 
         <section className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
@@ -457,7 +457,7 @@ export const CYESRegisterPage = () => {
         </section>
       </main>
 
-      <Footer />
+      <Footer variant="cyes" />
     </div>
   );
 };

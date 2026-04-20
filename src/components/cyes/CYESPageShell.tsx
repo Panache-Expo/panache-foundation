@@ -140,7 +140,7 @@ export const CYESInnerHero = ({
           {mobileImage ? (
             <div className="relative mt-12 flex h-[19rem] items-center justify-center md:hidden">
               <div
-                className={`absolute h-[17rem] w-[min(74vw,17rem)] overflow-hidden rounded-[1.05rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)] ${mobileImageClassName ?? "rotate-[12deg]"}`}
+                className={`absolute h-[17rem] w-[min(74vw,17rem)] overflow-hidden rounded-[1.05rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)] ${mobileImageClassName ?? "rotate-[10deg]"}`}
               >
                 <img
                   src={mobileImage}

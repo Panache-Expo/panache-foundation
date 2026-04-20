@@ -5,6 +5,7 @@ import {
   CYESSectionIntro,
   cyesSurfaceClasses,
 } from "@/components/cyes/CYESPageShell";
+import { PeopleSpreadShowcase, type SpreadShowcaseMember } from "@/components/PeopleSpreadShowcase";
 import { Button } from "@/components/ui/button";
 import cyesCDAwards from "@/assets/CYESCDAwards.jpeg";
 import cyesEvent from "@/assets/CYES.jpeg";
@@ -18,6 +19,7 @@ import angwi from "@/assets/angwi.png";
 import nanalynn from "@/assets/nanalynn.png";
 import godlove from "@/assets/godlove.png";
 import { Award, Calendar, CheckCircle2, MapPin, Trophy, User, Users } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 import { Link } from "react-router-dom";
 
 const competitiveCategories = [
@@ -99,6 +101,74 @@ const juryMembers = [
   },
 ];
 
+const juryShowcaseMembers: SpreadShowcaseMember[] = [
+  {
+    ...juryMembers[2],
+    targetX: -520,
+    targetY: 132,
+    targetRotate: -20,
+    layer: 10,
+  },
+  {
+    ...juryMembers[3],
+    targetX: -396,
+    targetY: 102,
+    targetRotate: -15,
+    layer: 12,
+  },
+  {
+    ...juryMembers[4],
+    targetX: -262,
+    targetY: 74,
+    targetRotate: -10,
+    layer: 14,
+  },
+  {
+    ...juryMembers[1],
+    targetX: -128,
+    targetY: 42,
+    targetRotate: -6,
+    layer: 16,
+  },
+  {
+    ...juryMembers[0],
+    targetX: 0,
+    targetY: 18,
+    targetRotate: 0,
+    layer: 24,
+    isPrimary: true,
+    alwaysShowCopy: true,
+  },
+  {
+    ...juryMembers[5],
+    targetX: 128,
+    targetY: 42,
+    targetRotate: 6,
+    layer: 16,
+  },
+  {
+    ...juryMembers[6],
+    targetX: 262,
+    targetY: 74,
+    targetRotate: 10,
+    layer: 14,
+  },
+  {
+    ...juryMembers[7],
+    targetX: 396,
+    targetY: 102,
+    targetRotate: 15,
+    layer: 12,
+  },
+  {
+    ...juryMembers[8],
+    targetX: 520,
+    targetY: 132,
+    targetRotate: 20,
+    layer: 10,
+  },
+];
+
 const awardValueCards = [
   {
     icon: Trophy,
@@ -147,6 +217,8 @@ const categoryCardClasses =
   "rounded-[1.6rem] border border-black/8 bg-white/74 px-5 py-5 shadow-[0_16px_38px_rgba(17,16,14,0.05)]";
 
 const CYESAwardsPage = () => {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <div className="min-h-screen bg-[#f7f8f3] text-[#171411]">
       <Header />
@@ -189,7 +261,7 @@ const CYESAwardsPage = () => {
           cards={awardHeroCards}
           mobileImage={cyesCDAwards}
           mobileImageAlt="CYECD Awards event"
-          mobileImageClassName="rotate-[14deg]"
+          mobileImageClassName="rotate-[10deg]"
         />
 
         <section className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
@@ -223,7 +295,7 @@ const CYESAwardsPage = () => {
           </div>
         </section>
 
-        <section className="mx-auto mt-20 max-w-6xl px-6 md:px-24">
+        <section className="mx-auto mt-20 max-w-6xl overflow-x-clip px-6 md:px-24">
           <CYESSectionIntro
             eyebrow="20 categories"
             title={
@@ -288,7 +360,14 @@ const CYESAwardsPage = () => {
             description="Our jury brings together public leadership, entrepreneurship, innovation, media, and professional expertise to evaluate nominees with credibility and context."
           />
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-12 hidden md:block">
+            <PeopleSpreadShowcase
+              members={juryShowcaseMembers}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+          </div>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 md:hidden xl:grid-cols-3">
             {juryMembers.map((member) => (
               <article
                 key={member.name}
@@ -376,7 +455,7 @@ const CYESAwardsPage = () => {
         </section>
       </main>
 
-      <Footer />
+      <Footer variant="cyes" />
     </div>
   );
 };

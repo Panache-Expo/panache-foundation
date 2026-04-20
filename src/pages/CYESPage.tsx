@@ -360,7 +360,7 @@ const CYESPage = () => {
           ref={heroSectionRef}
           className="relative w-full overflow-visible px-6 md:px-24"
         >
-          <div className="relative mt-12 min-h-[42rem] sm:min-h-[46rem] md:min-h-[62rem] lg:min-h-[48rem] overflow-hidden">
+          <div className="relative mt-12 min-h-[42rem] sm:min-h-[46rem] md:min-h-[62rem] lg:min-h-[48rem] overflow-visible">
             <div className="relative z-20 flex justify-start">
               <div className="max-w-[32rem]">
                 <motion.h1
@@ -402,9 +402,25 @@ const CYESPage = () => {
                 </Link>
 
                 <div className="relative mt-12 flex h-[19rem] items-center justify-center md:hidden">
-                  <div className="absolute h-[17rem] w-[min(72vw,16rem)] rotate-[20deg] overflow-hidden rounded-[0.85rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)]">
+                  <div className="absolute h-[17rem] w-[min(72vw,16rem)] rotate-[3deg] overflow-hidden rounded-[0.85rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)]">
                     <img
                       src={cyesEvent}
+                      alt="CYES summit hero image"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute left-[10%] -bottom-[10%] h-[7rem] w-[min(36vw,8rem)] rotate-[-5deg] overflow-hidden rounded-[0.85rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)]">
+                    <img
+                      src={cyesAwards}
+                      alt="CYES summit hero image"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute right-[10%] -top-[10%] h-[7rem] w-[min(36vw,8rem)] rotate-[-2deg] overflow-hidden rounded-[0.85rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)]">
+                    <img
+                      src={speaker2}
                       alt="CYES summit hero image"
                       className="h-full w-full object-cover"
                     />
@@ -601,8 +617,8 @@ const CYESPage = () => {
 
       </main>
 
-      <SponsorsMarquee />
-      <Footer />
+      <SponsorsMarquee variant="cyes" />
+      <Footer variant="cyes" />
     </div>
   );
 };

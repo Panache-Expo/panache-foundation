@@ -45,7 +45,15 @@ const sponsors = [
 
 const sponsorsLoop = [...sponsors, ...sponsors];
 
-export const SponsorsMarquee = () => {
+type SponsorsMarqueeVariant = "panache" | "cyes";
+
+type SponsorsMarqueeProps = {
+  variant?: SponsorsMarqueeVariant;
+};
+
+export const SponsorsMarquee = ({
+  variant = "panache",
+}: SponsorsMarqueeProps) => {
   const shouldReduceMotion = useReducedMotion();
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [singleLoopWidth, setSingleLoopWidth] = useState(0);
@@ -72,6 +80,16 @@ export const SponsorsMarquee = () => {
 
     return `${-wrappedOffset}px`;
   });
+  const isCyesVariant = variant === "cyes";
+  const sectionBackgroundClassName = isCyesVariant
+    ? "bg-[#f7f8f3]"
+    : "bg-accent";
+  const fadeGradientClassName = isCyesVariant
+    ? "from-[#f7f8f3] to-transparent"
+    : "from-muted/30 to-transparent";
+  const sponsorCardClassName = isCyesVariant
+    ? "bg-white/88 shadow-[0_16px_36px_rgba(17,16,14,0.07)]"
+    : "bg-white";
 
   useEffect(() => {
     if (!trackRef.current) {
@@ -135,7 +153,12 @@ export const SponsorsMarquee = () => {
   });
 
   return (
-    <section className="relative py-16 bg-accent overflow-hidden">
+    <section
+      className={`relative overflow-hidden py-16 ${sectionBackgroundClassName}`}
+    >
+      {/* {isCyesVariant ? (
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(21,109,59,0.1),transparent_24%),radial-gradient(circle_at_83%_22%,rgba(24,117,210,0.12),transparent_26%),radial-gradient(circle_at_48%_88%,rgba(255,178,0,0.1),transparent_22%),linear-gradient(180deg,rgba(247,248,243,0.92)_0%,rgba(247,248,243,1)_100%)]" />
+      ) : null} */}
       <div className="mx-auto mb-14 flex max-w-7xl flex-col gap-8 px-6 md:mb-16 md:flex-row md:items-start md:justify-between md:gap-16">
         <div className="max-w-[34rem]">
           <h2 className="text-[#11100e]">
@@ -156,8 +179,12 @@ export const SponsorsMarquee = () => {
 
       <div className="relative">
         {/* Gradient fades on edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-muted/30 to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-muted/30 to-transparent z-10 pointer-events-none" />
+        <div
+          className={`pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-24 bg-gradient-to-r ${fadeGradientClassName}`}
+        />
+        <div
+          className={`pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-24 bg-gradient-to-l ${fadeGradientClassName}`}
+        />
 
         <motion.div
           ref={trackRef}
@@ -167,7 +194,7 @@ export const SponsorsMarquee = () => {
           {sponsorsLoop.map((sponsor, index) => (
             <div
               key={index}
-              className="flex-shrink-0 mx-6 w-36 h-24 rounded-xl flex items-center justify-center p-2 grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-150 bg-white"
+              className={`mx-6 flex h-24 w-36 flex-shrink-0 items-center justify-center rounded-xl p-2 opacity-70 grayscale transition-all duration-150 hover:opacity-100 hover:grayscale-0 ${sponsorCardClassName}`}
             >
               <img
                 src={sponsor.logo}
