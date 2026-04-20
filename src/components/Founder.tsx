@@ -1,8 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Instagram, ExternalLink } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { Instagram } from "lucide-react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 import FounderImage from "@/assets/Founder.jpeg";
+import FounderCutout from "@/assets/FounderCutout.png";
 import tony from "@/assets/tony.jpeg";
 import ramiims from "@/assets/ramiims.jpg";
 import akwo from "@/assets/akwo.jpeg";
@@ -152,6 +158,14 @@ const teamShowcaseMembers: TeamShowcaseMember[] = [
 
 const stackedOffsets = [-14, -10, -6, -3, 0, 3, 6, 10, 14];
 
+const founderRoleLabel = "Founder & CEO";
+const founderNameParts = ["Walters", "Ekie"] as const;
+const founderBio = [
+  "Ekie Walters founded Panache Expo with a vision to elevate beauty standards and empower professionals across Cameroon and beyond.",
+  "His passion for excellence and commitment to education has transformed countless lives, creating a platform where beauty professionals can learn, grow, and celebrate their craft together.",
+  "Through Panache Expo, he continues to bridge the gap between traditional beauty practices and modern techniques, fostering a community that celebrates diversity, creativity, and professional excellence.",
+];
+
 type TeamSpreadCardProps = {
   member: TeamShowcaseMember;
   index: number;
@@ -174,7 +188,8 @@ const TeamSpreadCard = ({
   onHoverChange,
 }: TeamSpreadCardProps) => {
   const isHovered = hoveredMemberName === member.name;
-  const isDimmed = hoveredMemberName !== null && hoveredMemberName !== member.name;
+  const isDimmed =
+    hoveredMemberName !== null && hoveredMemberName !== member.name;
   const hoverDistance =
     hoveredMemberIndex === null ? null : Math.abs(index - hoveredMemberIndex);
   const hoverDirection =
@@ -183,33 +198,36 @@ const TeamSpreadCard = ({
     hoverDistance === null || hoverDistance === 0
       ? 0
       : hoverDirection * (52 / hoverDistance);
-  const hoverScale =
-    shouldReduceMotion
-      ? 1
-      : isHovered
-        ? member.isFounder
-          ? 1.05
-          : 1.08
-        : isDimmed
-          ? 0.965
-          : 1;
-  const hoverY =
-    shouldReduceMotion
-      ? 0
-      : isHovered
-        ? member.isFounder
-          ? -12
-          : -18
-        : isDimmed
-          ? Math.min(10, hoverDistance ? hoverDistance * 2 : 0)
-          : 0;
-  const hoverOpacity = shouldReduceMotion ? 1 : isDimmed ? Math.max(0.6, 0.92 - (hoverDistance ?? 0) * 0.08) : 1;
+  const hoverScale = shouldReduceMotion
+    ? 1
+    : isHovered
+      ? member.isFounder
+        ? 1.05
+        : 1.08
+      : isDimmed
+        ? 0.965
+        : 1;
+  const hoverY = shouldReduceMotion
+    ? 0
+    : isHovered
+      ? member.isFounder
+        ? -12
+        : -18
+      : isDimmed
+        ? Math.min(10, hoverDistance ? hoverDistance * 2 : 0)
+        : 0;
+  const hoverOpacity = shouldReduceMotion
+    ? 1
+    : isDimmed
+      ? Math.max(0.6, 0.92 - (hoverDistance ?? 0) * 0.08)
+      : 1;
   const hoverFilter =
     shouldReduceMotion || !isDimmed
       ? "none"
       : `saturate(${Math.max(0.72, 0.9 - (hoverDistance ?? 0) * 0.06)}) brightness(${Math.max(0.78, 0.95 - (hoverDistance ?? 0) * 0.05)})`;
   const initialRotate = useMemo(
-    () => (member.isFounder ? 0 : Math.round((Math.random() * 16 - 8) * 10) / 10),
+    () =>
+      member.isFounder ? 0 : Math.round((Math.random() * 16 - 8) * 10) / 10,
     [member.isFounder],
   );
   const spreadState = {
@@ -333,97 +351,205 @@ const TeamSpreadCard = ({
 };
 
 export const Founder = () => {
+  const founderIntroRef = useRef<HTMLDivElement | null>(null);
   const shouldReduceMotion = useReducedMotion();
-  const [hoveredTeamMemberName, setHoveredTeamMemberName] = useState<string | null>(null);
+  const [hoveredTeamMemberName, setHoveredTeamMemberName] = useState<
+    string | null
+  >(null);
   const hoveredTeamMemberIndex =
     hoveredTeamMemberName === null
       ? null
-      : teamShowcaseMembers.findIndex((member) => member.name === hoveredTeamMemberName);
+      : teamShowcaseMembers.findIndex(
+          (member) => member.name === hoveredTeamMemberName,
+        );
+  const { scrollYProgress: founderIntroProgress } = useScroll({
+    target: founderIntroRef,
+    offset: ["start end", "end start"],
+  });
+  const founderLabelY = useTransform(
+    founderIntroProgress,
+    [0, 1],
+    shouldReduceMotion ? [0, 0] : [18, -38],
+  );
+  const founderLeftNameY = useTransform(
+    founderIntroProgress,
+    [0, 1],
+    shouldReduceMotion ? [0, 0] : [32, -96],
+  );
+  const founderRightNameY = useTransform(
+    founderIntroProgress,
+    [0, 1],
+    shouldReduceMotion ? [0, 0] : [76, -24],
+  );
+  const founderLeftCopyY = useTransform(
+    founderIntroProgress,
+    [0, 1],
+    shouldReduceMotion ? [0, 0] : [22, -42],
+  );
+  const founderRightCopyY = useTransform(
+    founderIntroProgress,
+    [0, 1],
+    shouldReduceMotion ? [0, 0] : [12, -54],
+  );
+  const founderBadgeY = useTransform(
+    founderIntroProgress,
+    [0, 1],
+    shouldReduceMotion ? [0, 0] : [28, -34],
+  );
+  const founderRevealInitial = shouldReduceMotion
+    ? { opacity: 1, y: 0, scale: 1 }
+    : { opacity: 0, y: 56, scale: 0.9 };
+  const founderRevealTarget = { opacity: 1, y: 0, scale: 1 };
+  const founderRevealTransition = {
+    duration: 0.95,
+    ease: [0.22, 1, 0.36, 1] as const,
+  };
 
   return (
-    <section className="relative py-24 px-6 bg-accent overflow-x-clip">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative py-24 bg-accent overflow-x-clip">
+      <div className="w-full">
         {/* Founder Section */}
-        <div className="grid md:grid-cols-2 gap-12 items-center mb-24">
-          {/* Founder Image */}
-          <div className="relative">
-            <div className="aspect-square rounded-3xl overflow-hidden ">
+        <div className="mb-24">
+          <div className="mx-auto max-w-3xl text-center md:hidden">
+            <span className="font-sans text-sm font-semibold uppercase tracking-[0.28em] text-[#8b7f78]">
+              Meet Our Team
+            </span>
+            <p className="mt-4 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-[#171411]/68">
+              {founderRoleLabel}
+            </p>
+            <h2 className="mt-3 font-display text-[clamp(3.25rem,18vw,6rem)] font-bold leading-[0.84] tracking-[-0.08em] text-[#13110f]">
+              {founderNameParts[1]} {founderNameParts[0]}
+            </h2>
+            <div className="relative mx-auto mt-8 aspect-[5/6] w-full max-w-[24rem]">
               <img
-                src={FounderImage}
+                src={FounderCutout}
                 alt="Ekie Walters - Founder of Panache Expo"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-contain"
               />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[22%] bg-gradient-to-t from-accent via-accent/78 to-transparent" />
             </div>
-            {/* Floating decoration */}
-            <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-primary rounded-2xl opacity-20 animate-float"></div>
-            <div
-              className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-secondary rounded-full opacity-30 animate-float"
-              style={{ animationDelay: "1s" }}
-            ></div>
+            <div className="mt-8 space-y-4 text-left font-sans text-base leading-relaxed text-[#2a2521]/84">
+              {founderBio.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            <a
+              href="https://instagram.com/ekie_walters"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 inline-flex"
+            >
+              <Button className="h-11 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white hover:bg-[#171411]/88">
+                <Instagram className="mr-2 h-5 w-5" />
+                Follow on Instagram
+              </Button>
+            </a>
           </div>
 
-          {/* Founder Content */}
-          <div>
-            <div className="mb-6">
-              <span className="text-rose-gold font-medium text-lg">
-                Meet Our Team
-              </span>
-              <h2 className="font-display text-4xl md:text-5xl font-bold text-primary mt-2 mb-4">
-                Ekie Walters
-              </h2>
-              <p className="text-muted-foreground font-medium mb-3">
-                Founder, Panache Expo
-              </p>
-              <div className="flex items-center gap-2 mb-6">
-                <Instagram className="w-5 h-5 text-rose-gold" />
-                <a
-                  href="https://instagram.com/ekie_walters"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-rose-gold hover:text-primary transition-colors font-medium"
-                >
-                  @ekie_walters
-                </a>
-                <ExternalLink className="w-4 h-4 text-rose-gold" />
+          <div
+            ref={founderIntroRef}
+            className="relative hidden min-h-[100svh] w-full md:block lg:min-h-[100svh]"
+          >
+            <motion.div
+              style={shouldReduceMotion ? undefined : { y: founderLabelY }}
+              className="absolute left-1/2 -top-10 z-20 -translate-x-1/2 text-center"
+              initial={founderRevealInitial}
+              whileInView={founderRevealTarget}
+              viewport={{ once: true, amount: 0.18 }}
+              transition={founderRevealTransition}
+            >
+              <div className="mt-3 inline-flex px-4 ">
+                <p className="font-sans text-[1.05rem] font-semibold leading-[1.15] tracking-[-0.03em] text-[#171411]">
+                  {founderRoleLabel}
+                  <br />
+                  Panache Expo
+                </p>
               </div>
+            </motion.div>
+
+            <motion.div
+              style={shouldReduceMotion ? undefined : { y: founderLeftNameY }}
+              className="pointer-events-none absolute left-0 top-[7rem] z-0"
+              initial={founderRevealInitial}
+              whileInView={founderRevealTarget}
+              viewport={{ once: true, amount: 0.18 }}
+              transition={{ ...founderRevealTransition, delay: 0.06 }}
+            >
+              <h2 className="font-display text-[clamp(8rem,17vw,14rem)] font-bold leading-[0.82] tracking-[-0.09em] text-[#13110f]">
+                {founderNameParts[0]}
+              </h2>
+            </motion.div>
+            <motion.div
+              style={shouldReduceMotion ? undefined : { y: founderRightNameY }}
+              className="pointer-events-none absolute right-[1%] top-[20rem] z-0"
+              initial={founderRevealInitial}
+              whileInView={founderRevealTarget}
+              viewport={{ once: true, amount: 0.18 }}
+              transition={{ ...founderRevealTransition, delay: 0.14 }}
+            >
+              <h2 className="font-display text-[clamp(8rem,17vw,14rem)] font-bold leading-[0.82] tracking-[-0.09em] text-[#13110f]">
+                {founderNameParts[1]}
+              </h2>
+            </motion.div>
+
+            <div className="absolute left-1/2 top-0 z-10 flex-col h-[100svh] -translate-x-1/2 items-end justify-center">
+              <img
+                src={FounderCutout}
+                alt="Ekie Walters - Founder of Panache Expo"
+                className="h-full w-auto max-w-none object-contain"
+              />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[24vh] bg-gradient-to-t from-accent to-transparent" />
             </div>
 
-            <div className="space-y-4 text-muted-foreground leading-relaxed">
-              <p>
+            <motion.div
+              style={shouldReduceMotion ? undefined : { y: founderLeftCopyY }}
+              className="absolute left-[2%] top-[21rem] z-20 max-w-[19rem] space-y-6"
+              initial={founderRevealInitial}
+              whileInView={founderRevealTarget}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ ...founderRevealTransition, delay: 0.22 }}
+            >
+              <p className="font-sans text-[1.45rem] font-semibold leading-[1.05] tracking-[-0.04em] text-[#171411]/86">
                 Ekie Walters founded Panache Expo with a vision to elevate
                 beauty standards and empower professionals across Cameroon and
                 beyond.
               </p>
-              <p>
+              <p className="font-sans text-[1.15rem] leading-[1.28] text-[#2a2521]/78">
                 His passion for excellence and commitment to education has
                 transformed countless lives, creating a platform where beauty
                 professionals can learn, grow, and celebrate their craft
                 together.
               </p>
-              <p>
+            </motion.div>
+
+            <motion.div
+              style={shouldReduceMotion ? undefined : { y: founderRightCopyY }}
+              className="absolute right-[1.5%] top-[37rem] z-20 max-w-[21rem] text-right"
+              initial={founderRevealInitial}
+              whileInView={founderRevealTarget}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ ...founderRevealTransition, delay: 0.3 }}
+            >
+              <p className="font-sans text-[1.18rem] leading-[1.28] text-[#2a2521]/78">
                 Through Panache Expo, he continues to bridge the gap between
                 traditional beauty practices and modern techniques, fostering a
                 community that celebrates diversity, creativity, and
                 professional excellence.
               </p>
-            </div>
-
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <a
                 href="https://instagram.com/ekie_walters"
                 target="_blank"
                 rel="noopener noreferrer"
+                className="mt-7 inline-flex"
               >
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full sm:w-auto"
-                >
-                  <Instagram className="w-5 h-5 mr-2" />
+                <Button className="h-11 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white shadow-[0_16px_30px_rgba(15,11,8,0.15)] hover:bg-[#171411]/88">
+                  <Instagram className="mr-2 h-5 w-5" />
                   Follow on Instagram
                 </Button>
               </a>
-            </div>
+            </motion.div>
+
+            {/* <div className="pointer-events-none absolute left-1/2 top-[39.5rem] z-0 h-36 w-[min(46rem,58vw)] -translate-x-1/2 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.95),rgba(255,255,255,0.62)_42%,rgba(255,255,255,0)_72%)]" /> */}
           </div>
         </div>
 

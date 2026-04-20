@@ -1,634 +1,604 @@
+import { useRef } from "react";
+
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { SponsorsMarquee } from "@/components/SponsorsMarquee";
 import { Button } from "@/components/ui/button";
+import cyesEvent from "@/assets/CYES.jpeg";
 import cyesAwards from "@/assets/CYESCDAwards.jpeg";
-import cyesBackground from "@/assets/CYESBackground.jpeg";
-import cyesLogo from "@/assets/CYESLogo.jpeg";
+import cyesFrameLogo from "@/assets/CYESFrameLogo.svg";
+import honDonald from "@/assets/HonDonald.jpeg";
 import speaker1 from "@/assets/speaker1.jpeg";
 import speaker2 from "@/assets/speaker2.jpeg";
 import speaker3 from "@/assets/speaker3.jpeg";
 import speaker4 from "@/assets/speaker4.jpeg";
+import speaker5 from "@/assets/speaker5.jpeg";
+import { ArrowRight, Award, Lightbulb, Mic, Users } from "lucide-react";
 import {
-  ArrowRight,
-  ArrowUpRight,
-  Award,
-  Calendar,
-  Lightbulb,
-  MapPin,
-  Mic,
-  Target,
-  Trophy,
-  Users,
-} from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+  motion,
+  type MotionValue,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 import { Link } from "react-router-dom";
 
-const heroFacts = [
-  { value: "16 July", label: "summit and awards day" },
-  { value: "Buea", label: "Chariot Hotel venue" },
-  { value: "Youth", label: "entrepreneurship at the center" },
-];
+type Highlight = {
+  icon: typeof Mic;
+  title: string;
+  description: string;
+  accentClassName: string;
+};
 
-const summitPillars = [
+type TiltPhoto = {
+  image: string;
+  alt: string;
+  className: string;
+  parallaxY?: [number, number];
+  parallaxX?: [number, number];
+  parallaxScale?: [number, number];
+};
+
+type RevealCharacterProps = {
+  children: string;
+  progress: MotionValue<number>;
+  range: [number, number];
+  shouldReduceMotion: boolean;
+};
+
+const highlights: Highlight[] = [
   {
     icon: Mic,
-    title: "Keynote sessions",
+    title: "Keynote Sessions",
     description:
       "Direct insight from builders, business leaders, and voices shaping the next generation of enterprise in Cameroon.",
-    accent: "text-cyes-blue",
-    surface: "bg-cyes-blue/8",
+    accentClassName: "text-[#156D3B]",
   },
   {
     icon: Users,
-    title: "Real networking",
+    title: "Real Networking",
     description:
       "Founders, students, operators, partners, and mentors in one room with enough structure to create useful connections.",
-    accent: "text-cyes-green",
-    surface: "bg-cyes-green/8",
+    accentClassName: "text-[#1875D2]",
   },
   {
     icon: Lightbulb,
-    title: "Practical workshops",
+    title: "Practical Workshops",
     description:
       "Focused conversations around growth, visibility, digital opportunity, and what it takes to turn ideas into traction.",
-    accent: "text-cyes-yellow",
-    surface: "bg-cyes-yellow/10",
+    accentClassName: "text-[#CC2129]",
   },
   {
     icon: Award,
-    title: "Recognition on stage",
+    title: "Recognition on Stage",
     description:
       "The summit culminates in awards that spotlight youth entrepreneurship, community leadership, and impact.",
-    accent: "text-cyes-red",
-    surface: "bg-cyes-red/8",
+    accentClassName: "text-[#FFB200]",
   },
 ];
 
-const pathways = [
+const heroPhotos: TiltPhoto[] = [
   {
-    label: "Awards",
-    title: "Honor the voices and ventures moving youth enterprise forward.",
-    description:
-      "Explore the CYECD Awards, categories, jury structure, and what the recognition platform stands for this year.",
-    to: "/cyes/awards",
-    cta: "Explore awards",
-    tone:
-      "border-cyes-green/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(255,255,255,0.7))]",
-    accent: "text-cyes-green",
+    image: speaker2,
+    alt: "CYES beauty portrait",
+    className: "left-[56%] top-[4%] w-[20%] rotate-[-4deg]",
+    parallaxY: [0, -44],
+    parallaxX: [0, -12],
   },
   {
-    label: "Pitch Competition",
-    title: "Step into the sharper competitive lane for founders with ideas to prove.",
-    description:
-      "The CYES pitch competition gives emerging businesses a more focused path into attention, structure, and opportunity.",
-    to: "/cyes/pitch-competition",
-    cta: "View pitch competition",
-    tone:
-      "border-cyes-blue/20 bg-[linear-gradient(180deg,rgba(17,88,211,0.08),rgba(255,255,255,0.86))]",
-    accent: "text-cyes-blue",
+    image: cyesAwards,
+    alt: "CYES awards audience",
+    className: "left-[27%] top-[39%] w-[22%] rotate-[10deg]",
+    parallaxY: [0, -22],
+    parallaxX: [0, 10],
   },
   {
-    label: "Nominations",
-    title: "Put forward the people and organizations making meaningful impact.",
-    description:
-      "From entrepreneurs to community leaders, nominations help the platform reflect the people actually building the future.",
-    to: "/cyes/nominations",
-    cta: "Open nominations",
-    tone:
-      "border-cyes-yellow/25 bg-[linear-gradient(180deg,rgba(223,171,8,0.12),rgba(255,255,255,0.86))]",
-    accent: "text-cyes-yellow",
+    image: speaker1,
+    alt: "CYES speaker portrait",
+    className: "left-[56%] top-[73%] w-[22%] rotate-[6deg]",
+    parallaxY: [0, 26],
+    parallaxX: [0, -8],
+  },
+  {
+    image: cyesEvent,
+    alt: "CYES event atmosphere",
+    className: "left-[62%] top-[18%] w-[35%] rotate-[0deg]",
+    parallaxY: [0, -58],
+    parallaxScale: [1, 1.035],
   },
 ];
 
-const speakers = [
-  { image: speaker1, label: "Speaker" },
-  { image: speaker2, label: "Speaker" },
-  { image: speaker3, label: "Speaker" },
-  { image: speaker4, label: "Speaker" },
+const heroSupportPhotos: TiltPhoto[] = [
+  {
+    image: speaker4,
+    alt: "CYES support portrait one",
+    className: "left-[-5%] top-[18%] w-[15%] rotate-[-8deg]",
+    parallaxY: [0, -18],
+    parallaxX: [0, -10],
+  },
+  {
+    image: speaker3,
+    alt: "CYES support keynote image",
+    className: "left-[7%] top-[70%] w-[20%] rotate-[6deg]",
+    parallaxY: [0, 24],
+    parallaxX: [0, 8],
+  },
+  {
+    image: speaker5,
+    alt: "CYES support guest image",
+    className: "left-[25%] top-[0%] w-[22%] rotate-[-5deg]",
+    parallaxY: [0, -34],
+    parallaxX: [0, 12],
+  },
+  {
+    image: honDonald,
+    alt: "Featured summit voice",
+    className: "left-[43%] top-[70%] w-[22%] rotate-[-8deg]",
+    parallaxY: [0, 30],
+    parallaxX: [0, -6],
+  },
 ];
 
-const editorialMotion = {
-  ease: [0.22, 1, 0.36, 1] as const,
-  duration: 0.9,
-};
+const spotlightPhotos: TiltPhoto[] = [
+  {
+    image: speaker1,
+    alt: "Featured speaker portrait",
+    className:
+      "left-[18%] top-[7%] z-20 w-[44%] rotate-[-4deg] rounded-[2rem]",
+  },
+  {
+    image: speaker2,
+    alt: "Young entrepreneur portrait",
+    className:
+      "left-[60%] top-[20%] z-10 w-[31%] rotate-[6deg] rounded-[2rem]",
+  },
+  {
+    image: speaker5,
+    alt: "Speaker card detail",
+    className:
+      "left-[31%] top-[60%] z-30 w-[24%] rotate-[-8deg] rounded-[1.8rem]",
+  },
+  {
+    image: honDonald,
+    alt: "Industry leader portrait",
+    className:
+      "left-[53%] top-[54%] z-20 w-[35%] rotate-[9deg] rounded-[2rem]",
+  },
+];
 
-const lightSurfaceClasses =
-  "rounded-[2rem] border border-black/10 bg-white/72 shadow-[0_24px_60px_rgba(17,16,14,0.08)] backdrop-blur-sm";
+const statementCards = [
+  {
+    number: "01.",
+    title: "Innovation",
+    description:
+      "Encouraging fresh ideas, bold enterprise, and practical solutions that create value for young Cameroonians.",
+    className: "bg-[#eef5fb] md:-rotate-[0deg]",
+  },
+  {
+    number: "02.",
+    title: "Empowerment",
+    description:
+      "Equipping young founders with mentorship, visibility, tools, and confidence to build sustainable ventures.",
+    className: "bg-[#dfeefb] md:rotate-[0deg]",
+  },
+  {
+    number: "03.",
+    title: "Recognition",
+    description:
+      "Celebrating and rewarding outstanding entrepreneurial achievements.",
+    className: "bg-[#d4e8fb] md:-rotate-[0deg]",
+  },
+];
+const aboutCyesDescription =
+  "The Cameroon Youth Entrepreneurial Summit & Awards is a flagship initiative dedicated to nurturing entrepreneurial talent, empowering innovation, and celebrating the achievements of young Cameroonian entrepreneurs.";
 
-const SectionLabel = ({ children }: { children: ReactNode }) => (
-  <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-cyes-green">
-    {children}
-  </p>
+const TiltCard = ({ image, alt, className }: TiltPhoto) => (
+  <div
+    className={`absolute aspect-[4/5] overflow-hidden rounded-[0.9rem] bg-white shadow-[0_22px_50px_rgba(17,16,14,0.1)] md:rounded-[1.05rem] ${className}`}
+  >
+    <img src={image} alt={alt} className="h-full w-full object-cover" />
+  </div>
 );
 
-const CYESPage = () => {
-  const shouldReduceMotion = useReducedMotion();
+type ParallaxTiltCardProps = TiltPhoto & {
+  progress: MotionValue<number>;
+};
+
+const ParallaxTiltCard = ({
+  image,
+  alt,
+  className,
+  progress,
+  parallaxX = [0, 0],
+  parallaxY = [0, 0],
+  parallaxScale = [1, 1],
+}: ParallaxTiltCardProps) => {
+  const x = useTransform(progress, [0, 1], parallaxX);
+  const y = useTransform(progress, [0, 1], parallaxY);
+  const scale = useTransform(progress, [0, 1], parallaxScale);
 
   return (
-    <div className="min-h-screen bg-[#f4f6f1] text-[#171411]">
+    <motion.div
+      style={{ x, y, scale }}
+      className={`absolute aspect-[4/5] overflow-hidden rounded-[0.9rem] bg-white shadow-[0_22px_50px_rgba(17,16,14,0.1)] will-change-transform md:rounded-[1.05rem] ${className}`}
+    >
+      <img src={image} alt={alt} className="h-full w-full object-cover" />
+    </motion.div>
+  );
+};
+
+const SpeakerSpotlightCard = ({ image, alt, className }: TiltPhoto) => (
+  <div
+    className={`absolute aspect-[0.86/1] overflow-hidden bg-white shadow-[0_26px_60px_rgba(17,16,14,0.14)] ${className}`}
+  >
+    <img src={image} alt={alt} className="h-full w-full object-cover" />
+  </div>
+);
+
+const RevealCharacter = ({
+  children,
+  progress,
+  range,
+  shouldReduceMotion,
+}: RevealCharacterProps) => {
+  const opacity = useTransform(
+    progress,
+    range,
+    shouldReduceMotion ? [1, 1] : [0, 1],
+  );
+  const y = useTransform(
+    progress,
+    range,
+    shouldReduceMotion ? [0, 0] : [16, 0],
+  );
+
+  if (children === " ") {
+    return <span className="w-[0.3em]" aria-hidden="true" />;
+  }
+
+  return (
+    <span className="relative mt-1 inline-block align-top">
+      <span className="absolute inset-0 text-[#f7f8f3]">{children}</span>
+      <motion.span style={{ opacity, y }} className="relative inline-block">
+        {children}
+      </motion.span>
+    </span>
+  );
+};
+
+const getHeadingRevealProps = (shouldReduceMotion: boolean) => ({
+  initial: shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 34 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.65 } as const,
+  transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+});
+
+const AboutCYESSection = () => {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const shouldReduceMotion = useReducedMotion();
+  const words = aboutCyesDescription.split(" ");
+  const totalCharacters = Math.max(aboutCyesDescription.length, 1);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 82%", "end 38%"],
+  });
+
+  const revealRange = useTransform(
+    scrollYProgress,
+    [0.08, 0.72],
+    shouldReduceMotion ? [1, 1] : [0, 1],
+  );
+
+  return (
+    <section
+      ref={sectionRef}
+      className="mx-auto mt-24 max-w-6xl px-6 text-center md:px-24"
+    >
+      <motion.h2
+        {...getHeadingRevealProps(shouldReduceMotion)}
+        className="font-sans text-[clamp(2.5rem,4.4vw,3.8rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#171411]"
+      >
+        About <span className="font-display">CYES</span> 
+      </motion.h2>
+
+      <p className="mx-auto mt-6 flex max-w-[90rem] flex-wrap justify-center font-sans font-semibold text-[1.2rem] leading-[1.2] text-[#171411]/76 md:text-[2.3rem]">
+        {words.map((word, wordIndex) => {
+          const consumedCharacters = words
+            .slice(0, wordIndex)
+            .reduce((count, currentWord) => count + currentWord.length + 1, 0);
+
+          return (
+            <span
+              key={`${word}-${wordIndex}`}
+              className="mr-[0.3em] inline-flex whitespace-nowrap"
+            >
+              {Array.from(word).map((character, characterIndex) => {
+                const start =
+                  (consumedCharacters + characterIndex) / totalCharacters;
+                const end = start + 1 / totalCharacters;
+
+                return (
+                  <RevealCharacter
+                    key={`${character}-${wordIndex}-${characterIndex}`}
+                    progress={revealRange}
+                    range={[start, end]}
+                    shouldReduceMotion={shouldReduceMotion}
+                  >
+                    {character}
+                  </RevealCharacter>
+                );
+              })}
+            </span>
+          );
+        })}
+      </p>
+    </section>
+  );
+};
+
+const CYESPage = () => {
+  const heroSectionRef = useRef<HTMLElement | null>(null);
+  const shouldReduceMotion = useReducedMotion();
+  const { scrollYProgress: heroScrollProgress } = useScroll({
+    target: heroSectionRef,
+    offset: ["start start", "end start"],
+  });
+
+  return (
+    <div className="min-h-screen bg-[#f7f8f3] text-[#171411]">
       <Header />
 
-      <main className="overflow-hidden">
-        <section className="relative px-4 pb-20 pt-32 md:px-6 md:pb-24 md:pt-40">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-[46rem] bg-[radial-gradient(circle_at_10%_18%,rgba(37,175,95,0.18),transparent_28%),radial-gradient(circle_at_90%_16%,rgba(17,88,211,0.16),transparent_26%),radial-gradient(circle_at_72%_56%,rgba(223,171,8,0.13),transparent_16%),linear-gradient(180deg,#f8faf5_0%,#f4f6f1_100%)]" />
-          <div className="pointer-events-none absolute right-0 top-0 h-[40rem] w-[38rem] bg-[linear-gradient(270deg,rgba(17,88,211,0.08),transparent_70%)]" />
-          <div className="pointer-events-none absolute right-[-10rem] top-[7rem] h-[30rem] w-[30rem] overflow-hidden rounded-full blur-3xl opacity-20">
-            <img
-              src={cyesBackground}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          </div>
+      <main className="pb-20 pt-28 md:pb-24 md:pt-36">
+        <div className="absolute left-0 top-0 px-6 py-4 md:px-24 md:py-6">
+          <img
+            src={cyesFrameLogo}
+            alt="CYES logo"
+            className="pointer-events-none  z-30 h-10 w-auto object-contain md:h-12"
+          />
+        </div>
+        <section
+          ref={heroSectionRef}
+          className="relative w-full overflow-visible px-6 md:px-24"
+        >
+          <div className="relative mt-12 min-h-[42rem] sm:min-h-[46rem] md:min-h-[62rem] lg:min-h-[48rem] overflow-hidden">
+            <div className="relative z-20 flex justify-start">
+              <div className="max-w-[32rem]">
+                <motion.h1
+                  {...getHeadingRevealProps(shouldReduceMotion)}
+                  className="leading-none text-[#171411] text-[clamp(2.35rem,11vw,3.35rem)] md:text-[clamp(3.1rem,5.4vw,5.4rem)]"
+                >
+                  <div className="flex gap-4">
+                    <span className="block font-sans   tracking-[-0.07em]">
+                      Cameroon
+                    </span>
+                    <span className="mt-1 block font-sans  tracking-[-0.07em] text-[#1875D2]">
+                      Youth
+                    </span>
+                  </div>
 
-          <div className="relative mx-auto grid max-w-7xl gap-10 xl:grid-cols-[0.9fr,1.1fr] xl:items-center">
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 36 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={editorialMotion}
-              className="max-w-[42rem]"
-            >
-              <div className="inline-flex items-center gap-3 rounded-full border border-black/8 bg-white/70 px-3 py-3 shadow-[0_20px_50px_rgba(17,16,14,0.06)] backdrop-blur-sm">
-                <img
-                  src={cyesLogo}
-                  alt="CYES logo"
-                  className="h-11 w-11 rounded-full object-cover"
-                />
-                <div className="text-left">
-                  <p className="font-sans text-[0.66rem] font-semibold uppercase tracking-[0.24em] text-cyes-green">
-                    Cameroon Youths
-                  </p>
-                  <p className="font-sans text-sm font-semibold tracking-[-0.03em] text-[#171411]">
-                    Entrepreneurial Summit & Awards
-                  </p>
+                  <div className="flex gap-4">
+                    <span className="block font-display  tracking-[-0.07em] text-[#156D3B]">
+                      Summit
+                    </span>
+                    <span className="block font-display text-[clamp(2.1rem,9.5vw,3rem)] tracking-[-0.07em] text-[#CC2129] md:text-[clamp(2.8rem,5vw,4.9rem)]">
+                      &amp;
+                    </span>
+                    <span className="block font-display  tracking-[-0.07em] text-[#FFB200]">
+                      Awards
+                    </span>
+                  </div>
+                </motion.h1>
+
+                <p className="mt-5 font-sans text-[1.4rem] leading-relaxed font-semibold text-[#171411]/72">
+                  Empowering the next generation of Cameroonian entrepreneurs
+                  through mentorship, networking, and recognition of outstanding
+                  achievements.
+                </p>
+
+                <Link to="/cyes/register" className="mt-7 inline-flex">
+                  <Button className="h-11 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white hover:bg-[#171411]/90">
+                    Register now
+                  </Button>
+                </Link>
+
+                <div className="relative mt-12 flex h-[19rem] items-center justify-center md:hidden">
+                  <div className="absolute h-[17rem] w-[min(72vw,16rem)] rotate-[20deg] overflow-hidden rounded-[0.85rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)]">
+                    <img
+                      src={cyesEvent}
+                      alt="CYES summit hero image"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <h1 className="mt-6 font-sans text-[clamp(3.7rem,8vw,7.4rem)] font-semibold leading-[0.82] tracking-[-0.085em] text-[#171411]">
-                CAMEROON
-                <span className="block text-cyes-red">YOUTH</span>
-                <span className="block font-display text-[0.82em] tracking-[-0.05em] text-cyes-blue">
-                  Summit & Awards
+            <div className="pointer-events-none absolute inset-x-0 left-[-3%] top-[19rem] z-10 hidden h-[12.5rem] overflow-visible md:block md:left-0 md:top-[22rem] md:h-[12.5rem]">
+              {heroSupportPhotos.map((photo) => (
+                <ParallaxTiltCard
+                  key={photo.alt + photo.className}
+                  {...photo}
+                  progress={heroScrollProgress}
+                />
+              ))}
+            </div>
+
+            <div className="pointer-events-none absolute left-[5%] right-[-10%] top-[20.5rem] z-10 hidden h-[31rem] overflow-visible md:block md:left-[14%] md:right-[-6%] md:top-[24rem] md:h-[38rem] lg:left-[28%] lg:right-[-8%] lg:top-[-0.5rem] lg:h-[41rem]">
+              {heroPhotos.map((photo) => (
+                <ParallaxTiltCard
+                  key={photo.alt + photo.className}
+                  {...photo}
+                  progress={heroScrollProgress}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <AboutCYESSection />
+
+        <section className="mt-16 w-full px-2 md:px-6">
+          <div className="space-y-3 px-2 py-2 md:-space-y-4">
+            {statementCards.map((card, index) => (
+              <article
+                key={card.title}
+                className={[
+                  "group relative overflow-hidden px-5 py-5 shadow-[0_18px_40px_rgba(17,16,14,0.05)] transition-[transform,box-shadow,padding] duration-500 ease-out md:px-24 md:py-7",
+                  "[clip-path:polygon(0_0,100%_0,98%_100%,2%_100%)]",
+                  card.className,
+                  index > 0 ? "md:-mt-2" : "",
+                ].join(" ")}
+              >
+                <span
+                  className="font-sans text-xl font-medium tracking-[-0.04em] text-[#171411] md:absolute md:text-2xl"
+                  style={{ left: `${3 + index * 30}%` }}
+                >
+                  {card.number}
                 </span>
-              </h1>
 
-              <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-cyes-yellow/14 px-4 py-2 font-sans text-sm font-semibold text-[#171411]">
-                <span className="h-2.5 w-2.5 rounded-full bg-cyes-yellow" />
-                CYES 2026
-              </div>
+                <motion.h3
+                  {...getHeadingRevealProps(shouldReduceMotion)}
+                  className="mt-2 font-sans text-[clamp(4.4rem,14vw,12.5rem)] font-semibold leading-[0.84] tracking-[-0.095em] text-[#171411]"
+                >
+                  {card.title}
+                </motion.h3>
 
-              <p className="mt-7 max-w-[35rem] font-sans text-[clamp(1.08rem,2vw,1.35rem)] leading-[1.45] text-[#171411]/72">
-                A sharper platform for youth entrepreneurship, ambition, and recognition
-                in Cameroon, built around summit conversations, live networking, and an
-                awards program that celebrates visible impact.
+                <div className="mt-5 grid grid-rows-[1fr] transition-[grid-template-rows,opacity,transform] duration-500 ease-out md:grid-rows-[0fr] md:translate-y-4 md:opacity-0 md:group-hover:grid-rows-[1fr] md:group-hover:translate-y-0 md:group-hover:opacity-100">
+                  <div className="overflow-hidden">
+                    <p className="max-w-[28rem] font-sans text-base leading-relaxed text-[#171411]/72 md:ml-auto md:text-right">
+                      <span className="mr-2 align-top text-lg text-[#171411]">
+                        ↳
+                      </span>
+                      {card.description}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-20 max-w-[90rem] px-6 md:px-24">
+          <div className="grid gap-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-start">
+            <div>
+              <motion.h2
+                {...getHeadingRevealProps(shouldReduceMotion)}
+                className="text-[#171411]"
+              >
+                <span className="block font-sans text-[clamp(2.8rem,5vw,4.9rem)] font-semibold leading-[0.92] tracking-[-0.075em]">
+                  Summit
+                </span>
+                <span className="block font-display text-[clamp(2.8rem,5vw,5rem)] leading-[0.9] tracking-[-0.055em]">
+                  Highlights
+                </span>
+              </motion.h2>
+            </div>
+
+            <p className="max-w-[42rem] font-sans text-[clamp(1.25rem,2vw,1.75rem)] font-medium leading-[1.34] tracking-[-0.04em] text-[#171411] lg:ml-auto">
+              CYES should feel energetic, but also useful. The goal is not
+              noise. It is gathering the right people, ideas, and recognition
+              structures in one place.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {highlights.map((highlight) => {
+              const Icon = highlight.icon;
+
+              return (
+                <article
+                  key={highlight.title}
+                  className="rounded-[2rem] bg-[#eef2f6] px-6 py-7 shadow-[0_16px_36px_rgba(17,16,14,0.045)]"
+                >
+                  <Icon className={`h-10 w-10 ${highlight.accentClassName}`} />
+                  <motion.h3
+                    {...getHeadingRevealProps(shouldReduceMotion)}
+                    className="mt-8 font-sans text-[1.2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-[#171411] md:text-[1.35rem]"
+                  >
+                    {highlight.title}
+                  </motion.h3>
+                  <p className="mt-6 font-sans text-[1.02rem] leading-[1.42] tracking-[-0.02em] text-[#171411]/82">
+                    {highlight.description}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mx-auto mt-24 grid w-full gap-12 px-6 md:px-24 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div className="max-w-[31rem]">
+            <p className="font-sans text-[0.92rem] font-semibold uppercase tracking-[0.08em] text-[#156D3B]">
+              Featured Speakers
+            </p>
+            <motion.h2
+              {...getHeadingRevealProps(shouldReduceMotion)}
+              className="mt-5 font-sans text-[clamp(1.95rem,4vw,3.7rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-[#171411]"
+            >
+              A summit feels different when the people shaping it are visible.
+              Take a look at our speakers.
+            </motion.h2>
+
+            <p className="mt-6 max-w-[28rem] font-sans text-[1rem] leading-[1.42] tracking-[-0.025em] text-[#171411]/76 md:text-[1.5rem]">
+              Learn from industry leaders and successful entrepreneurs who will
+              share their insights and experiences.
+            </p>
+
+            <Link to="/cyes/contact" className="mt-8 inline-flex">
+              <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-base font-semibold text-white hover:bg-[#171411]/90">
+                <span className="mr-2 text-lg leading-none">↳</span>
+                See more...
+              </Button>
+            </Link>
+          </div>
+
+          <div className="relative mx-auto h-[25rem] w-full max-w-[48rem] overflow-visible sm:h-[31rem] md:h-[35rem]">
+            {spotlightPhotos.map((photo) => (
+              <SpeakerSpotlightCard
+                key={photo.alt + photo.className}
+                {...photo}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="px-6 md:px-24">
+          <div className="mx-auto mt-20 grid max-w-6xl gap-8 rounded-[2rem] border border-black/8 bg-white/56 px-6 py-8 md:grid-cols-[0.72fr_1.28fr] md:px-8">
+            <div>
+              <motion.h2
+                {...getHeadingRevealProps(shouldReduceMotion)}
+                className="font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-[#171411]"
+              >
+                Join the summit. Enter the room prepared.
+              </motion.h2>
+            </div>
+
+            <div>
+              <p className="max-w-[34rem] font-sans text-[1rem] leading-relaxed text-[#171411]/70">
+                Whether you are coming to learn, connect, nominate, pitch, or be
+                recognized, CYES should feel like a platform with direction and
+                a clear path into action.
               </p>
 
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link to="/cyes/register">
-                  <Button className="h-14 rounded-full bg-[#171411] px-8 font-sans text-base font-semibold text-white hover:bg-[#171411]/92">
-                    Register for CYES
+                  <Button className="h-11 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white hover:bg-[#171411]/90">
+                    Register now
                   </Button>
                 </Link>
 
                 <Link
-                  to="/cyes/pitch-competition"
-                  className="inline-flex h-14 items-center justify-center gap-2 rounded-full border border-black/12 bg-white/58 px-7 font-sans text-base font-semibold text-[#171411] backdrop-blur-sm transition-colors hover:bg-white/82"
+                  to="/cyes/contact"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-6 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-[#f0f2ed]"
                 >
-                  Explore pitch competition
+                  Contact the team
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-
-              <div className="mt-10 grid gap-3 sm:grid-cols-3">
-                {heroFacts.map((fact, index) => (
-                  <motion.div
-                    key={fact.label}
-                    initial={
-                      shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }
-                    }
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      ...editorialMotion,
-                      delay: shouldReduceMotion ? 0 : 0.08 + index * 0.08,
-                    }}
-                    className={`${lightSurfaceClasses} px-5 py-5`}
-                  >
-                    <p className="font-sans text-[1.9rem] font-semibold leading-none tracking-[-0.06em] text-[#171411]">
-                      {fact.value}
-                    </p>
-                    <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/58">
-                      {fact.label}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="mt-9 flex flex-wrap gap-6 text-sm font-medium text-[#171411]/64">
-                <div className="inline-flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-cyes-green" />
-                  July 16th 2026
-                </div>
-                <div className="inline-flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-cyes-blue" />
-                  Chariot Hotel, Buea
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 34 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.12 }}
-              className="mx-auto w-full max-w-[46rem]"
-            >
-              <div className="grid gap-4 lg:grid-cols-[1.08fr,0.92fr]">
-                <div className="relative flex flex-col gap-4">
-                  <motion.div
-                    initial={
-                      shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }
-                    }
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.18 }}
-                    className="relative overflow-hidden rounded-[2.25rem] border border-black/10 bg-white/70 shadow-[0_30px_90px_rgba(17,16,14,0.14)]"
-                  >
-                    <img
-                      src={cyesAwards}
-                      alt="CYES community and summit moment"
-                      className="h-full min-h-[24rem] w-full object-cover md:min-h-[30rem]"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/72 via-black/20 to-transparent px-6 pb-6 pt-14 text-white">
-                      <p className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-cyes-yellow">
-                        Summit atmosphere
-                      </p>
-                      <p className="mt-3 max-w-[22rem] font-sans text-[1.05rem] font-medium leading-[1.28] tracking-[-0.03em]">
-                        A room built for visibility, ambition, and the public celebration of youth enterprise.
-                      </p>
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                    initial={
-                      shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }
-                    }
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.28 }}
-                    className="rounded-[2rem] bg-[#171411] px-6 py-6 text-white shadow-[0_28px_80px_rgba(17,16,14,0.24)]"
-                  >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.26em] text-cyes-yellow">
-                          This year
-                        </p>
-                        <p className="mt-4 font-sans text-[1.55rem] font-semibold leading-[1.02] tracking-[-0.05em]">
-                          A clearer room for founders, students, operators, and impact voices.
-                        </p>
-                      </div>
-                      <div className="grid gap-3 sm:pl-4">
-                        <div className="rounded-[1.2rem] border border-white/12 bg-white/[0.06] px-4 py-4">
-                          <p className="font-sans text-sm font-semibold text-white">Summit</p>
-                          <p className="mt-1 font-sans text-sm leading-relaxed text-white/66">
-                            Keynotes, networking, workshops, and community energy.
-                          </p>
-                        </div>
-                        <div className="rounded-[1.2rem] border border-white/12 bg-white/[0.06] px-4 py-4">
-                          <p className="font-sans text-sm font-semibold text-white">Awards</p>
-                          <p className="mt-1 font-sans text-sm leading-relaxed text-white/66">
-                            Recognition for youth entrepreneurship and visible impact.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <motion.div
-                    initial={
-                      shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-                    }
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.24 }}
-                    className="overflow-hidden rounded-[2rem] border border-black/10 bg-white/70 shadow-[0_28px_80px_rgba(17,16,14,0.12)]"
-                  >
-                    <img
-                      src={speaker3}
-                      alt="CYES speaker moment"
-                      className="h-full min-h-[17rem] w-full object-cover"
-                    />
-                  </motion.div>
-
-                  <div className="grid gap-4 sm:grid-cols-[1fr,0.88fr] lg:grid-cols-1">
-                    <motion.div
-                      initial={
-                        shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-                      }
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.3 }}
-                      className="overflow-hidden rounded-[2rem] bg-cyes-blue px-6 py-6 text-white shadow-[0_28px_80px_rgba(17,88,211,0.22)]"
-                    >
-                      <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.26em] text-cyes-yellow">
-                        Venue & timing
-                      </p>
-                      <h2 className="mt-4 font-sans text-[clamp(1.45rem,2vw,1.95rem)] font-semibold leading-[1] tracking-[-0.05em]">
-                        Chariot Hotel, Buea.
-                      </h2>
-                      <p className="mt-4 font-sans text-[0.96rem] leading-relaxed text-white/76">
-                        July 16th 2026. Built as a full summit day, not just a brief ceremony.
-                      </p>
-                    </motion.div>
-
-                    <motion.div
-                      initial={
-                        shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-                      }
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.36 }}
-                      className="flex flex-col justify-between rounded-[2rem] border border-black/10 bg-white/72 px-6 py-6 shadow-[0_28px_80px_rgba(17,16,14,0.12)]"
-                    >
-                      <div>
-                        <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-cyes-green">
-                          Identity
-                        </p>
-                        <p className="mt-4 font-sans text-[1.45rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
-                          Entrepreneurial energy, national context, and youth-first visibility.
-                        </p>
-                      </div>
-                      <img
-                        src={cyesLogo}
-                        alt="CYES identity"
-                        className="mt-6 h-28 w-28 rounded-full object-cover"
-                      />
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        <section className="px-4 py-16 md:px-6 md:py-24">
-          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.9fr,1.1fr]">
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.28 }}
-              transition={editorialMotion}
-            >
-              <SectionLabel>Why CYES matters</SectionLabel>
-              <h2 className="mt-4 max-w-[11ch] font-sans text-[clamp(2.8rem,5vw,4.8rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#171411]">
-                Not just another event. A youth-enterprise platform.
-              </h2>
-            </motion.div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <motion.div
-                initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.28 }}
-                transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.06 }}
-                className={`${lightSurfaceClasses} p-7`}
-              >
-                <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-cyes-green">
-                  Mission
-                </p>
-                <p className="mt-5 font-sans text-[1.25rem] font-medium leading-[1.28] tracking-[-0.04em] text-[#171411]">
-                  CYES exists to give young Cameroonian entrepreneurs a stronger public
-                  stage for growth, learning, and visibility.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.28 }}
-                transition={{ ...editorialMotion, delay: shouldReduceMotion ? 0 : 0.12 }}
-                className="rounded-[2rem] bg-[linear-gradient(180deg,rgba(37,175,95,0.1),rgba(17,88,211,0.14))] px-7 py-7 shadow-[0_26px_80px_rgba(17,88,211,0.1)]"
-              >
-                <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-cyes-blue">
-                  What it creates
-                </p>
-                <p className="mt-5 font-sans text-[1.25rem] font-medium leading-[1.28] tracking-[-0.04em] text-[#171411]">
-                  A live meeting point between ambition, opportunity, policy, community,
-                  and recognition.
-                </p>
-              </motion.div>
             </div>
           </div>
         </section>
 
-        <section className="px-4 py-20 md:px-6 md:py-24">
-          <div className="mx-auto max-w-7xl">
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={editorialMotion}
-              className="grid gap-5 lg:grid-cols-[0.82fr,1.18fr] lg:items-end"
-            >
-              <div>
-                <SectionLabel>The summit structure</SectionLabel>
-                <h2 className="mt-4 max-w-[12ch] font-sans text-[clamp(2.8rem,5vw,4.8rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#171411]">
-                  Four reasons the room matters.
-                </h2>
-              </div>
-
-              <p className="max-w-[36rem] font-sans text-[1.05rem] leading-relaxed text-[#171411]/66 lg:ml-auto">
-                CYES should feel energetic, but also useful. The goal is not noise. It is
-                gathering the right people, ideas, and recognition structures in one place.
-              </p>
-            </motion.div>
-
-            <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {summitPillars.map((pillar, index) => {
-                const Icon = pillar.icon;
-
-                return (
-                  <motion.article
-                    key={pillar.title}
-                    initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.18 }}
-                    transition={{
-                      ...editorialMotion,
-                      delay: shouldReduceMotion ? 0 : index * 0.04,
-                    }}
-                    className={`${lightSurfaceClasses} min-h-[16rem] p-6`}
-                  >
-                    <div className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl ${pillar.surface}`}>
-                      <Icon className={`h-7 w-7 ${pillar.accent}`} />
-                    </div>
-                    <h3 className="mt-5 font-sans text-[1.4rem] font-semibold leading-[1.02] tracking-[-0.05em] text-[#171411]">
-                      {pillar.title}
-                    </h3>
-                    <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/62">
-                      {pillar.description}
-                    </p>
-                  </motion.article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="px-4 py-20 md:px-6 md:py-24">
-          <div className="mx-auto max-w-7xl">
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={editorialMotion}
-            >
-              <SectionLabel>Main pathways</SectionLabel>
-              <h2 className="mt-4 max-w-[11ch] font-sans text-[clamp(2.8rem,5vw,4.8rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#171411]">
-                Enter through the lane that fits your role.
-              </h2>
-            </motion.div>
-
-            <div className="mt-10 grid gap-4 lg:grid-cols-3">
-              {pathways.map((pathway, index) => (
-                <motion.article
-                  key={pathway.title}
-                  initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 26 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.22 }}
-                  transition={{
-                    ...editorialMotion,
-                    delay: shouldReduceMotion ? 0 : index * 0.05,
-                  }}
-                  className={`rounded-[2rem] border p-7 shadow-[0_24px_60px_rgba(17,16,14,0.08)] ${pathway.tone}`}
-                >
-                  <p className={`font-sans text-[0.72rem] font-semibold uppercase tracking-[0.24em] ${pathway.accent}`}>
-                    {pathway.label}
-                  </p>
-                  <h3 className="mt-4 font-sans text-[1.55rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
-                    {pathway.title}
-                  </h3>
-                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/64">
-                    {pathway.description}
-                  </p>
-                  <Link
-                    to={pathway.to}
-                    className="mt-8 inline-flex items-center gap-2 font-sans text-sm font-semibold text-[#171411] transition-opacity hover:opacity-65"
-                  >
-                    {pathway.cta}
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                </motion.article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="px-4 py-20 md:px-6 md:py-24">
-          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.86fr,1.14fr] lg:items-start">
-            <motion.div
-              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.28 }}
-              transition={editorialMotion}
-            >
-              <SectionLabel>Faces in the room</SectionLabel>
-              <h2 className="mt-4 max-w-[10ch] font-sans text-[clamp(2.8rem,5vw,4.8rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#171411]">
-                A summit feels different when the people shaping it are visible.
-              </h2>
-              <p className="mt-5 max-w-[31rem] font-sans text-[1.05rem] leading-relaxed text-[#171411]/68">
-                Speakers, partners, jury voices, and youth participants all contribute to the
-                event’s credibility. The page should show that CYES is built around people, not
-                just program text.
-              </p>
-            </motion.div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {speakers.map((speaker, index) => (
-                <motion.div
-                  key={`${speaker.label}-${index}`}
-                  initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    ...editorialMotion,
-                    delay: shouldReduceMotion ? 0 : index * 0.04,
-                  }}
-                  className="overflow-hidden rounded-[2rem] border border-black/10 bg-white/72 shadow-[0_24px_60px_rgba(17,16,14,0.08)]"
-                >
-                  <div className="aspect-[0.98/1]">
-                    <img
-                      src={speaker.image}
-                      alt={`CYES speaker ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="px-4 pb-20 pt-8 md:px-6 md:pb-28">
-          <motion.div
-            initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 26 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={editorialMotion}
-            className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] border border-cyes-blue/12 bg-white/72 px-6 py-8 shadow-[0_30px_120px_rgba(17,16,14,0.08)] md:px-10 md:py-12"
-          >
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_12%_22%,rgba(37,175,95,0.13),transparent_36%),radial-gradient(circle_at_84%_20%,rgba(17,88,211,0.13),transparent_28%),radial-gradient(circle_at_62%_90%,rgba(223,171,8,0.1),transparent_22%)]" />
-
-            <div className="relative grid gap-8 lg:grid-cols-[0.95fr,1.05fr] lg:items-end">
-              <div>
-                <SectionLabel>Final call</SectionLabel>
-                <h2 className="mt-4 max-w-[10ch] font-sans text-[clamp(2.8rem,5vw,4.8rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#171411]">
-                  Join the summit. Enter the room prepared.
-                </h2>
-              </div>
-
-              <div className="lg:ml-auto lg:max-w-[38rem]">
-                <p className="font-sans text-[1.08rem] leading-relaxed text-[#171411]/68">
-                  Whether you are coming to learn, connect, nominate, pitch, or be recognized,
-                  CYES should feel like a platform with direction, not just another event date.
-                </p>
-
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <Link to="/cyes/register">
-                    <Button className="h-14 rounded-full bg-[#171411] px-8 font-sans text-base font-semibold text-white hover:bg-[#171411]/92">
-                      Register now
-                    </Button>
-                  </Link>
-
-                  <Link
-                    to="/cyes/contact"
-                    className="inline-flex h-14 items-center justify-center gap-2 rounded-full border border-black/12 bg-white/60 px-7 font-sans text-base font-semibold text-[#171411] backdrop-blur-sm transition-colors hover:bg-white/82"
-                  >
-                    Contact the team
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                </div>
-
-                <div className="mt-7 grid gap-3 sm:grid-cols-3">
-                  <div className={`${lightSurfaceClasses} px-4 py-4`}>
-                    <Target className="h-5 w-5 text-cyes-green" />
-                    <p className="mt-3 font-sans text-sm font-medium text-[#171411]/66">
-                      Better summit structure
-                    </p>
-                  </div>
-                  <div className={`${lightSurfaceClasses} px-4 py-4`}>
-                    <Users className="h-5 w-5 text-cyes-blue" />
-                    <p className="mt-3 font-sans text-sm font-medium text-[#171411]/66">
-                      Clearer youth-enterprise focus
-                    </p>
-                  </div>
-                  <div className={`${lightSurfaceClasses} px-4 py-4`}>
-                    <Trophy className="h-5 w-5 text-cyes-yellow" />
-                    <p className="mt-3 font-sans text-sm font-medium text-[#171411]/66">
-                      Stronger pathways into action
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </section>
       </main>
 
       <SponsorsMarquee />

@@ -18,7 +18,13 @@ import panacheDorImage from "@/assets/PanacheDorWinners.jpeg";
 import panachExpoImage from "@/assets/PanachExpo.jpeg";
 import speakerThreeImage from "@/assets/speaker3.jpeg";
 import wigImage from "@/assets/WigInstall.jpg";
-import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  type MotionValue,
+} from "motion/react";
 import { Link } from "react-router-dom";
 
 type GalleryCard = {
@@ -31,6 +37,15 @@ type GalleryPanel = {
   title: string;
   subtitle: string;
   cards: GalleryCard[];
+};
+
+type GalleryParallaxCardProps = {
+  card: GalleryCard;
+  panelIndex: number;
+  cardIndex: number;
+  panelCount: number;
+  progress: MotionValue<number>;
+  shouldReduceMotion: boolean;
 };
 
 const galleryPanels: GalleryPanel[] = [
@@ -180,6 +195,46 @@ const galleryPanels: GalleryPanel[] = [
   },
 ];
 
+const GalleryParallaxCard = ({
+  card,
+  panelIndex,
+  cardIndex,
+  panelCount,
+  progress,
+  shouldReduceMotion,
+}: GalleryParallaxCardProps) => {
+  const panelStart = panelIndex / panelCount;
+  const panelEnd = (panelIndex + 1) / panelCount;
+  const localProgress = useTransform(progress, [panelStart, panelEnd], [0, 1]);
+  const direction = (panelIndex + cardIndex) % 2 === 0 ? 1 : -1;
+  const cardDrift = 28 + (cardIndex % 4) * 10;
+  const cardX = useTransform(
+    localProgress,
+    [0, 0.5, 1],
+    shouldReduceMotion
+      ? [0, 0, 0]
+      : [direction * -cardDrift, 0, direction * cardDrift],
+  );
+  const cardScale = useTransform(
+    localProgress,
+    [0, 0.5, 1],
+    shouldReduceMotion ? [1, 1, 1] : [1.08, 1.12, 1.08],
+  );
+
+  return (
+    <motion.figure
+      style={shouldReduceMotion ? undefined : { x: cardX, scale: cardScale }}
+      className={`absolute bg-[#e8e4dc] shadow-[0_22px_60px_rgba(15,11,8,0.22)] will-change-transform ${card.frameClassName}`}
+    >
+      <img
+        src={card.src}
+        alt={card.alt}
+        className="h-full w-full object-cover"
+      />
+    </motion.figure>
+  );
+};
+
 export const Gallery = () => {
   const sceneRef = useRef<HTMLElement | null>(null);
   const shouldReduceMotion = useReducedMotion();
@@ -212,7 +267,7 @@ export const Gallery = () => {
       </div>
 
       <div className="mt-16 md:hidden">
-        <div className="space-y-16 px-6">
+        <div className="space-y-16 ">
           {galleryPanels.map((panel) => (
             <article key={panel.title} className="space-y-6">
               <div className="text-center">
@@ -256,7 +311,7 @@ export const Gallery = () => {
             style={shouldReduceMotion ? undefined : { x: trackX, display: "flex", width: `${panelCount * 100}vw` }}
             className={shouldReduceMotion ? "space-y-20 px-10" : "h-full"}
           >
-            {galleryPanels.map((panel) => (
+            {galleryPanels.map((panel, panelIndex) => (
               <article
                 key={panel.title}
                 className={shouldReduceMotion ? "relative h-[85svh]" : "relative h-full w-screen shrink-0 px-8 pb-10 pt-6 lg:px-12"}
@@ -272,13 +327,16 @@ export const Gallery = () => {
                   </div>
 
                   <div className="relative mt-8 h-[calc(100%-7rem)]">
-                    {panel.cards.map((card) => (
-                      <figure
+                    {panel.cards.map((card, cardIndex) => (
+                      <GalleryParallaxCard
                         key={`${panel.title}-${card.alt}`}
-                        className={`absolute overflow-hidden bg-[#e8e4dc]  ${card.frameClassName}`}
-                      >
-                        <img src={card.src} alt={card.alt} className="h-full w-full object-cover" />
-                      </figure>
+                        card={card}
+                        panelIndex={panelIndex}
+                        cardIndex={cardIndex}
+                        panelCount={panelCount}
+                        progress={scrollYProgress}
+                        shouldReduceMotion={shouldReduceMotion}
+                      />
                     ))}
                   </div>
                 </div>

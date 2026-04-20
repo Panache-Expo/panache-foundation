@@ -1,287 +1,285 @@
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Header } from "@/components/Header";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Award, User } from "lucide-react";
+  CYESInnerHero,
+  CYESSectionIntro,
+  cyesSurfaceClasses,
+} from "@/components/cyes/CYESPageShell";
+import { Button } from "@/components/ui/button";
+import cyesAwards from "@/assets/CYESCDAwards.jpeg";
+import cyesEvent from "@/assets/CYES.jpeg";
 import honDonald from "@/assets/HonDonald.jpeg";
-import nshala from "@/assets/Nshala.jpeg";
-import felix from "@/assets/felix.jpg";
-import nervis from "@/assets/nervis.png";
-import chuo from "@/assets/chuo.png";
-import steve from "@/assets/stevenjang.png";
-import angwi from "@/assets/angwi.png";
-import nanalynn from "@/assets/nanalynn.png";
-import godlove from "@/assets/godlove.png";
+import speaker2 from "@/assets/speaker2.jpeg";
+import {
+  Calendar,
+  CheckCircle2,
+  Clock3,
+  MapPin,
+  ShieldCheck,
+  Trophy,
+  Users,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
-const CYES_EMAIL = "info.cyescyecdawards@gmail.com";
-
-const competitiveCategories = [
-  { value: "Youth Entrepreneur of the Year", description: "Outstanding young entrepreneur (under 35) who has built a sustainable and impactful business demonstrating leadership, measurable growth, and innovation." },
-  { value: "Startup of the Year", description: "Promising startup (less than 5 years old) showing innovation, scalability, strong market traction, and potential for long-term success." },
-  { value: "Technology Innovator of the Year", description: "Individual or company leveraging technology to solve problems, improve systems, or drive digital transformation with measurable impact." },
-  { value: "Agribusiness of the Year", description: "Business or entrepreneur making significant contributions to agriculture, agritech, food production, or rural economic development." },
-  { value: "Creative Entrepreneur of the Year", description: "Creative industry professional running a structured and impactful business in fashion, media, art, design, photography, or entertainment." },
-  { value: "Social Impact Business of the Year", description: "Business that combines profitability with purpose, actively addressing social or community challenges." },
-  { value: "Community Leader of the Year", description: "Individual who has demonstrated exceptional leadership in driving positive change within their community." },
-  { value: "NGO of the Year", description: "Registered non-profit organization making measurable and sustainable contributions to community development." },
-  { value: "Youth Empowerment Initiative of the Year", description: "Project or organization empowering young people through skills development, mentorship, or opportunity creation." },
-  { value: "Education Impact of the Year", description: "Individual or organization improving access to education, academic excellence, or mentorship programs." },
-  { value: "Health Impact of the Year", description: "Impactful work in healthcare, public health awareness, humanitarian medical support, or health innovation." },
-  { value: "Environmental Impact of the Year", description: "Initiatives promoting sustainability, environmental protection, climate awareness, or eco-friendly innovation." },
-  { value: "Corporate Impact of the Year", description: "Corporate organization demonstrating strong social responsibility, community investment, and sustainable impact." },
-  { value: "SME of the Year", description: "Small or medium-sized enterprise with strong growth, operational excellence, and measurable contribution to the economy." },
-  { value: "Financial Institution of the Year", description: "Financial institution supporting entrepreneurship, community development, and economic empowerment." },
-  { value: "Woman in Business of the Year", description: "Female business leader demonstrating excellence, resilience, and measurable business impact." },
-  { value: "Diaspora Impact of the Year", description: "Diaspora individual or organization contributing significantly to development and investment back home." },
-  { value: "Emerging Youth Leader of the Year", description: "Young leader demonstrating influence, integrity, and positive impact within their sector or community." },
-  { value: "Media & Advocacy of the Year", description: "Media personality or platform using their voice to promote awareness, development, or social change." },
-  { value: "Voice of the Generation Award", description: "Spoken word artist, poet, or youth voice using creative expression to inspire change and influence society." },
-];
-
-const honoraryCategories = [
-  { value: "Lifetime Achievement Award", description: "Individual with decades of sustained impact and outstanding contribution to community or national development." },
-  { value: "National Impact Award", description: "Distinguished personality whose work has significantly influenced national growth and transformation." },
-  { value: "Entrepreneurial Legacy Award", description: "Visionary business leader whose long-term work has shaped industries and inspired future generations." },
-  { value: "Youth Champion Award", description: "Individual or institution consistently supporting and advancing youth empowerment initiatives." },
-  { value: "Presidential Honor Award", description: "Special recognition presented by the Founder to an exceptional personality for outstanding service and strategic impact." },
-];
-const juryMembers = [
+const nominationHeroCards = [
   {
-    name: "Hon Donald Malomba Esembe",
-    title: "MP Buea Urban Constituency",
-    photo: honDonald,
+    image: cyesAwards,
+    alt: "CYES awards atmosphere",
+    className: "left-[20%] top-[8%] z-20 w-[42%] rotate-[-4deg]",
   },
   {
-    name: "Mr Nshal Mpeng Abwa Bernard Takang",
-    title: "Regional President Cameroon National Youth Council Southwest",
-    photo: nshala,
+    image: speaker2,
+    alt: "CYES portrait card",
+    className: "left-[60%] top-[16%] z-10 w-[28%] rotate-[7deg]",
   },
   {
-    name: "Felix Fomengia",
-    title: "Digital Innovation Expert and Cybersecurity Professional",
-    photo: felix,
+    image: honDonald,
+    alt: "Jury portrait",
+    className: "left-[30%] top-[58%] z-30 w-[23%] rotate-[-8deg]",
   },
   {
-    name: "Nzometiah Nervis",
-    title: "CEO, Nervtek",
-    photo: nervis,
-  },
-  {
-    name: "Barr. Chuo Angabua ",
-    title: "Founding Partner | Prime Time Law offices",
-    photo: chuo,
-  },
-  {
-    name: "Steve Njang",
-    title: "Founder of Nexdim Empire, Award-winning Blogger/ Content creator",
-    photo: steve,
-  },
-  {
-    name: "Angwi Njamah",
-    title: "Journalist /Public Relations Officer PCC Business Units/Certified Virtual Assistant",
-    photo: angwi,
-  },
-  {
-    name: "Miss Nana Lynn ",
-    title: "LinkedIn & Personal Brand Coach",
-    photo: nanalynn,
-  },
-  {
-    name: "Godlove Njisong",
-    title: "Founder GoMAD",
-    photo: godlove, 
+    image: cyesEvent,
+    alt: "CYES summit moment",
+    className: "left-[54%] top-[54%] z-20 w-[33%] rotate-[9deg]",
   },
 ];
 
-const allCategories = [...competitiveCategories, ...honoraryCategories];
+const statusCards = [
+  {
+    icon: Clock3,
+    title: "Deadline reached",
+    description:
+      "Public nominations for CYECD Awards 2026 are now closed and no new entries are being accepted.",
+    accent: "text-[#CC2129]",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Review continues",
+    description:
+      "Submitted nominations continue through internal review and jury evaluation ahead of the awards programme.",
+    accent: "text-[#156D3B]",
+  },
+  {
+    icon: Users,
+    title: "The event is still open",
+    description:
+      "Attendance, partnership, media, and general summit participation remain open through the CYES registration flow.",
+    accent: "text-[#1875D2]",
+  },
+];
+
+const nextSteps = [
+  {
+    icon: Calendar,
+    title: "Register for the summit",
+    description:
+      "Secure your place for the summit and awards experience, including networking, sessions, and the recognition night.",
+    to: "/cyes/register",
+    cta: "Register now",
+  },
+  {
+    icon: Trophy,
+    title: "Review the awards platform",
+    description:
+      "See the award categories, honorary recognitions, and jury structure behind the CYECD Awards programme.",
+    to: "/cyes/awards",
+    cta: "View awards",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Contact the team",
+    description:
+      "Reach us for partnership, press, sponsorship, or clarification on the current nomination and awards timeline.",
+    to: "/cyes/contact",
+    cta: "Contact CYES",
+  },
+];
 
 const CYESNominationsPage = () => {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    nomineeName: "", nomineeEmail: "", nomineePhone: "", category: "",
-    nominatorName: "", nominatorEmail: "", reason: "",
-  });
-
-  const selectedCategoryInfo = allCategories.find(c => c.value === formData.category);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.nomineeName || !formData.category || !formData.nominatorName || !formData.nominatorEmail || !formData.reason) {
-      toast({ title: "Missing fields", description: "Please fill in all required fields.", variant: "destructive" });
-      return;
-    }
-
-    const subject = encodeURIComponent(`CYECD Awards Nomination - ${formData.category}`);
-    const body = encodeURIComponent(
-      `CYECD AWARDS NOMINATION\n\nCategory: ${formData.category}\n\n--- Nominee Details ---\nName: ${formData.nomineeName}\nEmail: ${formData.nomineeEmail}\nPhone: ${formData.nomineePhone}\n\n--- Nominator Details ---\nName: ${formData.nominatorName}\nEmail: ${formData.nominatorEmail}\n\n--- Reason for Nomination ---\n${formData.reason}`
-    );
-    window.location.href = `mailto:${CYES_EMAIL}?subject=${subject}&body=${body}`;
-    toast({ title: "Nomination prepared!", description: "Your email client will open. Please send to complete your submission." });
-  };
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#f7f8f3] text-[#171411]">
       <Header />
 
-      {/* Hero */}
-      <section className="pt-24 pb-16 bg-gradient-to-br from-cyes-green/20 via-cyes-blue/10 to-cyes-yellow/10">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="w-16 h-16 bg-cyes-green rounded-2xl mx-auto mb-6 flex items-center justify-center">
-            <Award className="w-8 h-8 text-cyes-white" />
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-            CYECD Awards <span className="text-cyes-green">Nominations</span>
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Cameroon Youths Entrepreneurial & Community Development Awards (CYECD) 2026.
-            Nominate an outstanding individual, business, or initiative below.
-          </p>
-        </div>
-      </section>
-
-      {/* Eligibility */}
-      <section className="py-8 px-6">
-        <Card className="max-w-3xl mx-auto bg-muted/30">
-          <CardContent className="pt-6">
-            <h3 className="font-display text-lg font-semibold text-cyes-green mb-3">General Eligibility Requirements</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Nominee must be a Cameroonian (by nationality or origin) or an individual/organization making a verifiable impact in Cameroon.</li>
-              <li>Nominee must be between 18 – 45 years old (except for special/honorary categories where applicable).</li>
-              <li>Nominee must be actively involved in entrepreneurship, business, innovation, leadership, or community development.</li>
-              <li>The nominee's work must demonstrate measurable impact, such as job creation, community transformation, innovation, or social value.</li>
-              <li>Achievements considered must fall within the last 12–24 months, unless otherwise specified.</li>
-              <li>Nominee must provide verifiable proof of work, including business registration (if applicable), portfolio, media presence, testimonials, or documented results.</li>
-              <li>Nominee must accept the nomination and submit all required documents within 72 hours of notification.</li>
-              <li>Nominee must uphold good ethical standards and must not be involved in any serious misconduct that could affect the credibility of the awards.</li>
-              <li>Organizations and startups must be operational for at least 6–12 months prior to nomination.</li>
-              <li>Nominees can apply or be nominated in multiple categories, but must meet the specific criteria for each category.</li>
-            </ul>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Form */}
-      <section className="py-16 px-6">
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle className="font-display text-2xl text-foreground">Nomination Form</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label>Award Category *</Label>
-                <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem disabled value="__competitive_header__" className="font-bold text-cyes-green">— Competitive Categories —</SelectItem>
-                    {competitiveCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>{cat.value}</SelectItem>
-                    ))}
-                    <SelectItem disabled value="__honorary_header__" className="font-bold text-cyes-yellow">— Honorary Categories (Board Selected) —</SelectItem>
-                    {honoraryCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>{cat.value}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedCategoryInfo && (
-                  <p className="text-sm text-muted-foreground bg-cyes-green/5 border border-cyes-green/20 rounded-lg p-3 mt-2">
-                    <strong>Description:</strong> {selectedCategoryInfo.description}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Nominee Details</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Full Name *</Label>
-                    <Input value={formData.nomineeName} onChange={(e) => setFormData({ ...formData, nomineeName: e.target.value })} placeholder="Nominee's full name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input type="email" value={formData.nomineeEmail} onChange={(e) => setFormData({ ...formData, nomineeEmail: e.target.value })} placeholder="Nominee's email" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Phone Number</Label>
-                    <Input value={formData.nomineePhone} onChange={(e) => setFormData({ ...formData, nomineePhone: e.target.value })} placeholder="Nominee's phone number" />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-4">Your Details</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Your Name *</Label>
-                    <Input value={formData.nominatorName} onChange={(e) => setFormData({ ...formData, nominatorName: e.target.value })} placeholder="Your full name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Your Email *</Label>
-                    <Input type="email" value={formData.nominatorEmail} onChange={(e) => setFormData({ ...formData, nominatorEmail: e.target.value })} placeholder="Your email" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Reason for Nomination *</Label>
-                <Textarea value={formData.reason} onChange={(e) => setFormData({ ...formData, reason: e.target.value })} placeholder="Explain why this person deserves to be nominated..." rows={5} />
-              </div>
-
-              <Button type="submit" className="w-full bg-cyes-green hover:bg-cyes-green/90 text-cyes-white font-bold" size="lg">
-                Submit Nomination
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </section>
-      {/* Jury Committee Section */}
-      <section className="py-24 px-6 bg-cyes-green/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="text-cyes-green font-medium text-lg">CYECD Awards 2026</span>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mt-2 mb-4">
-              Meet the <span className="text-cyes-green">Jury Committee</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our distinguished panel of judges brings expertise, integrity, and passion to evaluating Cameroon's brightest young entrepreneurs.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {juryMembers.map((member) => (
-              <div
-                key={member.name}
-                className="flex flex-col items-center text-center p-6 rounded-2xl bg-background shadow-lg border border-border/40 hover:shadow-xl transition-shadow"
+      <main className="pb-20 md:pb-24">
+        <CYESInnerHero
+          eyebrow="CYECD nominations"
+          title={
+            <>
+              Nominations are
+              <br />
+              <span className="font-display text-[#CC2129]">now closed.</span>
+            </>
+          }
+          description="Sir Walters has closed public nominations for the CYECD Awards. The submission deadline has been reached, but the wider CYES experience is still active for registration, attendance, and direct enquiries."
+          actions={
+            <>
+              <Link to="/cyes/register">
+                <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
+                  Register for CYES
+                </Button>
+              </Link>
+              <Link
+                to="/cyes/awards"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/80 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
               >
-                <div className="w-28 h-28 rounded-full overflow-hidden mb-4 bg-muted flex items-center justify-center border-2 border-cyes-green/30">
-                  {member.photo ? (
-                    <img
-                      src={member.photo}
-                      alt={member.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-muted-foreground/40" />
-                  )}
-                </div>
-                <h3 className="font-display text-xl font-bold text-foreground mb-1">
-                  {member.name}
-                </h3>
-                <p className="text-cyes-green font-medium text-sm mb-1">{member.title}</p>
-              </div>
-            ))}
+                View awards
+              </Link>
+            </>
+          }
+          chips={[
+            {
+              label: "Status",
+              value: "Nominations closed",
+              accentClassName: "text-[#CC2129]",
+            },
+            {
+              label: "Awards date",
+              value: "16 July 2026",
+              accentClassName: "text-[#156D3B]",
+            },
+            {
+              label: "Venue",
+              value: "Chariot Hotel, Buea",
+              accentClassName: "text-[#1875D2]",
+            },
+          ]}
+          cards={nominationHeroCards}
+          mobileImage={cyesAwards}
+          mobileImageAlt="CYES awards crowd"
+          mobileImageClassName="rotate-[14deg]"
+        />
+
+        <section className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
+          <CYESSectionIntro
+            eyebrow="Current status"
+            title={
+              <>
+                What this
+                <span className="block font-display">means now</span>
+              </>
+            }
+            description="The nomination window is no longer open, but the awards platform is still moving forward. Existing entries remain under review, and the summit itself still offers multiple ways to participate."
+          />
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {statusCards.map((card) => {
+              const Icon = card.icon;
+
+              return (
+                <article key={card.title} className={cyesSurfaceClasses + " px-6 py-7"}>
+                  <Icon className={`h-9 w-9 ${card.accent}`} />
+                  <h3 className="mt-6 font-sans text-[1.28rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
+                    {card.title}
+                  </h3>
+                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/72">
+                    {card.description}
+                  </p>
+                </article>
+              );
+            })}
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section className="mx-auto mt-20 max-w-6xl px-6 md:px-24">
+          <CYESSectionIntro
+            eyebrow="Still open"
+            title={
+              <>
+                Choose your
+                <span className="block font-display">next step</span>
+              </>
+            }
+            description="If you were planning to engage with CYES through nominations, the best next move is to shift into attendance, visibility, or direct contact with the team."
+          />
+
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {nextSteps.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <article
+                  key={item.title}
+                  className="rounded-[2rem] border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.86),rgba(238,245,251,0.9))] px-6 py-7 shadow-[0_18px_44px_rgba(17,16,14,0.06)]"
+                >
+                  <Icon className="h-9 w-9 text-[#156D3B]" />
+                  <h3 className="mt-6 font-sans text-[1.3rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-[#171411]/72">
+                    {item.description}
+                  </p>
+                  <Link
+                    to={item.to}
+                    className="mt-7 inline-flex h-11 items-center justify-center rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#171411]/92"
+                  >
+                    {item.cta}
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="px-6 md:px-24">
+          <div className="mx-auto mt-20 max-w-6xl rounded-[2.2rem] border border-black/8 bg-white/70 px-6 py-8 shadow-[0_18px_44px_rgba(17,16,14,0.05)] md:px-8 md:py-10">
+            <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
+              <div>
+                <p className="font-sans text-[0.92rem] font-semibold uppercase tracking-[0.08em] text-[#156D3B]">
+                  Need clarification?
+                </p>
+                <h2 className="mt-4 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-[#171411]">
+                  We can still help you navigate the awards and summit flow.
+                </h2>
+              </div>
+
+              <div>
+                <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/72">
+                  If you need help understanding the nomination closure, jury
+                  process, registration, or event participation, the CYES team can
+                  point you in the right direction quickly.
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link to="/cyes/contact">
+                    <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
+                      Contact the team
+                    </Button>
+                  </Link>
+                  <Link
+                    to="/cyes/register"
+                    className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-[#f5f7f3]"
+                  >
+                    Register for CYES
+                  </Link>
+                </div>
+
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
+                    <p className="font-sans text-sm text-[#171411]/76">
+                      Awards ceremony
+                    </p>
+                    <p className="mt-1 font-sans text-sm font-semibold text-[#171411]">
+                      16 July 2026
+                    </p>
+                  </div>
+                  <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
+                    <p className="font-sans text-sm text-[#171411]/76">Location</p>
+                    <p className="mt-1 font-sans text-sm font-semibold text-[#171411]">
+                      Buea
+                    </p>
+                  </div>
+                  <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">
+                    <p className="font-sans text-sm text-[#171411]/76">Status</p>
+                    <p className="mt-1 font-sans text-sm font-semibold text-[#171411]">
+                      Closed submissions
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
 
       <Footer />
     </div>

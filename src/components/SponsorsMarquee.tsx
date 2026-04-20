@@ -167,7 +167,7 @@ export const SponsorsMarquee = () => {
           {sponsorsLoop.map((sponsor, index) => (
             <div
               key={index}
-              className="flex-shrink-0 mx-6 w-36 h-24 rounded-xl flex items-center justify-center p-2 grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-150"
+              className="flex-shrink-0 mx-6 w-36 h-24 rounded-xl flex items-center justify-center p-2 grayscale hover:grayscale-0 opacity-70 hover:opacity-100 transition-all duration-150 bg-white"
             >
               <img
                 src={sponsor.logo}

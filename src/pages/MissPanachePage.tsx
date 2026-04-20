@@ -1,234 +1,239 @@
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
+import {
+  ExpoPageHero,
+  ExpoSidebarCard,
+  ExpoSurface,
+} from "@/components/registration/ExpoPageShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { Crown, Star, Users, Sparkles, Award, Heart, Camera, Mic } from "lucide-react";
 import { competitionRegistrationLinks } from "@/lib/registration-links";
 import MissPanacheImage from "@/assets/misspanacheupdate.jpg";
+import { ArrowRight, Camera, Crown, Mic, Sparkles, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const stages = [
   {
     number: "01",
-    title: "Application & Screening",
+    title: "Application and screening",
     description:
-      "Complete the official registration form with your personal profile, photos, social media details, and motivation statement. The organizing committee reviews and selects qualified contestants.",
-    icon: Users,
+      "Contestants submit their profiles, photos, social links, and motivation before selection is announced.",
   },
   {
     number: "02",
-    title: "Official Contestant Selection",
+    title: "Official contestant preparation",
     description:
-      "Selected applicants are officially announced and begin preparation including orientation sessions, promotional photoshoots, media introductions, and publicity campaigns.",
-    icon: Camera,
+      "Selected participants move into orientation, media visibility, image preparation, and public introductions.",
   },
   {
     number: "03",
-    title: "Pre-Pageant Activities",
+    title: "Pre-pageant activities",
     description:
-      "Contestants participate in media interviews, public speaking sessions, community engagement, social media promotion, and brand ambassador training.",
-    icon: Mic,
+      "Interviews, public speaking, campaign moments, and community-facing visibility all help shape the final presence.",
   },
   {
     number: "04",
-    title: "The Grand Finale Night",
+    title: "Grand finale night",
     description:
-      "Contestants compete in the Introduction Round, Runway Presentation, and Question & Answer Round before the judges during the final day of Panache Expo.",
-    icon: Crown,
+      "The pageant comes to life on stage through the introduction round, runway presentation, and the final Q&A.",
   },
 ];
 
 const eligibility = [
-  "Minimum age: 18 years",
-  "Maximum age: 28 years",
-  "Must be confident, presentable, and passionate about representing the Panache Expo brand",
-  "Must be available to participate in pageant activities and the grand finale",
-  "Must demonstrate good communication and leadership qualities",
-  "Must respect the rules and guidelines of the competition",
+  "Applicants should be between 18 and 28 years old.",
+  "Contestants should be available for pageant activities, media moments, and the final event programme.",
+  "Strong communication, confidence, and leadership presence matter as much as image.",
+  "Participants must be ready to represent the wider Panache Expo brand publicly and professionally.",
+];
+
+const crownBenefits = [
+  {
+    icon: Crown,
+    title: "Official crown and sash",
+    description:
+      "The winner becomes the visible face of the title and carries the official Panache distinction for the year.",
+  },
+  {
+    icon: Sparkles,
+    title: "Ambassador platform",
+    description:
+      "Miss Panache is not only ceremonial. The title is built around visibility, presentation, and representation.",
+  },
+  {
+    icon: Users,
+    title: "Brand presence",
+    description:
+      "The crown signals someone who can hold attention, carry the platform, and stand confidently in public space.",
+  },
 ];
 
 const MissPanachePage = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#f4f3ef]">
       <Header />
 
-      {/* Hero Section */}
-      <section className="pt-24 pb-20 relative overflow-hidden bg-gradient-to-br from-primary/20 via-secondary/10 to-primary/5">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(var(--primary)/0.08),transparent_60%)]" />
-        <div className="relative max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-2 text-sm font-medium mb-6">
-                <Crown className="w-4 h-4" />
-                Part of Panache Expo
-              </div>
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-6">
-                Miss Panache <span className="text-rose-gold">Expo</span>
-              </h1>
-              <p className="text-lg text-muted-foreground mb-4">
-                The official beauty and leadership pageant of Panache Expo, celebrating confident, intelligent, and inspiring women who represent the creativity, elegance, and strength of the African beauty and fashion industry.
-              </p>
-              <p className="text-muted-foreground mb-8">
-                More than a traditional beauty contest — a platform designed to empower women, promote leadership, and showcase ambassadors who represent the vision of Panache Expo.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button asChild variant="hero" size="lg">
-                  <Link to={competitionRegistrationLinks.missPanache.path}>
-                    <Sparkles className="w-5 h-5 mr-2" /> Register Now
-                  </Link>
-                </Button>
-                <Link to="/panache-expo">
-                  <Button variant="outline" size="lg">
-                    Back to Panache Expo
-                  </Button>
+      <ExpoPageHero
+        eyebrow="Mademoiselle Panache"
+        title={
+          <>
+            Mademoiselle
+            <br />
+            <span className="font-display text-[#f4e93f]">Panache</span>
+          </>
+        }
+        description="The official pageant and ambassador platform within Panache Expo. Mademoiselle Panache celebrates poise, intelligence, media confidence, and the kind of presence that can carry the Panache story with credibility."
+        image={MissPanacheImage}
+        panelLabel="Pageant overview"
+        panelTitle="A crown built for visibility."
+        panelDescription="The title is designed for women who can represent more than image alone. It rewards confidence, communication, and the ability to hold a public platform with grace."
+        panelItems={[
+          { label: "Format", value: "Pageant + ambassador role" },
+          { label: "Core rounds", value: "Intro, runway, Q&A" },
+          { label: "Entry route", value: "Contestant application" },
+        ]}
+      />
+
+      <main className="px-6 pb-20 pt-10 md:pb-24">
+        <section className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.82fr,1.18fr]">
+          <ExpoSidebarCard
+            eyebrow="What this crown represents"
+            title="Beauty still has to speak."
+            description="Mademoiselle Panache is for contestants who can combine confidence with communication, presentation with discipline, and personal image with the ability to represent a wider creative platform."
+            points={[
+              "The winner should look strong on stage and sound strong in the room.",
+              "Public presence, composure, and communication all matter.",
+              "The title is built around visibility, not just ceremony.",
+            ]}
+            footer={
+              <Button
+                asChild
+                className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+              >
+                <Link to={competitionRegistrationLinks.missPanache.path}>
+                  Register now
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-elegant">
-                <img
-                  src={MissPanacheImage}
-                  alt="Miss Panache Expo"
-                  className="w-full h-auto object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+              </Button>
+            }
+          />
 
-      {/* Competition Format */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-              The Pageant Journey
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Contestants compete through public presentations, runway showcases, interviews, and creative challenges before a panel of judges.
+          <ExpoSurface className="overflow-hidden">
+            <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+              The pageant journey
             </p>
-          </div>
+            <h2 className="mt-3 font-sans text-[clamp(2rem,3.2vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+              Four moments shape the final stage.
+            </h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stages.map((stage) => (
-              <Card key={stage.number} className="relative overflow-hidden group hover:shadow-elegant transition-shadow">
-                <CardContent className="p-6">
-                  <div className="text-5xl font-bold text-primary/10 mb-2">{stage.number}</div>
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                    <stage.icon className="w-6 h-6 text-primary" />
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              {stages.map((stage) => (
+                <div
+                  key={stage.number}
+                  className="rounded-[1.6rem] border border-black/8 bg-white/74 px-5 py-5"
+                >
+                  <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#8241B6]/78">
+                    {stage.number}
+                  </p>
+                  <h3 className="mt-3 font-sans text-[1.2rem] font-semibold leading-[1.14] tracking-[-0.04em] text-[#171411]">
+                    {stage.title}
+                  </h3>
+                  <p className="mt-3 font-sans text-[0.95rem] leading-relaxed text-[#171411]/66">
+                    {stage.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </ExpoSurface>
+        </section>
+
+        <section className="mx-auto mt-10 grid max-w-6xl gap-8 lg:grid-cols-2">
+          <ExpoSurface>
+            <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+              Eligibility
+            </p>
+            <h2 className="mt-3 font-sans text-[clamp(2rem,3.2vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+              Who should apply?
+            </h2>
+            <div className="mt-7 grid gap-3">
+              {eligibility.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[1.3rem] border border-black/8 bg-[#f8f2e8] px-4 py-4"
+                >
+                  <p className="font-sans text-sm leading-relaxed text-[#171411]/72">
+                    {item}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </ExpoSurface>
+
+          <ExpoSurface>
+            <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+              What the winner receives
+            </p>
+            <h2 className="mt-3 font-sans text-[clamp(2rem,3.2vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+              The title carries more than one moment.
+            </h2>
+
+            <div className="mt-8 grid gap-4">
+              {crownBenefits.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="rounded-[1.6rem] border border-black/8 bg-white/74 px-5 py-5"
+                  >
+                    <Icon className="h-8 w-8 text-[#8241B6]" />
+                    <h3 className="mt-5 font-sans text-[1.2rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#171411]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 font-sans text-[0.95rem] leading-relaxed text-[#171411]/66">
+                      {item.description}
+                    </p>
                   </div>
-                  <h3 className="font-display text-xl font-semibold text-primary mb-3">{stage.title}</h3>
-                  <p className="text-muted-foreground text-sm">{stage.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                );
+              })}
+            </div>
+          </ExpoSurface>
+        </section>
 
-      {/* Eligibility */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-              Eligibility Requirements
-            </h2>
-          </div>
-          <Card>
-            <CardContent className="p-8">
-              <ul className="space-y-4">
-                {eligibility.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <Star className="w-5 h-5 text-rose-gold mt-0.5 shrink-0" />
-                    <span className="text-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.9fr,1.1fr] lg:items-end">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Finale night
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  The stage brings everything into focus.
+                </h2>
+              </div>
 
-      {/* Grand Finale */}
-      <section className="py-16">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-              The Grand Finale Night
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              The pageant reaches its peak during the final day of Panache Expo
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <Card className="text-center">
-              <CardContent className="p-6">
-                <Users className="w-10 h-10 text-primary mx-auto mb-4" />
-                <h3 className="font-display text-lg font-semibold text-primary mb-2">Introduction Round</h3>
-                <p className="text-muted-foreground text-sm">Contestants present their personality and confidence</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="p-6">
-                <Heart className="w-10 h-10 text-primary mx-auto mb-4" />
-                <h3 className="font-display text-lg font-semibold text-primary mb-2">Runway Presentation</h3>
-                <p className="text-muted-foreground text-sm">Demonstrating elegance and stage presence</p>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardContent className="p-6">
-                <Mic className="w-10 h-10 text-primary mx-auto mb-4" />
-                <h3 className="font-display text-lg font-semibold text-primary mb-2">Q&A Round</h3>
-                <p className="text-muted-foreground text-sm">Demonstrating intelligence and leadership potential</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Crown & Awards */}
-          <Card className="bg-gradient-to-br from-primary/5 to-secondary/10">
-            <CardContent className="p-8 text-center">
-              <Crown className="w-12 h-12 text-rose-gold mx-auto mb-4" />
-              <h3 className="font-display text-2xl font-bold text-primary mb-6">Crown & Awards</h3>
-              <div className="grid sm:grid-cols-3 gap-6">
-                <div>
-                  <div className="text-3xl mb-2">👑</div>
-                  <h4 className="font-semibold text-primary">Miss Panache Expo</h4>
-                  <p className="text-muted-foreground text-sm">Official crown, sash & brand ambassador for one year</p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-[1.45rem] border border-black/8 bg-white/74 px-4 py-5">
+                  <Users className="h-8 w-8 text-[#8241B6]" />
+                  <p className="mt-4 font-sans text-sm font-semibold text-[#171411]">
+                    Introduction round
+                  </p>
                 </div>
-                <div>
-                  <div className="text-3xl mb-2">🥈</div>
-                  <h4 className="font-semibold text-primary">First Runner-Up</h4>
-                  <p className="text-muted-foreground text-sm">Recognition and awards</p>
+                <div className="rounded-[1.45rem] border border-black/8 bg-white/74 px-4 py-5">
+                  <Camera className="h-8 w-8 text-[#8241B6]" />
+                  <p className="mt-4 font-sans text-sm font-semibold text-[#171411]">
+                    Runway presentation
+                  </p>
                 </div>
-                <div>
-                  <div className="text-3xl mb-2">🥉</div>
-                  <h4 className="font-semibold text-primary">Second Runner-Up</h4>
-                  <p className="text-muted-foreground text-sm">Recognition and awards</p>
+                <div className="rounded-[1.45rem] border border-black/8 bg-white/74 px-4 py-5">
+                  <Mic className="h-8 w-8 text-[#8241B6]" />
+                  <p className="mt-4 font-sans text-sm font-semibold text-[#171411]">
+                    Final Q&amp;A
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 bg-gradient-to-br from-primary/10 to-secondary/10">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <Award className="w-12 h-12 text-rose-gold mx-auto mb-4" />
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-            Become the Next Miss Panache Expo
-          </h2>
-          <p className="text-muted-foreground text-lg mb-8">
-            Miss Panache Expo is more than a crown — it is an opportunity to become a leader, ambassador, and inspiration within the beauty and fashion community.
-          </p>
-          <Button asChild variant="hero" size="lg">
-            <Link to={competitionRegistrationLinks.missPanache.path}>
-              <Sparkles className="w-5 h-5 mr-2" /> Register Now
-            </Link>
-          </Button>
-        </div>
-      </section>
+            </div>
+          </ExpoSurface>
+        </section>
+      </main>
 
       <Footer />
     </div>

@@ -1,8 +1,15 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { CompetitionPaymentRedirect } from "@/components/registration/CompetitionPaymentRedirect";
+import {
+  ExpoPageHero,
+  ExpoSidebarCard,
+  ExpoSurface,
+  expoCheckboxClasses,
+  expoInputClasses,
+  expoSelectTriggerClasses,
+} from "@/components/registration/ExpoPageShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,43 +45,43 @@ const standOptions = [
     title: "Corporate Booth",
     value: "Corporate Booth",
     price: "200,000 FCFA",
-    description: "Perfect for established brands and companies.",
+    description: "Best for established companies and brands that need a stronger footprint.",
     icon: BriefcaseBusiness,
   },
   {
     title: "Food / Drinks",
     value: "Food / Drinks",
     price: "150,000 FCFA",
-    description: "Sell meals, beverages, and refreshments.",
+    description: "For meals, beverages, refreshments, and fast-moving hospitality brands.",
     icon: UtensilsCrossed,
   },
   {
     title: "Small Chops & Snacks",
     value: "Small Chops & Snacks",
     price: "70,000 FCFA",
-    description: "Quick sales, high demand, and fast turnover.",
+    description: "A lighter point of entry for quick sales, crowd demand, and high turnover.",
     icon: ShoppingBag,
   },
   {
     title: "General Business",
     value: "General Business (Fashion, Wigs, Beauty, etc)",
     price: "50,000 FCFA",
-    description: "Perfect for growing brands and vendors.",
+    description: "For fashion, beauty, wigs, retail products, and growing businesses.",
     icon: Store,
   },
 ] as const;
 
 const eventTraffic = [
   "Day 1: Entrepreneur Summit",
-  "Day 2: Panache 360 Beauty Competition",
-  "Day 3: Awards Night, Fashion Night, Miss Panache",
+  "Day 2: Panache 360 Beauty Contest",
+  "Day 3: Awards Night, Runway Show, Mademoiselle Panache",
 ];
 
 const reasonsToBook = [
-  "Reach 5,000+ potential customers",
-  "Sell directly and grow your brand",
-  "Network with businesses and partners",
-  "Gain massive visibility for 3 full days",
+  "Reach 5,000+ potential customers across the full expo weekend.",
+  "Sell directly while people are already in discovery mode.",
+  "Put your brand in front of partners, guests, and entrepreneurs.",
+  "Stay visible across three days of different event traffic.",
 ];
 
 export const ExhibitionStandsPage = () => {
@@ -172,8 +179,8 @@ export const ExhibitionStandsPage = () => {
       toast({
         title: "Stand request saved",
         description: emailWarning
-          ? `${emailWarning} Your stand request was still saved and you are being redirected to Ayati.`
-          : "Your stand request has been saved. Redirecting you to Ayati to complete payment.",
+          ? `${emailWarning} Your request was still saved and you are being redirected to Ayati.`
+          : "Your request has been saved. Redirecting you to Ayati to complete payment.",
       });
     } catch (error) {
       toast({
@@ -190,271 +197,274 @@ export const ExhibitionStandsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#f4f3ef]">
       <Header />
 
-      <section className="pt-24 pb-16 px-6 bg-gradient-card">
-        <div className="max-w-6xl mx-auto grid gap-10 lg:grid-cols-[1.15fr,0.85fr] lg:items-center">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-rose-gold mb-4">
-              Panache Expo 2026 Exhibition Stands
-            </p>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary mb-6">
-              Put Your Business in Front of <span className="text-rose-gold">5,000+ People</span> in Just 3 Days
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-3xl mb-8">
-              Panache Expo 2026 is bringing together entrepreneurs, beauty brands,
-              fashion businesses, and consumers. Reserve your stand here first, then
-              continue to Ayati to lock in your space.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button asChild variant="hero" size="lg">
-                <a href="#quick-registration">
-                  Book Your Stand Now
-                  <ArrowRight className="w-4 h-4" />
-                </a>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <a href="https://wa.me/237652587170" target="_blank" rel="noopener noreferrer">
-                  <PhoneCall className="w-4 h-4" />
-                  Call / WhatsApp
-                </a>
-              </Button>
-            </div>
-          </div>
+      <ExpoPageHero
+        eyebrow="Panache Expo exhibition stands"
+        title={
+          <>
+            Put Your
+            <br />
+            <span className="font-display text-[#f4e93f]">Business on the Floor</span>
+          </>
+        }
+        description="Panache Expo 2026 brings together beauty, fashion, entrepreneurship, and audience traffic across three full event days. Reserve your stand here first, then continue to Ayati to complete payment."
+        panelLabel="Stand booking"
+        panelTitle="Save the request. Pay after."
+        panelDescription="The flow is simple: choose your stand type, save the booking details on the site, then complete payment through Ayati to secure the booth."
+        panelItems={[
+          { label: "Traffic expectation", value: "5,000+ visitors" },
+          { label: "Booking flow", value: "Request first, Ayati after" },
+          { label: "Contact line", value: "+237 652 587 170" },
+        ]}
+      />
 
-          <Card className="border-border/60 shadow-elegant">
-            <CardContent className="p-8">
-              <p className="text-xs uppercase tracking-[0.24em] text-rose-gold mb-4">
-                Why You Should Book
+      <main className="px-6 pb-20 pt-10 md:pb-24">
+        <section className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.84fr,1.16fr]">
+          <ExpoSidebarCard
+            eyebrow="Why brands book"
+            title="Three days of real discovery."
+            description="The exhibition floor is strongest when the stand is more than decorative. Panache Expo gives brands a chance to sell, build visibility, and meet customers, partners, and collaborators in one weekend."
+            points={reasonsToBook}
+            footer={
+              <a
+                href="https://wa.me/237652587170"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-black/12 bg-white/74 px-6 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
+              >
+                <PhoneCall className="h-4 w-4" />
+                Call / WhatsApp
+              </a>
+            }
+          />
+
+          <ExpoSurface>
+            <div>
+              <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                Stand options
               </p>
-              <div className="space-y-4">
-                {reasonsToBook.map((reason) => (
-                  <div key={reason} className="flex items-start gap-3">
-                    <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Users className="w-4 h-4" />
+              <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.9rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                Choose the space that fits your brand.
+              </h2>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              {standOptions.map((option) => {
+                const Icon = option.icon;
+
+                return (
+                  <div
+                    key={option.value}
+                    className="rounded-[1.6rem] border border-black/8 bg-white/74 px-5 py-5"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-[1.2rem] bg-[#171411] text-white">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#8241B6]/78">
+                        {option.price}
+                      </p>
                     </div>
-                    <p className="text-muted-foreground">{reason}</p>
+
+                    <h3 className="mt-5 font-sans text-[1.25rem] font-semibold leading-[1.08] tracking-[-0.04em] text-[#171411]">
+                      {option.title}
+                    </h3>
+                    <p className="mt-3 font-sans text-[0.95rem] leading-relaxed text-[#171411]/66">
+                      {option.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </ExpoSurface>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.86fr,1.14fr] lg:items-start">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Event traffic
+                </p>
+                <h2 className="mt-3 max-w-[10ch] font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  Your stand stays visible across the biggest moments.
+                </h2>
+              </div>
+
+              <div className="grid gap-4">
+                {eventTraffic.map((item, index) => (
+                  <div
+                    key={item}
+                    className="rounded-[1.5rem] border border-black/8 bg-white/74 px-5 py-5"
+                  >
+                    <p className="font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#8241B6]/78">
+                      Day 0{index + 1}
+                    </p>
+                    <p className="mt-3 font-sans text-[1rem] leading-relaxed text-[#171411]/72">
+                      {item}
+                    </p>
                   </div>
                 ))}
               </div>
-              <div className="mt-8 rounded-2xl border border-border/60 bg-muted/20 p-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-gold mb-2">
-                  Limited spaces available
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Stands are going fast. Once all available booths are filled, registration closes.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      <section className="px-6 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-rose-gold mb-4">
-              Choose Your Stand
-            </p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-              Booth options for every brand stage
-            </h2>
-            <p className="text-muted-foreground">
-              Pick the stand type that fits your business, then complete the quick registration below.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {standOptions.map((option) => (
-              <Card key={option.value} className="border-border/60 shadow-soft h-full">
-                <CardContent className="p-7 flex h-full flex-col">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6">
-                    <option.icon className="w-7 h-7" />
-                  </div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-rose-gold mb-3">
-                    {option.price}
-                  </p>
-                  <h3 className="font-display text-2xl font-semibold text-primary mb-3">
-                    {option.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {option.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 pb-16">
-        <div className="max-w-6xl mx-auto rounded-3xl border border-border/60 bg-card p-8 md:p-10 shadow-soft">
-          <div className="max-w-3xl mb-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-rose-gold mb-4">
-              3 Days. Non-Stop Traffic.
-            </p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary mb-4">
-              Your stand stays visible across the biggest moments of the expo
-            </h2>
-            <p className="text-muted-foreground">
-              The full event weekend is designed to keep people moving through the venue and discovering new brands.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {eventTraffic.map((item) => (
-              <div key={item} className="rounded-2xl border border-border/60 bg-muted/20 p-5">
-                <p className="text-sm font-medium text-primary leading-7">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="quick-registration" className="px-6 pb-20">
-        {submittedApplicationCode ? (
-          <CompetitionPaymentRedirect
-            applicationCode={submittedApplicationCode}
-            paymentHref={paymentConfig.paymentHref}
-            title="Exhibition Stand Request Received"
-            description="Your stand request is now saved in the Panache registration system. Complete the Ayati payment to secure your booth."
-          />
-        ) : (
-          <div className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[0.95fr,1.05fr]">
-            <Card className="border-border/60 shadow-soft">
-              <CardContent className="p-8 md:p-10">
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-rose-gold mb-4">
-                  Book Your Stand Now
-                </p>
-                <h2 className="font-display text-3xl font-bold text-primary mb-4">
-                  Quick registration
-                </h2>
-                <p className="text-muted-foreground mb-8">
-                  Complete this quick form first. Once your request is saved, you will continue to Ayati to complete payment.
-                </p>
-
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-border/60 bg-muted/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                      Contact Number
-                    </p>
-                    <a
-                      href="tel:+237652587170"
-                      className="text-lg font-semibold text-primary hover:text-rose-gold transition-colors"
-                    >
-                      +237 652 587 170
-                    </a>
-                  </div>
-                  <div className="rounded-2xl border border-border/60 bg-muted/20 p-5">
-                    <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                      What we need from you
-                    </p>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li>Full name</li>
-                      <li>Business name</li>
-                      <li>Phone number</li>
-                      <li>Stand type</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="rounded-3xl border border-border/60 bg-card p-8 md:p-10 shadow-soft">
-              <form ref={formRef} className="space-y-6" onSubmit={handleSubmit}>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      className="mt-2"
-                      placeholder="Your full name"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="businessName">Business Name *</Label>
-                    <Input
-                      id="businessName"
-                      name="businessName"
-                      className="mt-2"
-                      placeholder="Your brand or business name"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      className="mt-2"
-                      placeholder="your.email@example.com"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      className="mt-2"
-                      placeholder="+237 6XX XXX XXX"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Stand Type *</Label>
-                  <Select value={selectedStandType} onValueChange={setSelectedStandType}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Choose your stand type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {standOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.title} - {option.price}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="standTerms"
-                    checked={agreedToTerms}
-                    onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
-                  />
-                  <Label htmlFor="standTerms" className="text-sm leading-6">
-                    I confirm that this booking request is accurate and I understand that my stand remains pending until Ayati payment is completed.
-                  </Label>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={
-                    submitCompetitionApplication.isPending || isFinalizingSubmission
-                  }
-                >
-                  {submitCompetitionApplication.isPending || isFinalizingSubmission
-                    ? "Saving request..."
-                    : "Save Request & Continue to Payment"}
-                </Button>
-              </form>
             </div>
-          </div>
-        )}
-      </section>
+          </ExpoSurface>
+        </section>
+
+        <section id="quick-registration" className="mx-auto mt-10 max-w-6xl">
+          {submittedApplicationCode ? (
+            <CompetitionPaymentRedirect
+              applicationCode={submittedApplicationCode}
+              paymentHref={paymentConfig.paymentHref}
+              title="Exhibition stand request received"
+              description="Your stand request is now saved in the Panache registration system. Complete the Ayati payment to secure your booth."
+            />
+          ) : (
+            <div className="grid gap-8 lg:grid-cols-[0.82fr,1.18fr]">
+              <ExpoSidebarCard
+                eyebrow="Quick registration"
+                title="Save your stand request here."
+                description="Complete the short form first so your details are already in the system before you move to Ayati. Your space is only secured after payment is completed."
+                points={[
+                  "We need your full name, business name, phone number, and stand type.",
+                  "Stand requests stay pending until Ayati payment is completed.",
+                  "If you need help choosing a stand type, contact the Panache team before paying.",
+                ]}
+              />
+
+              <ExpoSurface>
+                <form ref={formRef} className="space-y-7" onSubmit={handleSubmit}>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div>
+                      <Label
+                        htmlFor="fullName"
+                        className="font-sans text-sm font-semibold text-[#171411]"
+                      >
+                        Full name
+                      </Label>
+                      <Input
+                        id="fullName"
+                        name="fullName"
+                        className={expoInputClasses}
+                        placeholder="Your full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label
+                        htmlFor="businessName"
+                        className="font-sans text-sm font-semibold text-[#171411]"
+                      >
+                        Business name
+                      </Label>
+                      <Input
+                        id="businessName"
+                        name="businessName"
+                        className={expoInputClasses}
+                        placeholder="Your brand or business name"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div>
+                      <Label
+                        htmlFor="email"
+                        className="font-sans text-sm font-semibold text-[#171411]"
+                      >
+                        Email address
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        className={expoInputClasses}
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label
+                        htmlFor="phone"
+                        className="font-sans text-sm font-semibold text-[#171411]"
+                      >
+                        Phone number
+                      </Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        className={expoInputClasses}
+                        placeholder="+237 6XX XXX XXX"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor="standType"
+                      className="font-sans text-sm font-semibold text-[#171411]"
+                    >
+                      Stand type
+                    </Label>
+                    <Select value={selectedStandType} onValueChange={setSelectedStandType}>
+                      <SelectTrigger
+                        id="standType"
+                        className={expoSelectTriggerClasses}
+                      >
+                        <SelectValue placeholder="Choose your stand type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {standOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.title} - {option.price}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-[1.4rem] border border-black/8 bg-[#f8f2e8] px-4 py-4">
+                    <Checkbox
+                      id="standTerms"
+                      className={expoCheckboxClasses}
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                    />
+                    <Label
+                      htmlFor="standTerms"
+                      className="font-sans text-sm leading-relaxed text-[#171411]/72"
+                    >
+                      I confirm that this booking request is accurate and I understand that my stand remains pending until Ayati payment is completed.
+                    </Label>
+                  </div>
+
+                  <div className="flex flex-col gap-4 border-t border-black/8 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3 text-sm text-[#171411]/58">
+                      <Users className="mt-0.5 h-4 w-4 text-[#8241B6]" />
+                      <span>Once saved, you move straight into the Ayati payment flow.</span>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                      disabled={
+                        submitCompetitionApplication.isPending || isFinalizingSubmission
+                      }
+                    >
+                      {submitCompetitionApplication.isPending || isFinalizingSubmission
+                        ? "Saving request..."
+                        : "Save request and continue"}
+                    </Button>
+                  </div>
+                </form>
+              </ExpoSurface>
+            </div>
+          )}
+        </section>
+      </main>
 
       <Footer />
     </div>
