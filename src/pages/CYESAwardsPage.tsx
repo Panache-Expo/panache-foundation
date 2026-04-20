@@ -213,19 +213,6 @@ const awardHeroCards = [
   },
 ];
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link to="/cyes/nominations">
-              <Button size="lg" className="bg-cyes-yellow text-foreground hover:bg-cyes-yellow/90 font-bold">
-                Nominations Closed
-              </Button>
-            </Link>
-            <Link to="/cyes/register">
-              <Button variant="outline" size="lg" className="bg-cyes-white/10 text-cyes-white border-cyes-white/20 hover:bg-cyes-white/20">
-                Register to Attend
-              </Button>
-            </Link>
-          </div>
-
 const CYESAwardsPage = () => {
   const shouldReduceMotion = useReducedMotion();
 
@@ -428,6 +415,7 @@ const CYESAwardsPage = () => {
           </Link>
         </div>
       </section>
+      </main>
 
       <Footer variant="cyes" />
     </div>
