@@ -11,7 +11,7 @@ export const Hero = () => {
         <div className="relative overflow-hidden bg-[#161311] ">
           <img
             src={heroImage}
-            alt="Panache Expo audience celebrating beauty, fashion, and skincare"
+            alt="Panache Expo audience celebrating beauty, fashion, and entrepreneurship"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/65" />
@@ -42,7 +42,7 @@ export const Hero = () => {
               <h1 className=" font-sans text-5xl font-bold leading-[0.92] tracking-[-0.03em] text-white md:text-7xl lg:text-[5.4rem]">
                 Celebrating <span className="font-display text-[#f4e93f]">Beauty,</span>
                 <br />
-                <span className=" font-display text-[#f4e93f]">Fashion &amp; Skincare</span>
+                <span className=" font-display text-[#f4e93f]">Fashion &amp; Entrepreneurship</span>
               </h1>
 
               {/* <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/85 md:text-lg">
@@ -51,7 +51,7 @@ export const Hero = () => {
               </p> */}
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link to="/panache-expo/workshops">
+                <Link to="/panache-expo/register">
                   <Button
                     size="lg"
                     className="h-12 w-52 rounded-full bg-white px-7 text-base font-semibold text-[#211d1b] shadow-none hover:bg-white/90"

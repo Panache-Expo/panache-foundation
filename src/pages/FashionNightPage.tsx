@@ -5,6 +5,7 @@ import {
   ExpoSidebarCard,
   ExpoSurface,
 } from "@/components/registration/ExpoPageShell";
+import yulemLogo from "@/assets/sponsors/yulem-logo.png";
 import { Button } from "@/components/ui/button";
 import fashionNight from "@/assets/FashionNight.jpg";
 import { competitionRegistrationLinks } from "@/lib/registration-links";
@@ -157,6 +158,39 @@ const FashionNightPage = () => {
                     </p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Official runway partner
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  Yulem supports the runway journey.
+                </h2>
+                <p className="mt-4 max-w-[34ch] font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  Yulem is the featured sponsor for Panache Runway Show, helping
+                  spotlight emerging design talent and production quality.
+                </p>
+                <p className="mt-4 font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  Prize detail: finalists are also entered for support and a top
+                  winner receives an industrial sewing machine.
+                </p>
+              </div>
+
+              <div className="h-40 w-full rounded-[1.6rem] border border-black/8 bg-white p-4 lg:h-56">
+                <div className="flex h-full w-full items-center justify-center rounded-[1.25rem] bg-[#f4f3ef] p-6">
+                  <img
+                    src={yulemLogo}
+                    alt="Yulem logo"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
               </div>
             </div>
           </ExpoSurface>

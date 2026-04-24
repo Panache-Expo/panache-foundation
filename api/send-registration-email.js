@@ -9,6 +9,8 @@ const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
 const REGISTRATION_SUPPORT_EMAIL =
   process.env.REGISTRATION_SUPPORT_EMAIL || SMTP_USER || "";
+const PARTICIPANTS_DASHBOARD_PATH =
+  process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
@@ -37,12 +39,107 @@ const normalizeText = (value) => {
   return String(value).trim();
 };
 
-const buildHtml = ({
+const normalizeBoolean = (value) => {
+  if (value === undefined || value === null) {
+    return false;
+  }
+  if (typeof value === "boolean") {
+    return value;
+  }
+  return String(value).toLowerCase() === "true";
+};
+
+const normalizeAdminEmails = (value) => {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((email) => normalizeText(email))
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((email) => normalizeText(email))
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const resolveDashboardUrl = (req, dashboardUrlFromBody) => {
+  if (dashboardUrlFromBody) {
+    return dashboardUrlFromBody;
+  }
+
+  const host = normalizeText(req.headers.host);
+  if (!host) {
+    return `https://panache-expo.com${PARTICIPANTS_DASHBOARD_PATH}`;
+  }
+
+  const protocol =
+    normalizeText(req.headers["x-forwarded-proto"]).includes("https")
+      ? "https"
+      : "http";
+  return `${protocol}://${host}${PARTICIPANTS_DASHBOARD_PATH}`;
+};
+
+const buildApplicantText = ({
   applicantFirstName,
   competitionTitle,
   applicationCode,
-  paymentHref,
   category,
+  actionHref,
+  actionLabel,
+  isFree,
+}) => `
+Hello ${applicantFirstName || "there"},
+
+Your application for ${competitionTitle} has been received successfully.
+
+Application code: ${applicationCode}
+${category ? `Category: ${category}` : ""}
+
+${isFree ? "Continue in WhatsApp" : actionLabel}: ${actionHref}
+
+${isFree ? "Please continue in the WhatsApp group and one of our team members will assist you from here." : "Once your payment is confirmed, your status will be updated."}
+`.trim();
+
+const buildAdminText = ({
+  applicantFirstName,
+  competitionTitle,
+  competitionSlug,
+  applicationCode,
+  category,
+  email,
+  phone,
+  city,
+  country,
+  dashboardUrl,
+  submittedAt,
+}) => `
+A new registration has been submitted.
+
+Application code: ${applicationCode}
+Competition: ${competitionTitle} (${competitionSlug || "N/A"})
+Applicant: ${applicantFirstName || "N/A"}
+Email: ${email || "N/A"}
+WhatsApp Number: ${phone || "N/A"}
+Location: ${city ? `${city}${country ? ", " : ""}` : ""}${country || "N/A"}
+${category ? `Category: ${category}` : ""}
+Submitted at: ${submittedAt || "N/A"}
+
+Open dashboard: ${dashboardUrl}
+`.trim();
+
+const buildApplicantHtml = ({
+  applicantFirstName,
+  competitionTitle,
+  applicationCode,
+  category,
+  actionHref,
+  actionLabel,
+  isFree,
 }) => {
   const safeName = applicantFirstName || "there";
   const categoryLine = category
@@ -57,19 +154,50 @@ const buildHtml = ({
       </p>
       <p style="margin:0 0 12px;">Application code: <strong>${applicationCode}</strong></p>
       ${categoryLine}
-      <p style="margin:0 0 12px;">
-        Please complete your payment using the official link below:
-      </p>
+      <p style="margin:0 0 12px;">${isFree ? "Continue your registration flow here:" : "Complete your payment here:"}</p>
       <p style="margin:0 0 20px;">
-        <a href="${paymentHref}" style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;">
-          Complete payment
+        <a href="${actionHref}" style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;">
+          ${actionLabel}
         </a>
       </p>
       <p style="margin:0 0 12px;">
-        Once your payment is confirmed, your status will be updated and the Panache team will continue reviewing your application.
+        ${isFree ? "Please continue in WhatsApp and the Panache team will guide the next step." : "Once your payment is confirmed, your status will be updated and be reviewed by the Panache team."}
       </p>
       <p style="margin:0;">
         If you need help, reply to this email or contact ${REGISTRATION_SUPPORT_EMAIL || "the Panache team"}.
+      </p>
+    </div>
+  `;
+};
+
+const buildAdminHtml = ({
+  applicantFirstName,
+  competitionTitle,
+  competitionSlug,
+  applicationCode,
+  category,
+  email,
+  phone,
+  city,
+  country,
+  dashboardUrl,
+  submittedAt,
+}) => {
+  const safeName = applicantFirstName || "N/A";
+  const locationLine = city ? `${city}${country ? ", " : ""}${country || ""}` : country || "";
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#111827;">
+      <h2 style="margin:0 0 16px;">New registration logged</h2>
+      <p style="margin:0 0 12px;">Application code: <strong>${applicationCode}</strong></p>
+      <p style="margin:0 0 12px;">Competition: <strong>${competitionTitle}</strong> (${competitionSlug || "N/A"})</p>
+      <p style="margin:0 0 12px;">Applicant: <strong>${safeName}</strong></p>
+      <p style="margin:0 0 12px;">Email: <strong>${email || "N/A"}</strong></p>
+      <p style="margin:0 0 12px;">WhatsApp Number: <strong>${phone || "N/A"}</strong></p>
+      ${locationLine ? `<p style="margin:0 0 12px;">Location: <strong>${locationLine}</strong></p>` : ""}
+      ${category ? `<p style="margin:0 0 12px;">Category: <strong>${category}</strong></p>` : ""}
+      <p style="margin:0 0 12px;">Submitted: <strong>${submittedAt || "N/A"}</strong></p>
+      <p style="margin:0 0 20px;">
+        <a href="${dashboardUrl}" style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;">Open dashboard</a>
       </p>
     </div>
   `;
@@ -97,20 +225,35 @@ export default async function handler(req, res) {
   const applicantFirstName = normalizeText(body.applicantFirstName);
   const competitionTitle = normalizeText(body.competitionTitle);
   const applicationCode = normalizeText(body.applicationCode);
-  const paymentHref = normalizeText(body.paymentHref);
   const category = normalizeText(body.category);
+  const paymentHref = normalizeText(body.paymentHref);
+  const postSubmitHref = normalizeText(body.postSubmitHref);
+  const recipientType = normalizeText(body.recipientType) || "applicant";
+  const isFree = normalizeBoolean(body.isFree);
+  const competitionSlug = normalizeText(body.competitionSlug);
+  const city = normalizeText(body.city);
+  const country = normalizeText(body.country);
+  const email = normalizeText(body.email);
+  const phone = normalizeText(body.phone);
+  const submittedAt = normalizeText(body.submittedAt);
+  const dashboardUrl = resolveDashboardUrl(req, normalizeText(body.dashboardUrl));
+  const adminEmails = normalizeAdminEmails(body.adminEmails);
 
-  if (
-    !applicantEmail ||
-    !competitionTitle ||
-    !applicationCode ||
-    !paymentHref
-  ) {
+  if (!applicantEmail || !competitionTitle || !applicationCode) {
     return sendJson(res, 400, {
       message:
-        "applicantEmail, competitionTitle, applicationCode, and paymentHref are required.",
+        "applicantEmail, competitionTitle, and applicationCode are required.",
     });
   }
+
+  const actionHref = isFree ? postSubmitHref || paymentHref : paymentHref || postSubmitHref;
+  if (!actionHref) {
+    return sendJson(res, 400, {
+      message: "postSubmitHref/paymentHref is required.",
+    });
+  }
+
+  const actionLabel = isFree ? "Continue to WhatsApp" : "Complete payment";
 
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
@@ -122,44 +265,95 @@ export default async function handler(req, res) {
     },
   });
 
+  const mailTasks = [];
+  if (recipientType === "applicant" || recipientType === "both") {
+    mailTasks.push(
+      transporter.sendMail({
+        from: SMTP_FROM,
+        to: applicantEmail,
+        replyTo: REGISTRATION_SUPPORT_EMAIL || undefined,
+        subject: `Panache registration received - ${applicationCode}`,
+        text: buildApplicantText({
+          applicantFirstName,
+          competitionTitle,
+          applicationCode,
+          category,
+          actionHref,
+          actionLabel,
+          isFree,
+        }),
+        html: buildApplicantHtml({
+          applicantFirstName,
+          competitionTitle,
+          applicationCode,
+          category,
+          actionHref,
+          actionLabel,
+          isFree,
+        }),
+      })
+    );
+  }
+
+  const hasAdminEmails = adminEmails.length > 0 || Boolean(REGISTRATION_SUPPORT_EMAIL);
+  if ((recipientType === "admin" || recipientType === "both") && hasAdminEmails) {
+    const recipients = adminEmails.length > 0 ? adminEmails : [REGISTRATION_SUPPORT_EMAIL];
+    mailTasks.push(
+      Promise.all(
+        recipients.map((recipient) =>
+          transporter.sendMail({
+            from: SMTP_FROM,
+            to: recipient,
+            replyTo: applicantEmail || undefined,
+            subject: `New ${competitionTitle} registration - ${applicationCode}`,
+            text: buildAdminText({
+              applicantFirstName,
+              competitionTitle,
+              competitionSlug,
+              applicationCode,
+              category,
+              email,
+              phone,
+              city,
+              country,
+              dashboardUrl,
+              submittedAt,
+            }),
+            html: buildAdminHtml({
+              applicantFirstName,
+              competitionTitle,
+              competitionSlug,
+              applicationCode,
+              category,
+              email,
+              phone,
+              city,
+              country,
+              dashboardUrl,
+              submittedAt,
+            }),
+          })
+        )
+      )
+    );
+  }
+
   try {
-    await transporter.sendMail({
-      from: SMTP_FROM,
-      to: applicantEmail,
-      replyTo: REGISTRATION_SUPPORT_EMAIL || undefined,
-      subject: `Panache registration received - ${applicationCode}`,
-      text: [
-        `Hello ${applicantFirstName || "there"},`,
-        "",
-        `Your application for ${competitionTitle} has been received successfully.`,
-        `Application code: ${applicationCode}`,
-        category ? `Category: ${category}` : "",
-        "",
-        `Complete payment here: ${paymentHref}`,
-        "",
-        "Once your payment is confirmed, your status will be updated.",
-      ]
-        .filter(Boolean)
-        .join("\n"),
-      html: buildHtml({
-        applicantFirstName,
-        competitionTitle,
-        applicationCode,
-        paymentHref,
-        category,
-      }),
-    });
+    await Promise.all(mailTasks);
   } catch (error) {
     return sendJson(res, 500, {
       message:
         error instanceof Error
           ? error.message
-          : "Could not send the registration confirmation email.",
+          : "Could not send the registration notification email.",
     });
   }
 
   return sendJson(res, 200, {
     ok: true,
-    message: "Registration confirmation email sent.",
+    message:
+      recipientType === "both"
+        ? "Registration notifications sent."
+        : "Registration confirmation email sent.",
   });
 }

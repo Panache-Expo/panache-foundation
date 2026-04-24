@@ -20,12 +20,13 @@ import fashionBackdrop from "@/assets/FashionNight.jpg";
 import {
   buildCompetitionApplicationCode,
   competitionRegistrationLinks,
+  getCompetitionPaymentSettings,
 } from "@/lib/registration-links";
-import { sendCompetitionRegistrationEmail } from "@/lib/send-registration-email";
 import { ArrowUpRight, Shirt } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const paymentConfig = competitionRegistrationLinks.fashionNight;
+const paymentSettings = getCompetitionPaymentSettings(paymentConfig);
 
 export const FashionNightRegisterPage = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,8 +43,8 @@ export const FashionNightRegisterPage = () => {
     }
 
     const timeoutId = window.setTimeout(() => {
-      window.location.assign(paymentConfig.paymentHref);
-    }, 1600);
+      window.location.assign(paymentSettings.postSubmitHref);
+    }, paymentSettings.redirectDelayMs);
 
     return () => window.clearTimeout(timeoutId);
   }, [submittedApplicationCode]);
@@ -98,9 +99,12 @@ export const FashionNightRegisterPage = () => {
         portfolio_url: portfolioUrl,
         years_experience: yearsExperienceValue ? Number(yearsExperienceValue) : null,
         motivation,
-        payment_status: "pending",
-        payment_platform: "ayatickets",
+        payment_status: paymentSettings.paymentStatus,
+        payment_platform: paymentSettings.paymentPlatform,
         review_status: "submitted",
+        competitionTitle: paymentConfig.title,
+        postSubmitHref: paymentSettings.postSubmitHref,
+        notificationEmails: paymentSettings.notificationEmails,
         form_payload: {
           brand_name: brandName,
           collection_title: collectionTitle,
@@ -111,24 +115,6 @@ export const FashionNightRegisterPage = () => {
         },
       });
 
-      let emailWarning: string | null = null;
-
-      try {
-        await sendCompetitionRegistrationEmail({
-          applicantEmail: email,
-          applicantFirstName: firstName,
-          competitionTitle: paymentConfig.title,
-          applicationCode,
-          paymentHref: paymentConfig.paymentHref,
-          category: designSpecialty || undefined,
-        });
-      } catch (error) {
-        emailWarning =
-          error instanceof Error
-            ? error.message
-            : "We could not send the confirmation email.";
-      }
-
       formRef.current?.reset();
       setAgreedToTerms(false);
       setNewsletterSubscription(false);
@@ -136,9 +122,7 @@ export const FashionNightRegisterPage = () => {
 
       toast({
         title: "Application saved",
-        description: emailWarning
-          ? `${emailWarning} Your application was still saved and you are being redirected to Ayati.`
-          : "A confirmation email has been sent. Redirecting you to Ayati to complete payment.",
+        description: paymentSettings.successMessage,
       });
     } catch (error) {
       toast({
@@ -167,7 +151,7 @@ export const FashionNightRegisterPage = () => {
             <span className="font-display text-[#f4e93f]">Collection Live</span>
           </>
         }
-        description="This is the designer entry point for Panache Fashion Night. Save your application here first, then continue to Ayati to confirm your place."
+        description={paymentConfig.description}
         image={fashionBackdrop}
         panelLabel="Designer Entry"
         panelTitle="Collections with a stage."
@@ -175,7 +159,7 @@ export const FashionNightRegisterPage = () => {
         panelItems={[
           { label: "Who applies", value: "Designers & labels" },
           { label: "Required", value: "Collection concept + looks" },
-          { label: "Payment", value: "Ayati after submit" },
+          { label: "Registration flow", value: "Saved first, then WhatsApp" },
         ]}
       />
 
@@ -199,8 +183,8 @@ export const FashionNightRegisterPage = () => {
                       Submission flow
                     </p>
                     <p className="mt-1 font-sans text-sm leading-relaxed text-[#171411]/64">
-                      Save the form, receive your application code, then complete
-                      payment on Ayati.
+                      Save the form, receive your application code, then continue
+                      in WhatsApp.
                     </p>
                   </div>
                 </div>
@@ -211,9 +195,14 @@ export const FashionNightRegisterPage = () => {
           {submittedApplicationCode ? (
             <CompetitionPaymentRedirect
               applicationCode={submittedApplicationCode}
-              paymentHref={paymentConfig.paymentHref}
-              title="Fashion Night Application Received"
-              description="Your designer application is now stored in the Panache registration system. Complete your Ayati payment to finish the registration flow."
+              paymentHref={paymentSettings.postSubmitHref}
+              title={paymentConfig.successTitle || "Fashion Night Application Received"}
+              description={
+                paymentConfig.successDescription ||
+                "Your designer application is now stored in the Panache registration system."
+              }
+              actionLabel={paymentSettings.ctaLabel}
+              postSubmitCopy={paymentSettings.postSubmitCopy}
             />
           ) : (
             <ExpoSurface>
@@ -256,9 +245,9 @@ export const FashionNightRegisterPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="phone" className="font-sans text-sm font-semibold text-[#171411]">
-                        Phone Number
+                        WhatsApp Number
                       </Label>
-                      <Input id="phone" name="phone" type="tel" className={expoInputClasses} placeholder="+237 6XX XXX XXX" required />
+                      <Input id="phone" name="phone" type="tel" className={expoInputClasses} placeholder="WhatsApp number e.g. +237 6XX XXX XXX" required />
                     </div>
                   </div>
                 </div>
@@ -372,7 +361,7 @@ export const FashionNightRegisterPage = () => {
                       onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
                     />
                     <Label htmlFor="terms" className="font-sans text-sm leading-6 text-[#171411]/72">
-                      I confirm that the information provided is accurate and I understand that payment is required on Ayati after this form is submitted.
+                      I confirm that the information provided is accurate and I understand registration continues through the WhatsApp flow after this form is submitted.
                     </Label>
                   </div>
 
@@ -404,7 +393,7 @@ export const FashionNightRegisterPage = () => {
                     >
                       {submitCompetitionApplication.isPending || isFinalizingSubmission
                         ? "Saving application..."
-                        : "Save Application & Continue to Payment"}
+                        : "Save Application & Continue"}
                     </Button>
                     <Button
                       asChild
@@ -412,8 +401,8 @@ export const FashionNightRegisterPage = () => {
                       variant="outline"
                       className="h-12 rounded-full border-black/12 bg-white/72 px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                     >
-                      <a href={paymentConfig.paymentHref} target="_blank" rel="noopener noreferrer">
-                        View Ayati Page
+                      <a href={paymentSettings.postSubmitHref} target="_blank" rel="noopener noreferrer">
+                        {paymentSettings.ctaLabel}
                         <ArrowUpRight className="h-4 w-4" />
                       </a>
                     </Button>

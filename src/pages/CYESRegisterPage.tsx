@@ -43,6 +43,7 @@ const topics = [
   "Entrepreneurship & Business Growth",
   "Digital Economy & Personal Branding",
   "Technology, Innovation and AI",
+  "Agri Business & Food Security",
   "Leadership & National Development",
 ];
 
@@ -127,7 +128,7 @@ export const CYESRegisterPage = () => {
       `CYES SUMMIT REGISTRATION\n\n` +
         `Name: ${firstName} ${lastName}\n` +
         `Email: ${email}\n` +
-        `Phone: ${phone}\n` +
+        `WhatsApp: ${phone}\n` +
         `Topic: ${selectedTopic}\n` +
         `Additional Details: ${details || "None"}\n` +
         `Newsletter: ${newsletterSubscription ? "Yes" : "No"}\n`,
@@ -192,7 +193,7 @@ export const CYESRegisterPage = () => {
             },
             {
               label: "Tracks",
-              value: "4 focus areas",
+              value: "5 focus areas",
               accentClassName: "text-[#CC2129]",
             },
           ]}
@@ -361,14 +362,14 @@ export const CYESRegisterPage = () => {
                       htmlFor="phone"
                       className="font-sans text-sm font-semibold text-[#171411]"
                     >
-                      Phone Number
+                      WhatsApp Number
                     </Label>
                     <Input
                       id="phone"
                       name="phone"
                       type="tel"
                       className={cyesInputClasses}
-                      placeholder="+237 6XX XXX XXX"
+                      placeholder="WhatsApp number e.g. +237 6XX XXX XXX"
                       required
                     />
                   </div>

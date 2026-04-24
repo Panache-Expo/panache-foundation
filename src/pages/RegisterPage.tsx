@@ -59,15 +59,15 @@ export const RegisterPage = () => {
             <span className="font-display text-[#f4e93f]">Stage</span>
           </>
         }
-        description="Start your application on the website first, then continue to Ayati to complete payment. Every competition now uses the same clean two-step flow."
+        description="Start your application on the website first, then continue through our WhatsApp registration flow. Every competition now uses the same simple two-step journey."
         image={heroImage}
         panelLabel="Registration Flow"
-        panelTitle="Start here. Pay after."
-        panelDescription="Pick the experience that fits you, save your application details, and continue straight into payment once your form is confirmed."
+        panelTitle="Start here. Continue on WhatsApp."
+        panelDescription="Pick the experience that fits you, save your application details, and continue straight into WhatsApp once your form is confirmed."
         panelItems={[
           { label: "Step 1", value: "Choose competition" },
           { label: "Step 2", value: "Save application" },
-          { label: "Step 3", value: "Pay on Ayati" },
+          { label: "Step 3", value: "Confirm on WhatsApp" },
         ]}
       />
 

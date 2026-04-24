@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 
+import panacheAwardNight01 from "@/assets/panache-award-night/panache-award-night-2025-01.jpg";
+import panacheAwardNight02 from "@/assets/panache-award-night/panache-award-night-2025-02.jpg";
+import panacheAwardNight03 from "@/assets/panache-award-night/panache-award-night-2025-03.jpg";
+import panacheAwardNight04 from "@/assets/panache-award-night/panache-award-night-2025-04.jpg";
+import panacheAwardNight05 from "@/assets/panache-award-night/panache-award-night-2025-05.jpg";
 import { Button } from "@/components/ui/button";
-import awardOneImage from "@/assets/Award1.jpeg";
-import awardTwoImage from "@/assets/Award2.jpeg";
-import awardThreeImage from "@/assets/award3.jpeg";
-import makeupImage from "@/assets/Makeup.jpg";
-import missPanacheImage from "@/assets/MissPanache.jpeg";
 import {
   motion,
   useReducedMotion,
@@ -31,29 +31,29 @@ type AwardCardProps = AwardHighlight & {
 
 const awardHighlights: AwardHighlight[] = [
   {
-    title: "Best Hair Stylist",
-    description: "Outstanding achievement in hair styling",
-    image: awardOneImage,
+    title: "Award night",
+    description: "Real ceremony moments from Panache Award Night 2025.",
+    image: panacheAwardNight01,
   },
   {
-    title: "Miss Panache D'or",
-    description: "Celebrating elegance, intelligence, and grace",
-    image: missPanacheImage,
+    title: "Winning moment",
+    description: "Recognition captured on stage instead of flyer graphics.",
+    image: panacheAwardNight02,
   },
   {
-    title: "Best Makeup Artist",
-    description: "Excellence in makeup artistry and creativity",
-    image: makeupImage,
+    title: "Stage recognition",
+    description: "The atmosphere of the prize presentation as it happened live.",
+    image: panacheAwardNight03,
   },
   {
-    title: "Best Nail Technician",
-    description: "Mastery in nail art and design",
-    image: awardTwoImage,
+    title: "Celebration",
+    description: "A closer look at the people Panache actually celebrated that night.",
+    image: panacheAwardNight04,
   },
   {
-    title: "Best Skincare Specialist",
-    description: "Excellence in skincare and beauty treatments",
-    image: awardThreeImage,
+    title: "Panache prestige",
+    description: "Award-night photography from the official Panache Expo Instagram archive.",
+    image: panacheAwardNight05,
   },
 ];
 
@@ -242,13 +242,13 @@ export const AwardsDropdown = () => {
 
       <div className="mx-auto mt-12 flex max-w-6xl justify-end px-6">
         <div className="max-w-md">
-          <p className="font-sans text-lg font-medium leading-[1.35] text-[#171411] md:text-[1.55rem]">
-            Creativity for every stage. Join us and be part of our winners.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-4">
-            <Link to="/panache-expo/register">
-              <Button className="h-12 rounded-full bg-black px-7 font-sans text-sm font-semibold text-white hover:bg-black/85">
-                Register for Awards
+              <p className="font-sans text-lg font-medium leading-[1.35] text-[#171411] md:text-[1.55rem]">
+                Creativity for every stage. Join us and be part of our winners.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-4">
+                <Link to="/panache-expo/register">
+                  <Button className="h-12 rounded-full bg-black px-7 font-sans text-sm font-semibold text-white hover:bg-black/85">
+                Nominate for Awards
               </Button>
             </Link>
             {/* <Link

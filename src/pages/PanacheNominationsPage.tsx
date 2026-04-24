@@ -165,11 +165,14 @@ const PanacheNominationsPage = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     nomineeName: "",
+    nomineeStageName: "",
     nomineeEmail: "",
     nomineePhone: "",
     category: "",
     nominatorName: "",
+    nominatorStageName: "",
     nominatorEmail: "",
+    nominatorPhone: "",
     reason: "",
   });
 
@@ -182,14 +185,19 @@ const PanacheNominationsPage = () => {
 
     if (
       !formData.nomineeName ||
+      !formData.nomineeStageName ||
+      !formData.nomineePhone ||
       !formData.category ||
       !formData.nominatorName ||
+      !formData.nominatorStageName ||
       !formData.nominatorEmail ||
+      !formData.nominatorPhone ||
       !formData.reason
     ) {
       toast({
         title: "Missing fields",
-        description: "Please fill in all required fields before continuing.",
+        description:
+          "Please add all full names, stage names, WhatsApp numbers, and your nomination reason before continuing.",
         variant: "destructive",
       });
       return;
@@ -202,12 +210,15 @@ const PanacheNominationsPage = () => {
       `PANACHE D'OR NOMINATION\n\n` +
         `Category: ${formData.category}\n\n` +
         `--- Nominee Details ---\n` +
-        `Name: ${formData.nomineeName}\n` +
+        `Full Name: ${formData.nomineeName}\n` +
+        `Stage / Brand Name: ${formData.nomineeStageName}\n` +
         `Email: ${formData.nomineeEmail}\n` +
-        `Phone: ${formData.nomineePhone}\n\n` +
+        `WhatsApp Number: ${formData.nomineePhone}\n\n` +
         `--- Nominator Details ---\n` +
-        `Name: ${formData.nominatorName}\n` +
-        `Email: ${formData.nominatorEmail}\n\n` +
+        `Full Name: ${formData.nominatorName}\n` +
+        `Stage / Brand Name: ${formData.nominatorStageName}\n` +
+        `Email: ${formData.nominatorEmail}\n` +
+        `WhatsApp Number: ${formData.nominatorPhone}\n\n` +
         `--- Reason for Nomination ---\n` +
         `${formData.reason}`,
     );
@@ -347,7 +358,7 @@ const PanacheNominationsPage = () => {
                       htmlFor="nomineeName"
                       className="font-sans text-sm font-semibold text-[#171411]"
                     >
-                      Full name
+                      Full legal name
                     </Label>
                     <Input
                       id="nomineeName"
@@ -360,6 +371,27 @@ const PanacheNominationsPage = () => {
                         }))
                       }
                       placeholder="Nominee's full name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor="nomineeStageName"
+                      className="font-sans text-sm font-semibold text-[#171411]"
+                    >
+                      Stage / brand / business name
+                    </Label>
+                    <Input
+                      id="nomineeStageName"
+                      className={expoInputClasses}
+                      value={formData.nomineeStageName}
+                      onChange={(event) =>
+                        setFormData((current) => ({
+                          ...current,
+                          nomineeStageName: event.target.value,
+                        }))
+                      }
+                      placeholder="Nominee's public or brand name"
                     />
                   </div>
 
@@ -390,7 +422,7 @@ const PanacheNominationsPage = () => {
                       htmlFor="nomineePhone"
                       className="font-sans text-sm font-semibold text-[#171411]"
                     >
-                      Phone number
+                      WhatsApp number
                     </Label>
                     <Input
                       id="nomineePhone"
@@ -402,8 +434,11 @@ const PanacheNominationsPage = () => {
                           nomineePhone: event.target.value,
                         }))
                       }
-                      placeholder="Nominee's phone number"
+                      placeholder="Nominee's WhatsApp number"
                     />
+                    <p className="mt-2 font-sans text-xs leading-relaxed text-[#171411]/56">
+                      Use the nominee's active WhatsApp number in case they are shortlisted.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -418,7 +453,7 @@ const PanacheNominationsPage = () => {
                       htmlFor="nominatorName"
                       className="font-sans text-sm font-semibold text-[#171411]"
                     >
-                      Your name
+                      Your full name
                     </Label>
                     <Input
                       id="nominatorName"
@@ -431,6 +466,27 @@ const PanacheNominationsPage = () => {
                         }))
                       }
                       placeholder="Your full name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor="nominatorStageName"
+                      className="font-sans text-sm font-semibold text-[#171411]"
+                    >
+                      Your stage / brand name
+                    </Label>
+                    <Input
+                      id="nominatorStageName"
+                      className={expoInputClasses}
+                      value={formData.nominatorStageName}
+                      onChange={(event) =>
+                        setFormData((current) => ({
+                          ...current,
+                          nominatorStageName: event.target.value,
+                        }))
+                      }
+                      placeholder="Use your public name, brand name, or repeat your full name"
                     />
                   </div>
 
@@ -454,6 +510,30 @@ const PanacheNominationsPage = () => {
                       }
                       placeholder="Your email address"
                     />
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor="nominatorPhone"
+                      className="font-sans text-sm font-semibold text-[#171411]"
+                    >
+                      Your WhatsApp number
+                    </Label>
+                    <Input
+                      id="nominatorPhone"
+                      className={expoInputClasses}
+                      value={formData.nominatorPhone}
+                      onChange={(event) =>
+                        setFormData((current) => ({
+                          ...current,
+                          nominatorPhone: event.target.value,
+                        }))
+                      }
+                      placeholder="Your WhatsApp number"
+                    />
+                    <p className="mt-2 font-sans text-xs leading-relaxed text-[#171411]/56">
+                      The team may use this WhatsApp number for nomination clarification or follow-up.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -482,7 +562,9 @@ const PanacheNominationsPage = () => {
               <div className="flex flex-col gap-4 border-t border-black/8 pt-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3 text-sm text-[#171411]/58">
                   <Sparkles className="mt-0.5 h-4 w-4 text-[#8241B6]" />
-                  <span>This form opens your email client to complete the submission.</span>
+                  <span>
+                    This form opens your email client to complete the submission. Include names exactly as they should appear publicly.
+                  </span>
                 </div>
                 <Button
                   type="submit"

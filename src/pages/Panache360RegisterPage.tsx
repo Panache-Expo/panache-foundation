@@ -28,8 +28,8 @@ import panache360Backdrop from "@/assets/panache360-1.jpeg";
 import {
   buildCompetitionApplicationCode,
   competitionRegistrationLinks,
+  getCompetitionPaymentSettings,
 } from "@/lib/registration-links";
-import { sendCompetitionRegistrationEmail } from "@/lib/send-registration-email";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -45,6 +45,7 @@ const categories = [
 ];
 
 const paymentConfig = competitionRegistrationLinks.panache360;
+const paymentSettings = getCompetitionPaymentSettings(paymentConfig);
 
 export const Panache360RegisterPage = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -62,8 +63,8 @@ export const Panache360RegisterPage = () => {
     }
 
     const timeoutId = window.setTimeout(() => {
-      window.location.assign(paymentConfig.paymentHref);
-    }, 1600);
+      window.location.assign(paymentSettings.postSubmitHref);
+    }, paymentSettings.redirectDelayMs);
 
     return () => window.clearTimeout(timeoutId);
   }, [submittedApplicationCode]);
@@ -120,9 +121,12 @@ export const Panache360RegisterPage = () => {
         portfolio_url: portfolioUrl,
         years_experience: yearsExperienceValue ? Number(yearsExperienceValue) : null,
         motivation,
-        payment_status: "pending",
-        payment_platform: "ayatickets",
+        payment_status: paymentSettings.paymentStatus,
+        payment_platform: paymentSettings.paymentPlatform,
         review_status: "submitted",
+        competitionTitle: paymentConfig.title,
+        postSubmitHref: paymentSettings.postSubmitHref,
+        notificationEmails: paymentSettings.notificationEmails,
         form_payload: {
           current_role: currentRole,
           additional_details: additionalDetails,
@@ -130,24 +134,6 @@ export const Panache360RegisterPage = () => {
           agreed_to_terms: agreedToTerms,
         },
       });
-
-      let emailWarning: string | null = null;
-
-      try {
-        await sendCompetitionRegistrationEmail({
-          applicantEmail: email,
-          applicantFirstName: firstName,
-          competitionTitle: paymentConfig.title,
-          applicationCode,
-          paymentHref: paymentConfig.paymentHref,
-          category: selectedCategory,
-        });
-      } catch (error) {
-        emailWarning =
-          error instanceof Error
-            ? error.message
-            : "We could not send the confirmation email.";
-      }
 
       formRef.current?.reset();
       setAgreedToTerms(false);
@@ -157,9 +143,7 @@ export const Panache360RegisterPage = () => {
 
       toast({
         title: "Application saved",
-        description: emailWarning
-          ? `${emailWarning} Your application was still saved and you are being redirected to Ayati.`
-          : "A confirmation email has been sent. Redirecting you to Ayati to complete payment.",
+        description: paymentSettings.successMessage,
       });
     } catch (error) {
       console.log(error);
@@ -189,14 +173,14 @@ export const Panache360RegisterPage = () => {
             <span className="font-display text-[#f4e93f]">To The Floor</span>
           </>
         }
-        description="Apply for the Panache 360 competition, save your details, and continue directly into Ayati payment once your entry is confirmed."
+        description={paymentConfig.description}
         image={panache360Backdrop}
         panelLabel="Application Notes"
         panelTitle="Live creativity meets structure."
         panelDescription="Choose your category, tell us about your work, and submit a clean profile we can review quickly."
         panelItems={[
           { label: "Categories", value: "8 live contest tracks" },
-          { label: "Step After Submit", value: "Ayati payment" },
+          { label: "Registration flow", value: "Saved first, then WhatsApp" },
           { label: "Review Status", value: "Saved as submitted" },
         ]}
       />
@@ -222,7 +206,7 @@ export const Panache360RegisterPage = () => {
                     </p>
                     <p className="mt-1 font-sans text-sm leading-relaxed text-[#171411]/64">
                       Your application is saved first, then you are redirected to
-                      Ayati to complete payment.
+                      WhatsApp.
                     </p>
                   </div>
                 </div>
@@ -233,9 +217,14 @@ export const Panache360RegisterPage = () => {
           {submittedApplicationCode ? (
             <CompetitionPaymentRedirect
               applicationCode={submittedApplicationCode}
-              paymentHref={paymentConfig.paymentHref}
-              title="Panache 360 Application Received"
-              description="Your details are now stored in the Panache registration system. Complete your Ayati payment to finish the registration flow."
+              paymentHref={paymentSettings.postSubmitHref}
+              title={paymentConfig.successTitle || "Panache 360 Application Received"}
+              description={
+                paymentConfig.successDescription ||
+                "Your details are now stored in the Panache registration system."
+              }
+              actionLabel={paymentSettings.ctaLabel}
+              postSubmitCopy={paymentSettings.postSubmitCopy}
             />
           ) : (
             <ExpoSurface>
@@ -248,7 +237,7 @@ export const Panache360RegisterPage = () => {
                 </h2>
                 <p className="mt-3 max-w-2xl font-sans text-[0.98rem] leading-relaxed text-[#171411]/68">
                   Complete the essentials below. We&apos;ll store your profile first
-                  and then move you into payment.
+                  and then route you into WhatsApp.
                 </p>
               </div>
 
@@ -278,9 +267,9 @@ export const Panache360RegisterPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="phone" className="font-sans text-sm font-semibold text-[#171411]">
-                        Phone Number
+                        WhatsApp Number
                       </Label>
-                      <Input id="phone" name="phone" type="tel" className={expoInputClasses} placeholder="+237 6XX XXX XXX" required />
+                      <Input id="phone" name="phone" type="tel" className={expoInputClasses} placeholder="WhatsApp number e.g. +237 6XX XXX XXX" required />
                     </div>
                     <div>
                       <Label htmlFor="city" className="font-sans text-sm font-semibold text-[#171411]">
@@ -410,7 +399,7 @@ export const Panache360RegisterPage = () => {
                       onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
                     />
                     <Label htmlFor="terms" className="font-sans text-sm leading-6 text-[#171411]/72">
-                      I confirm that the information provided is accurate and I understand that payment is required on Ayati after this form is submitted.
+                      I confirm that the information provided is accurate and I understand that registration continues in WhatsApp after this form is submitted.
                     </Label>
                   </div>
 
@@ -429,7 +418,7 @@ export const Panache360RegisterPage = () => {
 
                 <div className="flex flex-col gap-4 border-t border-black/8 pt-8 sm:flex-row sm:items-center sm:justify-between">
                   <p className="font-sans text-sm text-[#171411]/56">
-                    Saved applications immediately continue to payment.
+                    Saved applications immediately continue in WhatsApp.
                   </p>
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <Button
@@ -442,7 +431,7 @@ export const Panache360RegisterPage = () => {
                     >
                       {submitCompetitionApplication.isPending || isFinalizingSubmission
                         ? "Saving application..."
-                        : "Save Application & Continue to Payment"}
+                        : "Save Application & Continue"}
                     </Button>
                     <Button
                       asChild
@@ -450,8 +439,8 @@ export const Panache360RegisterPage = () => {
                       variant="outline"
                       className="h-12 rounded-full border-black/12 bg-white/72 px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                     >
-                      <a href={paymentConfig.paymentHref} target="_blank" rel="noopener noreferrer">
-                        View Ayati Page
+                      <a href={paymentSettings.postSubmitHref} target="_blank" rel="noopener noreferrer">
+                        {paymentSettings.ctaLabel}
                         <ArrowUpRight className="h-4 w-4" />
                       </a>
                     </Button>

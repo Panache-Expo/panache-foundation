@@ -20,7 +20,7 @@ import { Link } from "react-router-dom";
 const heroFacts = [
   { value: "8", label: "live contest categories" },
   { value: "Live", label: "judged under pressure" },
-  { value: "Ayati", label: "payment after site submission" },
+  { value: "WhatsApp", label: "confirmation after site submission" },
 ];
 
 const contestTracks = [
@@ -85,13 +85,13 @@ const formatSteps = [
     number: "02",
     title: "Submit your profile, links, and motivation on the site.",
     description:
-      "We save your application first so your details are already in the system before you move to payment.",
+      "We save your application first so your details are already in the system before you continue to WhatsApp confirmation.",
   },
   {
     number: "03",
-    title: "Continue to Ayati and complete the registration flow.",
+    title: "Submit details and continue to WhatsApp.",
     description:
-      "Once the form is in, you are routed directly to Ayati to finish payment and confirm your contest entry.",
+      "Once the form is in, you are routed directly to WhatsApp to confirm your contest entry.",
   },
 ];
 
@@ -249,8 +249,8 @@ const Panache360Page = () => {
                         Cleaner journey. Stronger signal.
                       </h2>
                       <p className="mt-4 font-sans text-[0.98rem] leading-relaxed text-white/72">
-                        Submit your details on the site first, then finish payment through
-                        Ayati. The flow is simpler, faster, and easier to review.
+                        Submit your details on the site first, then continue in
+                        WhatsApp. The flow is simpler, faster, and easier to review.
                       </p>
 
                       <div className="mt-6 flex items-center gap-2 font-sans text-sm font-semibold text-white">

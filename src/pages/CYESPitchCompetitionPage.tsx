@@ -546,14 +546,14 @@ const CYESPitchCompetitionPage = () => {
                             htmlFor="phone"
                             className="font-sans text-sm font-semibold text-[#171411]"
                           >
-                            Phone Number
+                            WhatsApp Number
                           </Label>
                           <Input
                             id="phone"
                             name="phone"
                             type="tel"
                             className={cyesInputClasses}
-                            placeholder="+237 6XX XXX XXX"
+                            placeholder="WhatsApp number e.g. +237 6XX XXX XXX"
                             required
                           />
                         </div>

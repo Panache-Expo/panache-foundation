@@ -24,6 +24,9 @@ import sponsor12 from "@/assets/sponsors/sponsor12.jpeg";
 import sponsor13 from "@/assets/sponsors/sponsor13.jpeg";
 import sponsor14 from "@/assets/sponsors/sponsor14.jpeg";
 import sponsor15 from "@/assets/sponsors/sponsor15.jpeg";
+import aaFoundation from "@/assets/sponsors/aa-foundation.jpeg";
+import kemLogo from "@/assets/sponsors/kem-logo-blanc.png";
+import kovrLogo from "@/assets/sponsors/kovr-cosmetics.svg";
 
 const sponsors = [
   { name: "Sponsor 1", logo: sponsor1 },
@@ -43,7 +46,29 @@ const sponsors = [
   { name: "Sponsor 15", logo: sponsor15 },
 ];
 
-const sponsorsLoop = [...sponsors, ...sponsors];
+const panacheOfficialSponsors = [
+  {
+    name: "KOVR Cosmetics",
+    logo: kovrLogo,
+    role: "Official beauty partner",
+    className: "bg-black",
+    imageClassName: "",
+  },
+  {
+    name: "KEM",
+    logo: kemLogo,
+    role: "Official hair and body partner",
+    className: "bg-[#1a1511]",
+    imageClassName: "",
+  },
+];
+
+const panacheSponsors = [...sponsors];
+
+const cyesSponsors = [
+  ...sponsors,
+  { name: "AA Foundation", logo: aaFoundation },
+];
 
 type SponsorsMarqueeVariant = "panache" | "cyes";
 
@@ -81,6 +106,8 @@ export const SponsorsMarquee = ({
     return `${-wrappedOffset}px`;
   });
   const isCyesVariant = variant === "cyes";
+  const activeSponsors = isCyesVariant ? cyesSponsors : panacheSponsors;
+  const sponsorsLoop = [...activeSponsors, ...activeSponsors];
   const sectionBackgroundClassName = isCyesVariant
     ? "bg-[#f7f8f3]"
     : "bg-accent";
@@ -176,6 +203,59 @@ export const SponsorsMarquee = ({
           fashion, and youth empowerment.
         </p>
       </div>
+
+      {!isCyesVariant ? (
+        <div className="mx-auto mb-12 max-w-7xl px-6">
+          <div className="rounded-[2.2rem] border border-black/8 bg-white/78 px-5 py-6 shadow-[0_18px_40px_rgba(17,16,14,0.06)] backdrop-blur-sm md:px-7 md:py-7">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+              <div className="max-w-[28rem]">
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#8241B6]">
+                  Official Panache Expo Sponsors
+                </p>
+                <h3 className="mt-3 font-sans text-[clamp(1.9rem,3vw,2.8rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-[#11100e]">
+                  The brands directly backing the Panache Expo 2026 experience.
+                </h3>
+                <p className="mt-3 font-sans text-sm leading-relaxed text-[#11100e]/68 md:text-base">
+                  These are the official sponsor brands helping fund visibility,
+                  presentation quality, and the wider experience around Panache Expo.
+                </p>
+                <p className="mt-3 max-w-[24rem] font-sans text-sm leading-relaxed text-[#11100e]/58">
+                  Their support stretches across audience experience, brand
+                  presence, and the kind of polish the event wants to be known for.
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {panacheOfficialSponsors.map((sponsor) => (
+                  <div
+                    key={sponsor.name}
+                    className="overflow-hidden rounded-[1.65rem] border border-black/8 bg-[#f8f5ef] shadow-[0_16px_32px_rgba(17,16,14,0.06)]"
+                  >
+                    <div
+                      className={`flex min-h-[15rem] items-center justify-center  ${sponsor.className}`}
+                    >
+                      <img
+                        src={sponsor.logo}
+                        alt={sponsor.name}
+                        className={` max-h-[17rem] object-cover ${sponsor.imageClassName}`}
+                      />
+                    </div>
+
+                    <div className="border-t border-black/6 bg-white/88 px-4 py-4">
+                      <p className="font-sans text-sm font-semibold tracking-[-0.03em] text-[#11100e]">
+                        {sponsor.name}
+                      </p>
+                      <p className="mt-1 font-sans text-sm leading-relaxed text-[#11100e]/62">
+                        {sponsor.role}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="relative">
         {/* Gradient fades on edges */}

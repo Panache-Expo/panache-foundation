@@ -20,12 +20,13 @@ import missPanacheBackdrop from "@/assets/MissPanache.jpeg";
 import {
   buildCompetitionApplicationCode,
   competitionRegistrationLinks,
+  getCompetitionPaymentSettings,
 } from "@/lib/registration-links";
-import { sendCompetitionRegistrationEmail } from "@/lib/send-registration-email";
 import { ArrowUpRight, Crown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const paymentConfig = competitionRegistrationLinks.missPanache;
+const paymentSettings = getCompetitionPaymentSettings(paymentConfig);
 
 const MissPanacheRegisterPage = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,8 +43,8 @@ const MissPanacheRegisterPage = () => {
     }
 
     const timeoutId = window.setTimeout(() => {
-      window.location.assign(paymentConfig.paymentHref);
-    }, 1600);
+      window.location.assign(paymentSettings.postSubmitHref);
+    }, paymentSettings.redirectDelayMs);
 
     return () => window.clearTimeout(timeoutId);
   }, [submittedApplicationCode]);
@@ -97,9 +98,12 @@ const MissPanacheRegisterPage = () => {
         portfolio_url: portfolioUrl,
         years_experience: null,
         motivation,
-        payment_status: "pending",
-        payment_platform: "ayatickets",
+        payment_status: paymentSettings.paymentStatus,
+        payment_platform: paymentSettings.paymentPlatform,
         review_status: "submitted",
+        competitionTitle: paymentConfig.title,
+        postSubmitHref: paymentSettings.postSubmitHref,
+        notificationEmails: paymentSettings.notificationEmails,
         form_payload: {
           age: ageValue ? Number(ageValue) : null,
           occupation,
@@ -111,24 +115,6 @@ const MissPanacheRegisterPage = () => {
         },
       });
 
-      let emailWarning: string | null = null;
-
-      try {
-        await sendCompetitionRegistrationEmail({
-          applicantEmail: email,
-          applicantFirstName: firstName,
-          competitionTitle: paymentConfig.title,
-          applicationCode,
-          paymentHref: paymentConfig.paymentHref,
-          category: "Contestant",
-        });
-      } catch (error) {
-        emailWarning =
-          error instanceof Error
-            ? error.message
-            : "We could not send the confirmation email.";
-      }
-
       formRef.current?.reset();
       setAgreedToTerms(false);
       setNewsletterSubscription(false);
@@ -136,9 +122,7 @@ const MissPanacheRegisterPage = () => {
 
       toast({
         title: "Application saved",
-        description: emailWarning
-          ? `${emailWarning} Your application was still saved and you are being redirected to Ayati.`
-          : "A confirmation email has been sent. Redirecting you to Ayati to complete payment.",
+        description: paymentSettings.successMessage,
       });
     } catch (error) {
       toast({
@@ -167,7 +151,7 @@ const MissPanacheRegisterPage = () => {
             <span className="font-display text-[#f4e93f]">Miss Panache</span>
           </>
         }
-        description="Start your contestant journey here. Save your profile, your motivation, and your community story before completing payment on Ayati."
+        description={paymentConfig.description}
         image={missPanacheBackdrop}
         panelLabel="Contestant Entry"
         panelTitle="Beauty with presence and purpose."
@@ -175,7 +159,7 @@ const MissPanacheRegisterPage = () => {
         panelItems={[
           { label: "Category", value: "Contestant entry" },
           { label: "Best used for", value: "Ambition + purpose" },
-          { label: "Payment", value: "Ayati after save" },
+          { label: "Registration flow", value: "Saved first, then WhatsApp" },
         ]}
       />
 
@@ -199,8 +183,7 @@ const MissPanacheRegisterPage = () => {
                       Submission flow
                     </p>
                     <p className="mt-1 font-sans text-sm leading-relaxed text-[#171411]/64">
-                      Save your contestant form first, then complete payment using
-                      the Ayati page that follows.
+                      Save your contestant form first, then continue in WhatsApp.
                     </p>
                   </div>
                 </div>
@@ -211,9 +194,14 @@ const MissPanacheRegisterPage = () => {
           {submittedApplicationCode ? (
             <CompetitionPaymentRedirect
               applicationCode={submittedApplicationCode}
-              paymentHref={paymentConfig.paymentHref}
-              title="Miss Panache Application Received"
-              description="Your contestant application is now stored in the Panache registration system. Complete your Ayati payment to finish the registration flow."
+              paymentHref={paymentSettings.postSubmitHref}
+              title={paymentConfig.successTitle || "Miss Panache Application Received"}
+              description={
+                paymentConfig.successDescription ||
+                "Your contestant application is now stored in the Panache registration system."
+              }
+              actionLabel={paymentSettings.ctaLabel}
+              postSubmitCopy={paymentSettings.postSubmitCopy}
             />
           ) : (
             <ExpoSurface>
@@ -256,9 +244,9 @@ const MissPanacheRegisterPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="phone" className="font-sans text-sm font-semibold text-[#171411]">
-                        Phone Number
+                        WhatsApp Number
                       </Label>
-                      <Input id="phone" name="phone" type="tel" className={expoInputClasses} placeholder="+237 6XX XXX XXX" required />
+                      <Input id="phone" name="phone" type="tel" className={expoInputClasses} placeholder="WhatsApp number e.g. +237 6XX XXX XXX" required />
                     </div>
                   </div>
                 </div>
@@ -378,7 +366,7 @@ const MissPanacheRegisterPage = () => {
                       onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
                     />
                     <Label htmlFor="terms" className="font-sans text-sm leading-6 text-[#171411]/72">
-                      I confirm that the information provided is accurate and I understand that payment is required on Ayati after this form is submitted.
+                      I confirm that the information provided is accurate and I understand that registration continues in WhatsApp after this form is submitted.
                     </Label>
                   </div>
 
@@ -407,10 +395,10 @@ const MissPanacheRegisterPage = () => {
                       disabled={
                         submitCompetitionApplication.isPending || isFinalizingSubmission
                       }
-                    >
+                      >
                       {submitCompetitionApplication.isPending || isFinalizingSubmission
                         ? "Saving application..."
-                        : "Save Application & Continue to Payment"}
+                        : "Save Application & Continue"}
                     </Button>
                     <Button
                       asChild
@@ -418,8 +406,8 @@ const MissPanacheRegisterPage = () => {
                       variant="outline"
                       className="h-12 rounded-full border-black/12 bg-white/72 px-6 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                     >
-                      <a href={paymentConfig.paymentHref} target="_blank" rel="noopener noreferrer">
-                        View Ayati Page
+                      <a href={paymentSettings.postSubmitHref} target="_blank" rel="noopener noreferrer">
+                        {paymentSettings.ctaLabel}
                         <ArrowUpRight className="h-4 w-4" />
                       </a>
                     </Button>

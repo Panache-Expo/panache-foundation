@@ -5,6 +5,10 @@ const SUPABASE_URL =
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 const DASHBOARD_ACCESS_KEY = process.env.DASHBOARD_ACCESS_KEY || "";
+const REGISTRATION_SUPPORT_EMAIL = process.env.REGISTRATION_SUPPORT_EMAIL || "";
+const PARTICIPANTS_DASHBOARD_PATH =
+  process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
+const REGISTRATION_EMAIL_ENDPOINT = "/api/send-registration-email";
 
 const ALLOWED_COMPETITION_SLUGS = new Set([
   "cyes-pitch-competition",
@@ -37,6 +41,22 @@ const normalizeJson = (value) => {
   return value;
 };
 
+const normalizeAdminEmails = (value) => {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.map(normalizeText).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => normalizeText(item))
+      .filter(Boolean);
+  }
+  return [];
+};
+
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -55,6 +75,121 @@ const parseBody = (req) => {
     }
   }
   return {};
+};
+
+const resolveHostname = (req) => normalizeText(req.headers.host) || "localhost";
+
+const resolveProtocol = (req) => {
+  const headerValue = normalizeText(req.headers["x-forwarded-proto"]);
+  return headerValue.startsWith("http") ? headerValue : headerValue.includes("https") ? "https" : "http";
+};
+
+const resolveDashboardUrl = (req, overrideUrl) => {
+  if (overrideUrl) {
+    return overrideUrl;
+  }
+  return `${resolveProtocol(req)}://${resolveHostname(req)}${PARTICIPANTS_DASHBOARD_PATH}`;
+};
+
+const sendRegistrationNotification = async (req, record, body, isFree) => {
+  const applicantEmail = normalizeText(record.email);
+  const competitionTitle =
+    normalizeText(body.competitionTitle) || normalizeText(body.competition_title) || record.competition_slug;
+  const applicationCode = normalizeText(record.application_code);
+  const notificationEmails = normalizeAdminEmails(
+    body.notificationEmails ||
+      body.notification_emails ||
+      body.notificationRecipientEmails ||
+      body.adminEmails
+  );
+
+  const postSubmitHref = normalizeText(
+    body.postSubmitHref ||
+      body.post_submit_href ||
+      body.whatsappGroupUrl ||
+      body.whatsapp_group_url ||
+      body.paymentHref ||
+      body.payment_href
+  );
+  const paymentHref = normalizeText(body.paymentHref || body.payment_href);
+  const actionHref =
+    isFree && postSubmitHref
+      ? postSubmitHref
+      : paymentHref || postSubmitHref;
+
+  if (!applicantEmail && notificationEmails.length === 0) {
+    return {
+      attempted: false,
+      skipped: true,
+      reason: "No recipient email provided.",
+    };
+  }
+
+  const host = resolveHostname(req);
+  if (!host) {
+    return {
+      attempted: true,
+      skipped: true,
+      reason: "Host information is unavailable for notification API call.",
+    };
+  }
+
+  const emailPayload = {
+    applicantEmail: applicantEmail || "",
+    applicantFirstName: normalizeText(record.first_name),
+    competitionTitle,
+    applicationCode,
+    category: normalizeText(record.category),
+    paymentHref,
+    postSubmitHref,
+    isFree,
+    competitionSlug: normalizeText(record.competition_slug),
+    email: normalizeText(record.email),
+    phone: normalizeText(record.phone),
+    city: normalizeText(record.city),
+    country: normalizeText(record.country),
+    submittedAt: normalizeText(record.created_at),
+    dashboardUrl: resolveDashboardUrl(req, normalizeText(body.dashboardUrl)),
+    adminEmails: notificationEmails.length
+      ? notificationEmails
+      : REGISTRATION_SUPPORT_EMAIL
+      ? [REGISTRATION_SUPPORT_EMAIL]
+      : [],
+    recipientType: notificationEmails.length || actionHref ? "both" : "applicant",
+  };
+
+  if (!actionHref) {
+    return {
+      attempted: true,
+      skipped: true,
+      reason: "No destination URL available for action button.",
+      attemptedWithNoAction: true,
+    };
+  }
+
+  const requestUrl = `${resolveProtocol(req)}://${host}${REGISTRATION_EMAIL_ENDPOINT}`;
+
+  const response = await fetch(requestUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(emailPayload),
+  });
+
+  const emailResponse = (await response.json().catch(() => null)) || {};
+  if (!response.ok) {
+    return {
+      attempted: true,
+      ok: false,
+      error:
+        emailResponse?.message || "Could not send registration notification email.",
+    };
+  }
+
+  return {
+    attempted: true,
+    ok: true,
+    raw: emailResponse,
+  };
 };
 
 const buildInsertPayload = (payload) => {
@@ -85,9 +220,9 @@ const buildInsertPayload = (payload) => {
     review_notes: normalizeText(payload.review_notes),
   };
 
-  if (!record.application_code) {
-    return { error: "application_code is required." };
-  }
+    if (!record.application_code) {
+      return { error: "application_code is required." };
+    }
   if (!record.competition_slug || !ALLOWED_COMPETITION_SLUGS.has(record.competition_slug)) {
     return { error: "competition_slug is required and must be valid." };
   }
@@ -98,7 +233,7 @@ const buildInsertPayload = (payload) => {
     return { error: "email is required." };
   }
   if (!record.phone) {
-    return { error: "phone is required." };
+    return { error: "WhatsApp number is required." };
   }
 
   return { record };
@@ -183,8 +318,33 @@ export default async function handler(req, res) {
       });
     }
 
+    let emailResult = {
+      attempted: false,
+      ok: false,
+      skipped: true,
+    };
+    const isFreeSubmission = normalizeText(record.payment_platform) === "free";
+    try {
+      emailResult = await sendRegistrationNotification(
+        req,
+        data,
+        body,
+        isFreeSubmission
+      );
+    } catch (notificationError) {
+      emailResult = {
+        attempted: true,
+        ok: false,
+        error:
+          notificationError instanceof Error
+            ? notificationError.message
+            : "Could not send registration notification email.",
+      };
+    }
+
     return sendJson(res, 200, {
       application: data,
+      notification: emailResult,
     });
   }
 

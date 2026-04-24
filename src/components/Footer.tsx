@@ -6,9 +6,14 @@ import {
   MessageCircle,
   Twitter,
 } from "lucide-react";
+import {
+  PANACHE_SUPPORT_WHATSAPP_HREF,
+  PANACHE_SUPPORT_WHATSAPP_NUMBER,
+} from "@/lib/registration-links";
 import { Link } from "react-router-dom";
 import panacheScriptLogo from "@/assets/PanacheHeroLogo.svg";
 import footerMuse from "@/assets/footer-muse-crown.png";
+import MissPanacheImage from "@/assets/misspanacheupdate.jpg";
 
 const quickLinks = [
   { label: "Foundation Home", to: "/" },
@@ -54,9 +59,6 @@ const cyesSocials = [
 const socialLinkClasses =
   "inline-flex h-12 w-12 items-center justify-center rounded-full text-[#11100e] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-65";
 
-const PANACHE_WHATSAPP_NUMBER = "+237674230406";
-const PANACHE_WHATSAPP_HREF = "https://wa.me/237674230406";
-
 type FooterVariant = "panache" | "cyes";
 
 type FooterProps = {
@@ -78,7 +80,7 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
 
   return (
     <footer className={`relative px-3 pb-4 pt-14 md:px-4 md:pt-16 ${outerBackgroundClassName}`}>
-      <div className={`relative overflow-hidden rounded-[2.75rem] px-6 pb-10 pt-8 md:px-10 md:pb-12 md:pt-10 lg:px-14 lg:pb-14 lg:pt-12 ${innerBackgroundClassName}`}>
+      <div className={`relative overflow-hidden rounded-[2.75rem] px-6  pt-8 md:px-10 md: md:pt-10 lg:px-14 lg: lg:pt-12 ${innerBackgroundClassName}`}>
         <div className={`pointer-events-none absolute inset-0 ${glowBackgroundClassName}`} />
 
         <div className="relative grid gap-8 text-center lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-start lg:text-left">
@@ -129,7 +131,7 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
 
             <div className="mt-5 space-y-3">
               <a
-                href={PANACHE_WHATSAPP_HREF}
+                href={PANACHE_SUPPORT_WHATSAPP_HREF}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/78 px-5 py-3 font-sans text-sm font-semibold text-[#11100e] transition-colors hover:bg-white"
@@ -140,19 +142,19 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
               <p className="max-w-[16rem] font-sans text-sm leading-relaxed text-[#11100e]/62">
                 WhatsApp bot for Panache and CYES registration and support:
                 <span className="block font-semibold text-[#11100e]">
-                  {PANACHE_WHATSAPP_NUMBER}
+                  {PANACHE_SUPPORT_WHATSAPP_NUMBER}
                 </span>
               </p>
             </div>
           </div>
 
           <div className="order-1 flex justify-center lg:order-2">
-            <div className="relative flex min-h-[21rem] w-full items-end justify-center md:min-h-[28rem] lg:min-h-[40rem]">
+            <div className="relative flex min-h-[23rem] w-full items-end justify-center md:min-h-[30rem] lg:min-h-[44rem]">
               <div className="pointer-events-none absolute inset-x-10 bottom-8 h-[14rem] rounded-full bg-[radial-gradient(circle,rgba(255,210,61,0.24),rgba(130,65,182,0.14)_42%,transparent_76%)] blur-3xl md:inset-x-12 md:h-[18rem]" />
               <img
                 src={footerMuse}
                 alt="Panache Foundation muse"
-                className="relative h-[20rem] w-auto select-none object-contain drop-shadow-[0_24px_50px_rgba(17,16,14,0.18)] md:h-[28rem] lg:h-[40rem]"
+                className="relative h-[32rem] w-auto select-none object-cover overflow-visible drop-shadow-[0_24px_50px_rgba(17,16,14,0.18)] md:h-[40rem] lg:h-[54rem]"
               />
             </div>
           </div>
@@ -211,6 +213,45 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
             <p className="mx-auto mt-12 max-w-[18rem] font-sans text-[clamp(1.2rem,2vw,1.7rem)] font-medium leading-[1.18] tracking-[-0.03em] text-[#11100e]/92 lg:mr-0">
               Stay updated with our latest events and workshops
             </p>
+{/* right here replae hits and just add the name of the gilr to the footer muse image parent */}
+            {/* {!isCyesVariant ? (
+              <div className="mx-auto mt-7 w-full max-w-[21rem] overflow-hidden rounded-[2rem] border border-black/8 bg-white/56 px-4 py-5 text-left shadow-[0_18px_38px_rgba(17,16,14,0.08)] lg:ml-auto">
+                <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#11100e]/48">
+                  Current titleholder
+                </p>
+
+                <div className="relative mt-5 h-[20rem]">
+                  <p className="pointer-events-none absolute left-0 top-0 z-0 font-display text-[clamp(3.8rem,11vw,6rem)] font-bold leading-[0.82] tracking-[-0.09em] text-[#11100e]/10">
+                    SOULE
+                  </p>
+                  <p className="pointer-events-none absolute right-0 top-[5.1rem] z-0 font-display text-[clamp(2.4rem,8vw,4.2rem)] font-bold leading-[0.84] tracking-[-0.08em] text-[#11100e]/8">
+                    DJOULHIDA
+                  </p>
+
+                  <div className="absolute right-0 top-2 z-10 h-[15rem] w-[10.5rem] overflow-hidden rounded-[1.7rem] border border-black/10 bg-[#f1ece5] shadow-[0_18px_34px_rgba(17,16,14,0.14)]">
+                    <img
+                      src={MissPanacheImage}
+                      alt="Djoulhida Soule, Miss Panache D'or"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 z-20 max-w-[10.75rem]">
+                    <p className="font-sans text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[#8241B6]">
+                      Miss Panache D&apos;or
+                    </p>
+                    <p className="mt-2 font-sans text-[1.45rem] font-semibold leading-[0.96] tracking-[-0.05em] text-[#11100e]">
+                      Djoulhida
+                      <span className="block font-display text-[1.08em]">Soule</span>
+                    </p>
+                    <p className="mt-2 font-sans text-sm leading-relaxed text-[#11100e]/62">
+                      Carrying the crown with beauty visibility, brand presence,
+                      and ambassadorial poise.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null} */}
           </div>
         </div>
       </div>

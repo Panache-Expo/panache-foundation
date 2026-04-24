@@ -8,6 +8,15 @@ export type CompetitionApplication = Tables['competition_applications']['Row'];
 export type Profile = Tables['profiles']['Row'];
 export type CompetitionApplicationInsert = Tables['competition_applications']['Insert'];
 
+type CompetitionApplicationSubmitPayload =
+  Omit<CompetitionApplicationInsert, 'id' | 'created_at' | 'updated_at'> & {
+    competitionTitle?: string;
+    postSubmitHref?: string;
+    paymentMode?: string;
+    notificationEmails?: string[];
+    [key: string]: unknown;
+  };
+
 // Contact Submissions Service
 export const contactService = {
   async submit(data: Omit<ContactSubmission, 'id' | 'created_at'>) {
@@ -43,13 +52,31 @@ export const contactService = {
 
 // Competition Applications Service
 export const competitionApplicationService = {
-  async submit(data: CompetitionApplicationInsert) {
-    const { error } = await supabase
-      .from('competition_applications')
-      .insert([data]);
+  async submit(data: CompetitionApplicationSubmitPayload) {
+    const endpoint =
+      import.meta.env.VITE_COMPETITION_API_URL ||
+      '/api/competition-applications';
 
-    if (error) throw error;
-    return null;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { application?: CompetitionApplication; message?: string }
+      | null;
+
+    if (!response.ok || !payload) {
+      throw new Error(
+        payload?.message ||
+          `Could not submit the registration (${response.statusText || 'request failed'}).`
+      );
+    }
+
+    return payload.application || null;
   },
 };
 

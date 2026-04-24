@@ -27,12 +27,16 @@ import cyesEvent from "@/assets/CYES.jpeg";
 import speaker1 from "@/assets/speaker1.jpeg";
 import speaker4 from "@/assets/speaker4.jpeg";
 import speaker5 from "@/assets/speaker5.jpeg";
+import {
+  PANACHE_SUPPORT_WHATSAPP_HREF,
+  PANACHE_SUPPORT_WHATSAPP_NUMBER,
+} from "@/lib/registration-links";
 import { ArrowUpRight, Clock3, Mail, MapPin, Phone } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
 const CYES_EMAIL = "info.cyescyecdawards@gmail.com";
-const CONTACT_PHONE = "+237 673 594 931";
+const CONTACT_PHONE = PANACHE_SUPPORT_WHATSAPP_NUMBER;
 const CONTACT_LOCATION = "Buea, Cameroon";
 
 const cyesContactCards = [
@@ -144,7 +148,7 @@ export const ContactPage = () => {
                 accentClassName: "text-[#156D3B]",
               },
               {
-                label: "Phone",
+                label: "Phone / WhatsApp",
                 value: CONTACT_PHONE,
                 accentClassName: "text-[#1875D2]",
               },
@@ -187,7 +191,7 @@ export const ContactPage = () => {
                 <div className={cyesSurfaceClasses + " px-6 py-7"}>
                   <Phone className="h-8 w-8 text-[#1875D2]" />
                   <h3 className="mt-5 font-sans text-[1.28rem] font-semibold leading-[1.05] tracking-[-0.05em] text-[#171411]">
-                    Phone
+                    Phone / WhatsApp
                   </h3>
                   <p className="mt-3 font-sans text-[1rem] leading-relaxed text-[#171411]/72">
                     {CONTACT_PHONE}
@@ -396,13 +400,15 @@ export const ContactPage = () => {
                   </span>
                 </a>
                 <a
-                  href={`tel:${CONTACT_PHONE.replace(/\s+/g, "")}`}
+                  href={PANACHE_SUPPORT_WHATSAPP_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center justify-between rounded-[1.2rem] border border-black/10 bg-white/72 px-4 py-3 transition-colors hover:bg-white"
                 >
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-[#8241B6]" />
                     <span className="font-sans text-sm text-[#171411]/78">
-                      Phone
+                      Phone / WhatsApp
                     </span>
                   </div>
                   <span className="font-sans text-sm font-semibold text-[#171411]">

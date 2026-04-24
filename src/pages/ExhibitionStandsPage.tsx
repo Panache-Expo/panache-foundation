@@ -25,8 +25,10 @@ import { useToast } from "@/hooks/use-toast";
 import {
   buildCompetitionApplicationCode,
   competitionRegistrationLinks,
+  getCompetitionPaymentSettings,
+  PANACHE_SUPPORT_WHATSAPP_HREF,
+  PANACHE_SUPPORT_WHATSAPP_NUMBER,
 } from "@/lib/registration-links";
-import { sendCompetitionRegistrationEmail } from "@/lib/send-registration-email";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -39,6 +41,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 const paymentConfig = competitionRegistrationLinks.exhibitionStands;
+const paymentSettings = getCompetitionPaymentSettings(paymentConfig);
 
 const standOptions = [
   {
@@ -99,8 +102,8 @@ export const ExhibitionStandsPage = () => {
     }
 
     const timeoutId = window.setTimeout(() => {
-      window.location.assign(paymentConfig.paymentHref);
-    }, 1600);
+      window.location.assign(paymentSettings.postSubmitHref);
+    }, paymentSettings.redirectDelayMs);
 
     return () => window.clearTimeout(timeoutId);
   }, [submittedApplicationCode]);
@@ -142,34 +145,19 @@ export const ExhibitionStandsPage = () => {
         last_name: "",
         email,
         phone,
-        payment_status: "pending",
-        payment_platform: "ayatickets",
+        payment_status: paymentSettings.paymentStatus,
+        payment_platform: paymentSettings.paymentPlatform,
+        competitionTitle: paymentConfig.title,
+        postSubmitHref: paymentSettings.postSubmitHref,
+        notificationEmails: paymentSettings.notificationEmails,
         review_status: "submitted",
         form_payload: {
           business_name: businessName,
           agreed_to_terms: agreedToTerms,
-          contact_number: "+237652587170",
+          contact_number: PANACHE_SUPPORT_WHATSAPP_NUMBER,
           registration_type: "exhibition_stand",
         },
       });
-
-      let emailWarning: string | null = null;
-
-      try {
-        await sendCompetitionRegistrationEmail({
-          applicantEmail: email,
-          applicantFirstName: fullName,
-          competitionTitle: paymentConfig.title,
-          applicationCode,
-          paymentHref: paymentConfig.paymentHref,
-          category: selectedStandType,
-        });
-      } catch (error) {
-        emailWarning =
-          error instanceof Error
-            ? error.message
-            : "We could not send the confirmation email.";
-      }
 
       formRef.current?.reset();
       setSelectedStandType("");
@@ -178,9 +166,7 @@ export const ExhibitionStandsPage = () => {
 
       toast({
         title: "Stand request saved",
-        description: emailWarning
-          ? `${emailWarning} Your request was still saved and you are being redirected to Ayati.`
-          : "Your request has been saved. Redirecting you to Ayati to complete payment.",
+        description: paymentSettings.successMessage,
       });
     } catch (error) {
       toast({
@@ -209,14 +195,14 @@ export const ExhibitionStandsPage = () => {
             <span className="font-display text-[#f4e93f]">Business on the Floor</span>
           </>
         }
-        description="Panache Expo 2026 brings together beauty, fashion, entrepreneurship, and audience traffic across three full event days. Reserve your stand here first, then continue to Ayati to complete payment."
+        description={paymentConfig.description}
         panelLabel="Stand booking"
-        panelTitle="Save the request. Pay after."
-        panelDescription="The flow is simple: choose your stand type, save the booking details on the site, then complete payment through Ayati to secure the booth."
+        panelTitle="Save the request. Continue on WhatsApp."
+        panelDescription={paymentSettings.postSubmitCopy}
         panelItems={[
           { label: "Traffic expectation", value: "5,000+ visitors" },
-          { label: "Booking flow", value: "Request first, Ayati after" },
-          { label: "Contact line", value: "+237 652 587 170" },
+          { label: "Booking flow", value: "Request first, WhatsApp after" },
+          { label: "Contact line", value: PANACHE_SUPPORT_WHATSAPP_NUMBER },
         ]}
       />
 
@@ -229,7 +215,7 @@ export const ExhibitionStandsPage = () => {
             points={reasonsToBook}
             footer={
               <a
-                href="https://wa.me/237652587170"
+                href={PANACHE_SUPPORT_WHATSAPP_HREF}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-black/12 bg-white/74 px-6 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
@@ -316,20 +302,25 @@ export const ExhibitionStandsPage = () => {
           {submittedApplicationCode ? (
             <CompetitionPaymentRedirect
               applicationCode={submittedApplicationCode}
-              paymentHref={paymentConfig.paymentHref}
-              title="Exhibition stand request received"
-              description="Your stand request is now saved in the Panache registration system. Complete the Ayati payment to secure your booth."
+              paymentHref={paymentSettings.postSubmitHref}
+              title={paymentConfig.successTitle || "Exhibition stand request received"}
+              description={
+                paymentConfig.successDescription ||
+                "Your stand request is now saved in the Panache registration system."
+              }
+              actionLabel={paymentSettings.ctaLabel}
+              postSubmitCopy={paymentSettings.postSubmitCopy}
             />
           ) : (
             <div className="grid gap-8 lg:grid-cols-[0.82fr,1.18fr]">
               <ExpoSidebarCard
                 eyebrow="Quick registration"
                 title="Save your stand request here."
-                description="Complete the short form first so your details are already in the system before you move to Ayati. Your space is only secured after payment is completed."
+                description="Complete the short form first so your details are recorded. Your booking is shared with the team, then you continue in WhatsApp to finalize your stand confirmation."
                 points={[
-                  "We need your full name, business name, phone number, and stand type.",
-                  "Stand requests stay pending until Ayati payment is completed.",
-                  "If you need help choosing a stand type, contact the Panache team before paying.",
+                  "We need your full name, business name, WhatsApp number, and stand type.",
+                  "Stand requests are processed after your WhatsApp confirmation with the team.",
+                  "If you need help choosing a stand type, contact the Panache team in WhatsApp.",
                 ]}
               />
 
@@ -390,14 +381,14 @@ export const ExhibitionStandsPage = () => {
                         htmlFor="phone"
                         className="font-sans text-sm font-semibold text-[#171411]"
                       >
-                        Phone number
+                        WhatsApp number
                       </Label>
                       <Input
                         id="phone"
                         name="phone"
                         type="tel"
                         className={expoInputClasses}
-                        placeholder="+237 6XX XXX XXX"
+                        placeholder="WhatsApp number e.g. +237 6XX XXX XXX"
                         required
                       />
                     </div>
@@ -438,14 +429,18 @@ export const ExhibitionStandsPage = () => {
                       htmlFor="standTerms"
                       className="font-sans text-sm leading-relaxed text-[#171411]/72"
                     >
-                      I confirm that this booking request is accurate and I understand that my stand remains pending until Ayati payment is completed.
+                      I confirm that this booking request is accurate and I understand
+                      that my stand remains pending until team confirmation in
+                      WhatsApp.
                     </Label>
                   </div>
 
                   <div className="flex flex-col gap-4 border-t border-black/8 pt-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3 text-sm text-[#171411]/58">
                       <Users className="mt-0.5 h-4 w-4 text-[#8241B6]" />
-                      <span>Once saved, you move straight into the Ayati payment flow.</span>
+                      <span>
+                        Once saved, your stand request continues in WhatsApp.
+                      </span>
                     </div>
                     <Button
                       type="submit"

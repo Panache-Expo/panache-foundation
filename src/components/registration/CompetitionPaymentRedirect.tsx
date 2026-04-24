@@ -7,6 +7,8 @@ interface CompetitionPaymentRedirectProps {
   paymentHref: string;
   title: string;
   description: string;
+  actionLabel?: string;
+  postSubmitCopy?: string;
 }
 
 export const CompetitionPaymentRedirect = ({
@@ -14,7 +16,13 @@ export const CompetitionPaymentRedirect = ({
   paymentHref,
   title,
   description,
+  actionLabel,
+  postSubmitCopy,
 }: CompetitionPaymentRedirectProps) => {
+  const buttonLabel = actionLabel || "Continue";
+  const copy =
+    postSubmitCopy ||
+    "You will be redirected to continue your registration flow. If nothing happens, use the button below.";
   return (
     <ExpoSurface className="max-w-2xl mx-auto text-center">
       <p className="text-sm font-semibold uppercase tracking-[0.28em] text-rose-gold mb-4">
@@ -30,7 +38,7 @@ export const CompetitionPaymentRedirect = ({
         Application Code: {applicationCode}
       </div>
       <p className="mb-8 font-sans text-sm text-[#171411]/56">
-        You will be redirected to Ayati to complete payment. If nothing happens, use the button below.
+        {copy}
       </p>
       <Button
         asChild
@@ -38,7 +46,7 @@ export const CompetitionPaymentRedirect = ({
         className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white shadow-none hover:bg-[#171411]/92"
       >
         <a href={paymentHref} target="_blank" rel="noopener noreferrer">
-          Continue to Ayati
+          {buttonLabel}
           <ExternalLink className="w-4 h-4" />
         </a>
       </Button>

@@ -182,7 +182,7 @@ const AboutIntro = () => {
         </h3>
       </div>
 
-      <div className="sticky top-1/2 z-30 -translate-y-1/2 px-2 pt-[20svh] md:pt-[24svh]">
+      <div className="pointer-events-none sticky top-[50%] z-30 -translate-y-1/2 px-2 pt-[10svh] md:pt-[12svh]">
         <motion.div
           style={{ opacity: introOpacity, y: introY }}
           className="mx-auto flex w-full max-w-6xl flex-col items-center text-center"
@@ -369,7 +369,8 @@ const AboutScene = ({
 
 export const About = () => {
   return (
-    <section className="relative z-20 -mt-20 rounded-t-[2rem] bg-[#f4f3ef] pt-12  md:pt-20">
+    <section className="relative bg-[#f4f3ef] pt-12 md:pt-20 pointer-events-none">
+      <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 rounded-t-[2rem] bg-[#f4f3ef] md:-top-10 md:h-10" />
       <div className="w-full">
         <AboutIntro />
         <div className="space-y-0">

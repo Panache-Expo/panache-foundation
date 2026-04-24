@@ -32,6 +32,16 @@ const recognitionCards = [
   },
 ];
 
+const winnerPackageItems = [
+  "1.5 million FCFA cash package",
+  "Free business website",
+  "Pro video advert",
+  "Media tours",
+  "Featured on the official website",
+  "Official Panache ambassador status",
+  "DJI Pocket 3 vlogging camera",
+];
+
 const PanacheDorPage = () => {
   return (
     <div className="min-h-screen bg-[#f4f3ef]">
@@ -147,6 +157,47 @@ const PanacheDorPage = () => {
               </div>
             </div>
           </ExpoSurface>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-6xl">
+          <div className="grid gap-6 overflow-hidden rounded-[1.8rem] border border-black/8 bg-white p-6 md:grid-cols-[0.82fr_1.18fr] md:p-8 lg:grid-cols-[0.82fr_1.18fr]">
+            <div>
+              <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                Winner package
+              </p>
+              <h2 className="mt-3 font-sans text-[clamp(2rem,3.1vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                Panache D&apos;or comes with a full visibility and growth package.
+              </h2>
+              <p className="mt-4 max-w-[40ch] font-sans text-[1rem] leading-relaxed text-[#171411]/72">
+                The Panache D&apos;or winner goes with 1.5 million FCFA and a
+                business-building prize package designed to extend visibility
+                beyond the award night itself.
+              </p>
+              <p className="mt-3 font-sans text-[0.98rem] leading-relaxed text-[#171411]/72">
+                It is structured to support brand growth, media exposure,
+                content creation, and the winner&apos;s position as one of the
+                public faces of Panache.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {winnerPackageItems.map((item, index) => (
+                <div
+                  key={item}
+                  className={[
+                    "rounded-[1.35rem] border border-black/8 px-4 py-4",
+                    index === 0 || index === 6
+                      ? "bg-[#f8f2e8]"
+                      : "bg-[#fcfbf8]",
+                  ].join(" ")}
+                >
+                  <p className="font-sans text-sm font-semibold leading-relaxed text-[#171411]">
+                    {item}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="mx-auto mt-10 max-w-6xl">

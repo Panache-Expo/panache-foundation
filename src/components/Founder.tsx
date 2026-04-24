@@ -175,9 +175,9 @@ const stackedOffsets = [-14, -10, -6, -3, 0, 3, 6, 10, 14];
 const founderRoleLabel = "Founder & CEO";
 const founderNameParts = ["Walters", "Ekie"] as const;
 const founderBio = [
-  "Ekie Walters founded Panache Expo with a vision to elevate beauty standards and empower professionals across Cameroon and beyond.",
-  "His passion for excellence and commitment to education has transformed countless lives, creating a platform where beauty professionals can learn, grow, and celebrate their craft together.",
-  "Through Panache Expo, he continues to bridge the gap between traditional beauty practices and modern techniques, fostering a community that celebrates diversity, creativity, and professional excellence.",
+  "Ekie Walters founded Panache Expo Africa with a vision to elevate beauty standards and empower professionals across Cameroon and beyond.",
+  "His passion for excellence and commitment to education has transformed countless lives, creating a platform where entrepreneurs, beauty, fashion and professionals can learn, grow, and celebrate their craft together.",
+  "Through Panache Expo Africa, he continues to bridge the gap between traditional beauty practices and modern techniques, fostering a community that celebrates diversity, creativity, and professional excellence.",
 ];
 
 export const Founder = () => {
