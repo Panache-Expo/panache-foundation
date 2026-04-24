@@ -378,6 +378,12 @@ const CYESPage = () => {
 
                   <div className="flex gap-4">
                     <span className="block font-display  tracking-[-0.07em] text-[#156D3B]">
+                      Entrepreneurial
+                    </span>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <span className="block font-display  tracking-[-0.07em] text-[#156D3B]">
                       Summit
                     </span>
                     <span className="block font-display text-[clamp(2.1rem,9.5vw,3rem)] tracking-[-0.07em] text-[#CC2129] md:text-[clamp(2.8rem,5vw,4.9rem)]">
