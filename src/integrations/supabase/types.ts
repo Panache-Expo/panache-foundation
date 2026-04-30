@@ -131,6 +131,167 @@ export type Database = {
         }
         Relationships: []
       }
+      cyes_award_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+          voting_enabled: boolean
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          voting_enabled?: boolean
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          voting_enabled?: boolean
+        }
+        Relationships: []
+      }
+      cyes_award_nominees: {
+        Row: {
+          bio: string | null
+          category_id: string
+          created_at: string
+          id: string
+          name: string
+          organization: string | null
+          photo_url: string | null
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          category_id: string
+          created_at?: string
+          id?: string
+          name: string
+          organization?: string | null
+          photo_url?: string | null
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          category_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          organization?: string | null
+          photo_url?: string | null
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cyes_award_nominees_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "cyes_award_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cyes_award_votes: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          nominee_id: string
+          supabase_user_id: string | null
+          user_agent: string | null
+          verification_provider: string
+          voter_email: string | null
+          voter_name: string
+          voter_phone: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          nominee_id: string
+          supabase_user_id?: string | null
+          user_agent?: string | null
+          verification_provider?: string
+          voter_email?: string | null
+          voter_name: string
+          voter_phone: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          nominee_id?: string
+          supabase_user_id?: string | null
+          user_agent?: string | null
+          verification_provider?: string
+          voter_email?: string | null
+          voter_name?: string
+          voter_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cyes_award_votes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "cyes_award_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cyes_award_votes_nominee_id_fkey"
+            columns: ["nominee_id"]
+            isOneToOne: false
+            referencedRelation: "cyes_award_nominees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cyes_voting_rate_limits: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          rate_key: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          rate_key: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          rate_key?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

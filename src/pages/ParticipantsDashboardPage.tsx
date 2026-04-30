@@ -1,5 +1,6 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { CYESVotingDashboard } from "@/components/admin/CYESVotingDashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -544,6 +545,8 @@ const ParticipantsDashboardPage = () => {
                 </Button>
               </div>
             </div>
+
+            <CYESVotingDashboard accessKey={dashboardAccessKey} />
 
             <Tabs
               value={selectedCompetition}
