@@ -53,6 +53,9 @@ const honoraryCategories = [
   "Presidential Honor Award",
 ];
 
+const categoryCardClasses =
+  "rounded-[1.55rem] border border-black/8 bg-white/72 px-5 py-6 shadow-[0_16px_38px_rgba(17,16,14,0.05)]";
+
 const juryMembers = [
   {
     name: "Hon Donald Malomba Esembe",
@@ -243,10 +246,10 @@ const CYESAwardsPage = () => {
                 </Button>
               </Link>
               <Link
-                to="/cyes/contact"
+                to="/cyes/vote"
                 className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/76 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
               >
-                Contact the team
+                Vote Now
               </Link>
             </>
           }
@@ -406,11 +409,11 @@ const CYESAwardsPage = () => {
             Nominations Have Now Closed
           </h2>
           <p className="text-cyes-white/80 mb-8 text-lg">
-            The CYECD Awards nomination deadline has been reached. Thank you to everyone who submitted entries.
+            The CYECD Awards nomination deadline has been reached. Public voting is now available for active categories and nominees.
           </p>
-          <Link to="/cyes/nominations">
+          <Link to="/cyes/vote">
             <Button size="lg" className="bg-cyes-yellow text-foreground hover:bg-cyes-yellow/90 font-bold">
-              View deadline notice
+              Open voting
             </Button>
           </Link>
         </div>

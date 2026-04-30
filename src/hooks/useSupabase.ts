@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { contactService, profileService, authService, competitionApplicationService } from '@/integrations/supabase/services';
+import { contactService, profileService, authService, competitionApplicationService, cyesVotingService } from '@/integrations/supabase/services';
 
 // Query Keys (for cache management)
 export const queryKeys = {
@@ -11,6 +11,11 @@ export const queryKeys = {
   competitions: {
     all: ['competitions'] as const,
     applications: ['competitions', 'applications'] as const,
+  },
+  cyesVoting: {
+    all: ['cyesVoting'] as const,
+    public: ['cyesVoting', 'public'] as const,
+    captcha: ['cyesVoting', 'captcha'] as const,
   },
   profile: {
     all: ['profile'] as const,
@@ -45,6 +50,45 @@ export const useContactSubmissions = (userId?: string) => {
 export const useSubmitCompetitionApplication = () => {
   return useMutation({
     mutationFn: competitionApplicationService.submit,
+  });
+};
+
+// CYES Voting Hooks
+export const useCyesVoting = () => {
+  return useQuery({
+    queryKey: queryKeys.cyesVoting.public,
+    queryFn: cyesVotingService.getVoting,
+    staleTime: 60 * 1000,
+  });
+};
+
+export const useCyesCaptchaChallenge = () => {
+  return useQuery({
+    queryKey: queryKeys.cyesVoting.captcha,
+    queryFn: cyesVotingService.getCaptchaChallenge,
+    staleTime: 0,
+    gcTime: 0,
+  });
+};
+
+export const useRequestCyesVoteOtp = () => {
+  return useMutation({
+    mutationFn: cyesVotingService.requestOtp,
+  });
+};
+
+export const useCastCyesVote = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: cyesVotingService.castVote,
+    onSuccess: (payload) => {
+      if (payload?.voting) {
+        queryClient.setQueryData(queryKeys.cyesVoting.public, payload.voting);
+      } else {
+        queryClient.invalidateQueries({ queryKey: queryKeys.cyesVoting.all });
+      }
+    },
   });
 };
 
