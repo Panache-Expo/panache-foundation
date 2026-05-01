@@ -1,13 +1,52 @@
 import crypto from "node:crypto";
+import nodemailer from "nodemailer";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL =
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-const SUPABASE_ANON_KEY =
-  process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 const DASHBOARD_ACCESS_KEY = process.env.DASHBOARD_ACCESS_KEY || "";
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";
+const CYES_VOTING_AGENT_KEY =
+  process.env.CYES_VOTING_AGENT_KEY ||
+  process.env.PANACHE_CYES_VOTING_AGENT_KEY ||
+  "";
+const CYES_VOTE_OTP_TTL_MINUTES = Number.parseInt(
+  process.env.CYES_VOTE_OTP_TTL_MINUTES || "10",
+  10
+);
+const CYES_VOTE_OTP_SECRET =
+  process.env.CYES_VOTE_OTP_SECRET ||
+  CYES_VOTING_AGENT_KEY ||
+  DASHBOARD_ACCESS_KEY ||
+  SUPABASE_SERVICE_ROLE_KEY ||
+  "panache-cyes-vote-otp";
+const CYES_NOMINEE_PHOTO_BUCKET =
+  process.env.CYES_NOMINEE_PHOTO_BUCKET || "cyes-nominee-photos";
+const CYES_NOMINEE_PHOTO_MAX_BYTES = Number.parseInt(
+  process.env.CYES_NOMINEE_PHOTO_MAX_BYTES || String(3 * 1024 * 1024),
+  10
+);
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_SECURE =
+  String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false";
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
+const ADMIN_NOTIFICATION_EMAILS =
+  process.env.ADMIN_NOTIFICATION_EMAILS ||
+  process.env.PANACHE_NOTIFICATION_EMAILS ||
+  "glenmue2020@gmail.com";
+const CYES_VOTE_NOTIFICATION_EMAILS =
+  process.env.CYES_VOTE_NOTIFICATION_EMAILS ||
+  process.env.CYES_VOTING_NOTIFICATION_EMAILS ||
+  ADMIN_NOTIFICATION_EMAILS ||
+  process.env.REGISTRATION_SUPPORT_EMAIL ||
+  SMTP_USER ||
+  "";
+const PARTICIPANTS_DASHBOARD_PATH =
+  process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
 
 const CATEGORY_COLUMNS =
   "id, slug, name, description, status, voting_enabled, sort_order, created_at, updated_at";
@@ -17,6 +56,12 @@ const VOTE_COLUMNS =
   "id, category_id, nominee_id, voter_name, voter_phone, voter_email, created_at";
 
 const allowedStatuses = new Set(["active", "draft", "archived"]);
+const allowedNomineePhotoTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
@@ -84,6 +129,37 @@ const normalizePhone = (value) => {
   return `${hasPlus ? "+" : "+"}${digits}`;
 };
 
+const normalizeEmail = (value) => {
+  const raw = normalizeText(value);
+  if (!raw) {
+    return null;
+  }
+
+  const email = raw.toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+};
+
+const normalizeEmailList = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(normalizeEmail).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => normalizeEmail(item))
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const slugify = (value) =>
   String(value || "")
     .trim()
@@ -92,6 +168,68 @@ const slugify = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 96);
+
+const sanitizeStorageFileName = (value) => {
+  const fallbackName = `nominee-photo-${Date.now()}`;
+  const normalized = String(value || fallbackName)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return normalized || fallbackName;
+};
+
+const extensionForMimeType = (contentType) => {
+  if (contentType === "image/png") {
+    return "png";
+  }
+  if (contentType === "image/webp") {
+    return "webp";
+  }
+  if (contentType === "image/gif") {
+    return "gif";
+  }
+  return "jpg";
+};
+
+const parseBase64File = ({ base64, dataUrl, contentType }) => {
+  let normalizedBase64 = normalizeText(base64);
+  let normalizedContentType = normalizeText(contentType);
+
+  const normalizedDataUrl = normalizeText(dataUrl);
+  if (normalizedDataUrl?.startsWith("data:")) {
+    const match = normalizedDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) {
+      return { error: "Image data is invalid." };
+    }
+    normalizedContentType = normalizedContentType || match[1];
+    normalizedBase64 = match[2];
+  }
+
+  if (!normalizedBase64) {
+    return { error: "Image file data is required." };
+  }
+  if (!normalizedContentType || !allowedNomineePhotoTypes.has(normalizedContentType)) {
+    return { error: "Upload a JPG, PNG, WEBP, or GIF image." };
+  }
+
+  const buffer = Buffer.from(normalizedBase64, "base64");
+  if (!buffer.length) {
+    return { error: "Image file is empty." };
+  }
+  if (buffer.length > CYES_NOMINEE_PHOTO_MAX_BYTES) {
+    return {
+      error: `Image is too large. Upload an image under ${Math.round(
+        CYES_NOMINEE_PHOTO_MAX_BYTES / (1024 * 1024)
+      )} MB.`,
+    };
+  }
+
+  return {
+    buffer,
+    contentType: normalizedContentType,
+  };
+};
 
 const getClientIp = (req) => {
   const forwarded = normalizeText(req.headers["x-forwarded-for"]);
@@ -104,6 +242,22 @@ const getClientIp = (req) => {
     normalizeText(req.socket?.remoteAddress) ||
     "unknown"
   );
+};
+
+const resolveProtocol = (req) => {
+  const forwardedProto = normalizeText(req.headers["x-forwarded-proto"]);
+  if (forwardedProto?.includes("https")) {
+    return "https";
+  }
+  return forwardedProto?.startsWith("http") ? forwardedProto : "http";
+};
+
+const resolveDashboardUrl = (req) => {
+  const host = normalizeText(req.headers.host);
+  if (!host) {
+    return "";
+  }
+  return `${resolveProtocol(req)}://${host}${PARTICIPANTS_DASHBOARD_PATH}`;
 };
 
 const createAdminClient = () => {
@@ -124,25 +278,6 @@ const createAdminClient = () => {
   });
 };
 
-const createAuthClient = () => {
-  const key = SUPABASE_ANON_KEY || SUPABASE_SERVICE_ROLE_KEY;
-  if (!SUPABASE_URL || !key) {
-    return null;
-  }
-
-  return createClient(SUPABASE_URL, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-    global: {
-      headers: {
-        "x-client-info": "panache-cyes-voting-auth",
-      },
-    },
-  });
-};
-
 const getDashboardKeyFromRequest = (req) =>
   req.headers["x-dashboard-key"] ||
   req.headers["X-Dashboard-Key"] ||
@@ -150,6 +285,15 @@ const getDashboardKeyFromRequest = (req) =>
 
 const isAuthorizedDashboardRequest = (req) =>
   Boolean(DASHBOARD_ACCESS_KEY && getDashboardKeyFromRequest(req) === DASHBOARD_ACCESS_KEY);
+
+const getAgentKeyFromRequest = (req) =>
+  req.headers["x-cyes-agent-key"] || req.headers["X-CYES-Agent-Key"];
+
+const isTrustedVotingAgentRequest = (req) =>
+  Boolean(
+    (CYES_VOTING_AGENT_KEY && getAgentKeyFromRequest(req) === CYES_VOTING_AGENT_KEY) ||
+      isAuthorizedDashboardRequest(req)
+  );
 
 const assertAuthorized = (req, res) => {
   if (!isAuthorizedDashboardRequest(req)) {
@@ -419,11 +563,251 @@ const fetchVotingSelection = async (supabase, categoryId, nomineeId) => {
   return { ok: true, category, nominee };
 };
 
+const buildVoteNotificationText = ({ vote, category, nominee, dashboardUrl }) => `
+A new CYES Awards vote has been recorded.
+
+Category: ${category.name}
+Nominee: ${nominee.name}${nominee.organization ? ` - ${nominee.organization}` : ""}
+Voter: ${vote.voter_name}
+Email: ${vote.voter_email || "N/A"}
+Phone: ${vote.voter_phone || "N/A"}
+Vote ID: ${vote.id}
+Recorded at: ${vote.created_at || "N/A"}
+
+${dashboardUrl ? `Open dashboard: ${dashboardUrl}` : ""}
+`.trim();
+
+const buildVoteNotificationHtml = ({ vote, category, nominee, dashboardUrl }) => `
+  <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#111827;">
+    <h2 style="margin:0 0 16px;">New CYES Awards vote</h2>
+    <p style="margin:0 0 12px;">Category: <strong>${escapeHtml(category.name)}</strong></p>
+    <p style="margin:0 0 12px;">
+      Nominee: <strong>${escapeHtml(nominee.name)}</strong>
+      ${nominee.organization ? ` - ${escapeHtml(nominee.organization)}` : ""}
+    </p>
+    <p style="margin:0 0 12px;">Voter: <strong>${escapeHtml(vote.voter_name)}</strong></p>
+    <p style="margin:0 0 12px;">Email: <strong>${escapeHtml(vote.voter_email || "N/A")}</strong></p>
+    <p style="margin:0 0 12px;">Phone: <strong>${escapeHtml(vote.voter_phone || "N/A")}</strong></p>
+    <p style="margin:0 0 12px;">Vote ID: <strong>${escapeHtml(vote.id)}</strong></p>
+    <p style="margin:0 0 20px;">Recorded at: <strong>${escapeHtml(vote.created_at || "N/A")}</strong></p>
+    ${
+      dashboardUrl
+        ? `<p style="margin:0;"><a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;padding:12px 18px;background:#111827;color:#ffffff;text-decoration:none;border-radius:8px;">Open dashboard</a></p>`
+        : ""
+    }
+  </div>
+`;
+
+const sendVoteNotification = async (req, { vote, category, nominee }) => {
+  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);
+  if (!recipients.length) {
+    return {
+      attempted: false,
+      skipped: true,
+      reason: "No vote notification recipients configured.",
+    };
+  }
+
+  if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+    return {
+      attempted: false,
+      skipped: true,
+      reason: "SMTP is not configured on the server.",
+    };
+  }
+
+  const dashboardUrl = resolveDashboardUrl(req);
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: SMTP_FROM,
+    to: recipients,
+    replyTo: vote.voter_email || undefined,
+    subject: `New CYES Awards vote - ${category.name}`,
+    text: buildVoteNotificationText({ vote, category, nominee, dashboardUrl }),
+    html: buildVoteNotificationHtml({ vote, category, nominee, dashboardUrl }),
+  });
+
+  return {
+    attempted: true,
+    ok: true,
+    recipients,
+  };
+};
+
+const getVoteOtpTtlMinutes = () =>
+  Number.isFinite(CYES_VOTE_OTP_TTL_MINUTES) && CYES_VOTE_OTP_TTL_MINUTES > 0
+    ? CYES_VOTE_OTP_TTL_MINUTES
+    : 10;
+
+const normalizeOtp = (value) => {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return null;
+  }
+  const digits = normalized.replace(/\D/g, "");
+  return digits || normalized;
+};
+
+const createVoteOtpCode = () =>
+  String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
+
+const hashVoteOtp = (voter, otp) =>
+  crypto
+    .createHmac("sha256", CYES_VOTE_OTP_SECRET)
+    .update(
+      [
+        voter.categoryId,
+        voter.nomineeId,
+        voter.voterEmail,
+        voter.voterPhone,
+        normalizeOtp(otp),
+      ].join(":")
+    )
+    .digest("hex");
+
+const buildVoteOtpText = ({ voter, category, nominee, otp, ttlMinutes }) => `
+Your CYES Awards voting code is ${otp}.
+
+Category: ${category.name}
+Nominee: ${nominee.name}${nominee.organization ? ` - ${nominee.organization}` : ""}
+
+This code expires in ${ttlMinutes} minutes. If you did not request this vote, you can ignore this email.
+`.trim();
+
+const buildVoteOtpHtml = ({ category, nominee, otp, ttlMinutes }) => `
+  <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#111827;">
+    <h2 style="margin:0 0 16px;">Your CYES Awards voting code</h2>
+    <p style="margin:0 0 12px;">Use this code to confirm your vote:</p>
+    <p style="font-size:32px;letter-spacing:8px;font-weight:700;margin:0 0 18px;">${escapeHtml(otp)}</p>
+    <p style="margin:0 0 12px;">Category: <strong>${escapeHtml(category.name)}</strong></p>
+    <p style="margin:0 0 12px;">
+      Nominee: <strong>${escapeHtml(nominee.name)}</strong>
+      ${nominee.organization ? ` - ${escapeHtml(nominee.organization)}` : ""}
+    </p>
+    <p style="margin:0;">This code expires in ${escapeHtml(ttlMinutes)} minutes.</p>
+  </div>
+`;
+
+const sendVoteOtpEmail = async ({ voter, category, nominee, otp, ttlMinutes }) => {
+  if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+    return {
+      ok: false,
+      statusCode: 500,
+      message: "Email OTP sending is not configured on the server.",
+    };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: SMTP_FROM,
+    to: voter.voterEmail,
+    replyTo: normalizeEmailList(ADMIN_NOTIFICATION_EMAILS)[0] || undefined,
+    subject: `Your CYES Awards voting code: ${otp}`,
+    text: buildVoteOtpText({ voter, category, nominee, otp, ttlMinutes }),
+    html: buildVoteOtpHtml({ category, nominee, otp, ttlMinutes }),
+  });
+
+  return { ok: true };
+};
+
+const cleanupExpiredVoteOtps = async (supabase) => {
+  const cleanupBefore = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  await supabase
+    .from("cyes_vote_email_otps")
+    .delete()
+    .lt("expires_at", cleanupBefore);
+};
+
+const storeVoteOtp = async (supabase, { voter, otp, expiresAt }) => {
+  const { error } = await supabase.from("cyes_vote_email_otps").insert([
+    {
+      category_id: voter.categoryId,
+      nominee_id: voter.nomineeId,
+      voter_email: voter.voterEmail,
+      voter_phone: voter.voterPhone,
+      otp_hash: hashVoteOtp(voter, otp),
+      expires_at: expiresAt,
+    },
+  ]);
+
+  if (error) {
+    throw error;
+  }
+};
+
+const verifyVoteOtp = async (supabase, voter, otp) => {
+  const expectedHash = hashVoteOtp(voter, otp);
+  const { data: otpRecord, error: otpError } = await supabase
+    .from("cyes_vote_email_otps")
+    .select("id, otp_hash, attempts, expires_at")
+    .eq("category_id", voter.categoryId)
+    .eq("nominee_id", voter.nomineeId)
+    .eq("voter_email", voter.voterEmail)
+    .eq("voter_phone", voter.voterPhone)
+    .is("used_at", null)
+    .gte("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (otpError) {
+    throw otpError;
+  }
+  if (!otpRecord) {
+    return {
+      ok: false,
+      statusCode: 401,
+      message: "OTP is invalid or expired. Please request a new code.",
+    };
+  }
+
+  const attempts = Number(otpRecord.attempts || 0);
+  if (attempts >= 5) {
+    return {
+      ok: false,
+      statusCode: 429,
+      message: "Too many incorrect OTP attempts. Please request a new code.",
+    };
+  }
+
+  if (otpRecord.otp_hash !== expectedHash) {
+    await supabase
+      .from("cyes_vote_email_otps")
+      .update({ attempts: attempts + 1 })
+      .eq("id", otpRecord.id);
+    return {
+      ok: false,
+      statusCode: 401,
+      message: "OTP is incorrect. Please check the code and try again.",
+    };
+  }
+
+  return { ok: true, otpRecord };
+};
+
 const buildVoterPayload = (body) => {
   const categoryId = normalizeText(body.categoryId || body.category_id);
   const nomineeId = normalizeText(body.nomineeId || body.nominee_id);
   const voterName = normalizeText(body.voterName || body.voter_name);
-  const voterEmail = normalizeText(body.voterEmail || body.voter_email);
+  const voterEmail = normalizeEmail(body.voterEmail || body.voter_email);
   const voterPhone = normalizePhone(body.voterPhone || body.voter_phone || body.phone);
 
   if (!categoryId || !nomineeId) {
@@ -434,6 +818,9 @@ const buildVoterPayload = (body) => {
   }
   if (!voterPhone) {
     return { error: "Enter a valid phone number with country code." };
+  }
+  if (!voterEmail) {
+    return { error: "Enter a valid email address for OTP verification." };
   }
 
   return {
@@ -462,14 +849,16 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     return sendJson(res, selection.statusCode, { message: selection.message });
   }
 
-  const captcha = await verifyCaptcha(req, body);
-  if (!captcha.ok) {
-    return sendJson(res, 400, { message: captcha.message });
+  if (!isTrustedVotingAgentRequest(req)) {
+    const captcha = await verifyCaptcha(req, body);
+    if (!captcha.ok) {
+      return sendJson(res, 400, { message: captcha.message });
+    }
   }
 
   const ipAddress = getClientIp(req);
   const limit = await enforceRateLimit(supabase, {
-    key: `otp:${ipAddress}:${voter.voterPhone}`,
+    key: `otp:${ipAddress}:${voter.voterEmail}`,
     action: "request_otp",
     maxAttempts: 3,
     windowSeconds: 10 * 60,
@@ -477,48 +866,73 @@ const handleRequestOtp = async (req, res, supabase, body) => {
   if (!limit.ok) {
     return sendJson(res, 429, { message: limit.message });
   }
+  await cleanupExpiredVoteOtps(supabase).catch(() => null);
 
-  const { data: existingVote, error: existingVoteError } = await supabase
+  const { data: existingEmailVote, error: existingEmailVoteError } = await supabase
+    .from("cyes_award_votes")
+    .select("id")
+    .eq("category_id", voter.categoryId)
+    .eq("voter_email", voter.voterEmail)
+    .maybeSingle();
+
+  if (existingEmailVoteError) {
+    throw existingEmailVoteError;
+  }
+  if (existingEmailVote) {
+    return sendJson(res, 409, {
+      message: "This email address has already voted in this category.",
+    });
+  }
+
+  const { data: existingPhoneVote, error: existingPhoneVoteError } = await supabase
     .from("cyes_award_votes")
     .select("id")
     .eq("category_id", voter.categoryId)
     .eq("voter_phone", voter.voterPhone)
     .maybeSingle();
 
-  if (existingVoteError) {
-    throw existingVoteError;
+  if (existingPhoneVoteError) {
+    throw existingPhoneVoteError;
   }
-  if (existingVote) {
+  if (existingPhoneVote) {
     return sendJson(res, 409, {
       message: "This phone number has already voted in this category.",
     });
   }
 
-  const authClient = createAuthClient();
-  if (!authClient) {
-    return sendJson(res, 500, {
-      message: "Phone OTP is not configured for this server.",
+  const ttlMinutes = getVoteOtpTtlMinutes();
+  const otp = createVoteOtpCode();
+  const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
+
+  try {
+    await storeVoteOtp(supabase, { voter, otp, expiresAt });
+  } catch (otpStorageError) {
+    console.error("Failed to store CYES vote OTP", otpStorageError);
+    return sendJson(res, 400, {
+      message:
+        otpStorageError?.code === "42P01"
+          ? "Vote OTP storage is not configured. Apply the latest Supabase migration."
+          : otpStorageError?.message || "Could not prepare the OTP.",
     });
   }
 
-  const { error: otpError } = await authClient.auth.signInWithOtp({
-    phone: voter.voterPhone,
-    options: {
-      shouldCreateUser: true,
-    },
+  const emailResult = await sendVoteOtpEmail({
+    voter,
+    category: selection.category,
+    nominee: selection.nominee,
+    otp,
+    ttlMinutes,
   });
-
-  if (otpError) {
-    return sendJson(res, 400, {
-      message:
-        otpError.message ||
-        "Could not send the OTP. Check that phone authentication is enabled in Supabase.",
+  if (!emailResult.ok) {
+    return sendJson(res, emailResult.statusCode || 500, {
+      message: emailResult.message || "Could not send the OTP email.",
     });
   }
 
   return sendJson(res, 200, {
     message: "OTP sent.",
-    phone: voter.voterPhone,
+    email: voter.voterEmail,
+    expiresAt,
   });
 };
 
@@ -528,9 +942,9 @@ const handleCastVote = async (req, res, supabase, body) => {
     return sendJson(res, 400, { message: error });
   }
 
-  const otp = normalizeText(body.otp || body.token || body.verificationCode);
-  if (!otp || otp.length < 4) {
-    return sendJson(res, 400, { message: "Enter the OTP sent to your phone." });
+  const otp = normalizeOtp(body.otp || body.token || body.verificationCode);
+  if (!otp || otp.length !== 6) {
+    return sendJson(res, 400, { message: "Enter the OTP sent to your email." });
   }
 
   const selection = await fetchVotingSelection(
@@ -544,7 +958,7 @@ const handleCastVote = async (req, res, supabase, body) => {
 
   const ipAddress = getClientIp(req);
   const limit = await enforceRateLimit(supabase, {
-    key: `vote:${ipAddress}:${voter.voterPhone}`,
+    key: `vote:${ipAddress}:${voter.voterEmail}`,
     action: "cast_vote",
     maxAttempts: 8,
     windowSeconds: 60 * 60,
@@ -553,30 +967,21 @@ const handleCastVote = async (req, res, supabase, body) => {
     return sendJson(res, 429, { message: limit.message });
   }
 
-  const authClient = createAuthClient();
-  if (!authClient) {
-    return sendJson(res, 500, {
-      message: "Phone OTP is not configured for this server.",
+  let otpVerification;
+  try {
+    otpVerification = await verifyVoteOtp(supabase, voter, otp);
+  } catch (otpVerificationError) {
+    console.error("Failed to verify CYES vote OTP", otpVerificationError);
+    return sendJson(res, 400, {
+      message:
+        otpVerificationError?.code === "42P01"
+          ? "Vote OTP storage is not configured. Apply the latest Supabase migration."
+          : otpVerificationError?.message || "Could not verify the OTP.",
     });
   }
-
-  const { data: verification, error: verificationError } =
-    await authClient.auth.verifyOtp({
-      phone: voter.voterPhone,
-      token: otp,
-      type: "sms",
-    });
-
-  if (verificationError) {
-    return sendJson(res, 401, {
-      message: verificationError.message || "OTP verification failed.",
-    });
-  }
-
-  const verifiedPhone = normalizePhone(verification?.user?.phone);
-  if (verifiedPhone && verifiedPhone !== voter.voterPhone) {
-    return sendJson(res, 401, {
-      message: "The verified phone number does not match this vote.",
+  if (!otpVerification.ok) {
+    return sendJson(res, otpVerification.statusCode || 401, {
+      message: otpVerification.message,
     });
   }
 
@@ -589,9 +994,10 @@ const handleCastVote = async (req, res, supabase, body) => {
         voter_name: voter.voterName,
         voter_phone: voter.voterPhone,
         voter_email: voter.voterEmail,
-        supabase_user_id: verification?.user?.id || null,
+        supabase_user_id: null,
         ip_address: ipAddress,
         user_agent: normalizeText(req.headers["user-agent"]),
+        verification_provider: "panache-email-otp",
       },
     ])
     .select(VOTE_COLUMNS)
@@ -600,7 +1006,7 @@ const handleCastVote = async (req, res, supabase, body) => {
   if (insertError) {
     if (insertError.code === "23505") {
       return sendJson(res, 409, {
-        message: "This phone number has already voted in this category.",
+        message: "This email address or phone number has already voted in this category.",
       });
     }
 
@@ -610,11 +1016,43 @@ const handleCastVote = async (req, res, supabase, body) => {
     });
   }
 
+  const { error: markOtpUsedError } = await supabase
+    .from("cyes_vote_email_otps")
+    .update({ used_at: new Date().toISOString() })
+    .eq("id", otpVerification.otpRecord.id);
+  if (markOtpUsedError) {
+    console.error("Failed to mark CYES vote OTP as used", markOtpUsedError);
+  }
+
   const voting = await fetchVotingPayload(supabase);
+  let notification = {
+    attempted: false,
+    skipped: true,
+    reason: "Vote notification was not attempted.",
+  };
+  try {
+    notification = await sendVoteNotification(req, {
+      vote,
+      category: selection.category,
+      nominee: selection.nominee,
+    });
+  } catch (notificationError) {
+    console.error("Failed to send CYES vote notification", notificationError);
+    notification = {
+      attempted: true,
+      ok: false,
+      error:
+        notificationError instanceof Error
+          ? notificationError.message
+          : "Could not send CYES vote notification.",
+    };
+  }
+
   return sendJson(res, 200, {
     message: "Vote recorded.",
     vote,
     voting,
+    notification,
   });
 };
 
@@ -709,12 +1147,62 @@ const sanitizeNomineePayload = (payload, { creating = false } = {}) => {
   return { updates };
 };
 
+const handleUploadNomineePhoto = async (res, supabase, body) => {
+  const upload = parseBase64File({
+    base64: body.base64 || body.fileBase64 || body.file_base64,
+    dataUrl: body.dataUrl || body.data_url,
+    contentType: body.contentType || body.content_type,
+  });
+  if (upload.error) {
+    return sendJson(res, 400, { message: upload.error });
+  }
+
+  const rawFileName = sanitizeStorageFileName(body.fileName || body.file_name);
+  const extension = extensionForMimeType(upload.contentType);
+  const baseFileName = rawFileName.includes(".")
+    ? rawFileName.replace(/\.[^.]+$/, "")
+    : rawFileName;
+  const objectPath = `nominees/${new Date().toISOString().slice(0, 10)}/${Date.now()}-${crypto
+    .randomBytes(4)
+    .toString("hex")}-${baseFileName}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(CYES_NOMINEE_PHOTO_BUCKET)
+    .upload(objectPath, upload.buffer, {
+      contentType: upload.contentType,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    return sendJson(res, 400, {
+      message:
+        uploadError.message ||
+        "Could not upload the nominee photo. Check the Supabase storage bucket.",
+      error: uploadError,
+    });
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(CYES_NOMINEE_PHOTO_BUCKET)
+    .getPublicUrl(objectPath);
+
+  return sendJson(res, 200, {
+    photoUrl: publicUrlData?.publicUrl || "",
+    photo_url: publicUrlData?.publicUrl || "",
+    path: objectPath,
+  });
+};
+
 const handleAdminAction = async (req, res, supabase, body) => {
   if (!assertAuthorized(req, res)) {
     return;
   }
 
   const action = normalizeText(body.action);
+
+  if (action === "uploadNomineePhoto") {
+    return await handleUploadNomineePhoto(res, supabase, body);
+  }
 
   if (action === "createCategory") {
     const { error, updates } = sanitizeCategoryPayload(body.category || body, {

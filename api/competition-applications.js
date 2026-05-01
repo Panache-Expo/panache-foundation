@@ -6,6 +6,10 @@ const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 const DASHBOARD_ACCESS_KEY = process.env.DASHBOARD_ACCESS_KEY || "";
 const REGISTRATION_SUPPORT_EMAIL = process.env.REGISTRATION_SUPPORT_EMAIL || "";
+const ADMIN_NOTIFICATION_EMAILS =
+  process.env.ADMIN_NOTIFICATION_EMAILS ||
+  process.env.PANACHE_NOTIFICATION_EMAILS ||
+  "glenmue2020@gmail.com";
 const PARTICIPANTS_DASHBOARD_PATH =
   process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
 const REGISTRATION_EMAIL_ENDPOINT = "/api/send-registration-email";
@@ -117,7 +121,11 @@ const sendRegistrationNotification = async (req, record, body, isFree) => {
       ? postSubmitHref
       : paymentHref || postSubmitHref;
 
-  if (!applicantEmail && notificationEmails.length === 0) {
+  const defaultAdminEmails = normalizeAdminEmails(
+    ADMIN_NOTIFICATION_EMAILS || REGISTRATION_SUPPORT_EMAIL
+  );
+
+  if (!applicantEmail && notificationEmails.length === 0 && defaultAdminEmails.length === 0) {
     return {
       attempted: false,
       skipped: true,
@@ -152,9 +160,7 @@ const sendRegistrationNotification = async (req, record, body, isFree) => {
     dashboardUrl: resolveDashboardUrl(req, normalizeText(body.dashboardUrl)),
     adminEmails: notificationEmails.length
       ? notificationEmails
-      : REGISTRATION_SUPPORT_EMAIL
-      ? [REGISTRATION_SUPPORT_EMAIL]
-      : [],
+      : defaultAdminEmails,
     recipientType: notificationEmails.length || actionHref ? "both" : "applicant",
   };
 

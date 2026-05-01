@@ -30,7 +30,7 @@ export type CYESVoteRequestPayload = {
   nomineeId: string;
   voterName: string;
   voterPhone: string;
-  voterEmail?: string;
+  voterEmail: string;
   captchaToken?: string;
   captchaChallengeId?: string;
   captchaAnswer?: string;

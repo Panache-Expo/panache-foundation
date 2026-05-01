@@ -32,12 +32,13 @@ import {
   BarChart3,
   CheckCircle2,
   Loader2,
-  Phone,
+  Mail,
   RefreshCw,
   ShieldCheck,
   Vote,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -305,7 +306,7 @@ const CYESVotingPage = () => {
       setOtpSent(true);
       toast({
         title: "OTP sent",
-        description: "Check your phone for the verification code.",
+        description: "Check your email for the verification code.",
       });
     } catch (requestError) {
       resetOtpAndCaptcha();
@@ -366,7 +367,7 @@ const CYESVotingPage = () => {
               the CYECD Awards.
             </>
           }
-          description="Support outstanding entrepreneurs, leaders, and institutions across each open CYECD Awards category. Votes are verified by phone before they are counted."
+          description="Support outstanding entrepreneurs, leaders, and institutions across each open CYECD Awards category. Votes are verified by email before they are counted."
           actions={
             <>
               <a href="#cyes-voting-board">
@@ -378,8 +379,14 @@ const CYESVotingPage = () => {
                 href="#cyes-voting-form"
                 className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/76 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
               >
-                Verify Phone
+                Verify Email
               </a>
+              <Link
+                to="/cyes/leaderboard"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-[#156D3B]/20 bg-[#f3fbf6] px-7 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
+              >
+                View Leaderboard
+              </Link>
             </>
           }
           chips={[
@@ -414,7 +421,7 @@ const CYESVotingPage = () => {
                 <span className="block font-display">nominees</span>
               </>
             }
-            description="Each category accepts one verified vote per phone number. You can return to vote in another category after completing the current vote."
+            description="Each category accepts one verified vote per email address and phone number. You can return to vote in another category after completing the current vote."
           />
 
           {isLoading ? (
@@ -567,10 +574,10 @@ const CYESVotingPage = () => {
                 title={
                   <>
                     Confirm your
-                    <span className="block font-display">phone number</span>
+                    <span className="block font-display">email address</span>
                   </>
                 }
-                description="Your vote is counted after the phone OTP is verified. The same phone number can vote once in each category."
+                description="Your vote is counted after the email OTP is verified. The same email address and phone number can vote once in each category."
               />
 
               <div className="mt-8 grid gap-4">
@@ -581,14 +588,14 @@ const CYESVotingPage = () => {
                     description: "Voting requests are screened before OTP delivery.",
                   },
                   {
-                    icon: Phone,
+                    icon: Mail,
                     title: "OTP verified",
-                    description: "Supabase sends the verification code to your phone.",
+                    description: "We send a six-digit verification code to your email.",
                   },
                   {
                     icon: CheckCircle2,
                     title: "One vote counted",
-                    description: "A unique phone/category rule blocks repeat votes.",
+                    description: "Unique email and phone rules block repeat votes.",
                   },
                 ].map((item) => {
                   const Icon = item.icon;
@@ -662,8 +669,12 @@ const CYESVotingPage = () => {
                     type="email"
                     className={cyesInputClasses + " mt-2"}
                     value={voterEmail}
-                    onChange={(event) => setVoterEmail(event.target.value)}
+                    onChange={(event) => {
+                      setVoterEmail(event.target.value);
+                      resetOtpForFieldChange();
+                    }}
                     placeholder="name@example.com"
+                    required
                   />
                 </div>
 
@@ -748,7 +759,7 @@ const CYESVotingPage = () => {
                     {requestOtp.isPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <Phone className="mr-2 h-4 w-4" />
+                      <Mail className="mr-2 h-4 w-4" />
                     )}
                     Send OTP
                   </Button>

@@ -10,6 +10,9 @@ export const PANACHE_PARTICIPANT_WHATSAPP_GROUP_URL =
 export const PANACHE_RUNWAY_WHATSAPP_GROUP_URL =
   import.meta.env.VITE_RUNWAY_WHATSAPP_GROUP_URL ||
   "https://chat.whatsapp.com/FS3SllgrWSr78MRJfEfCNU?mode=gi_t";
+export const PANACHE_MISS_WHATSAPP_GROUP_URL =
+  import.meta.env.VITE_MISS_WHATSAPP_GROUP_URL ||
+  "https://chat.whatsapp.com/D6IHg69vpuSJtmPX6TIDtu?mode=gi_t";
 
 export interface CompetitionRegistrationConfig {
   title: string;
@@ -57,7 +60,7 @@ export const competitionRegistrationLinks: Record<
     successTitle: "Exhibition stand request received",
     successDescription:
       "Your stand request is now saved in the Panache registration system. Continue in WhatsApp to confirm your stand details with the team.",
-    notificationRecipientEmails: ["glenmue2020@gmail.com"],
+    notificationRecipientEmails: DEFAULT_NOTIFICATION_EMAILS,
   },
   missPanache: {
     title: "Mademoiselle Panache",
@@ -68,11 +71,11 @@ export const competitionRegistrationLinks: Record<
     path: "/panache-expo/miss-panache/register",
     competitionSlug: "miss-panache",
     codePrefix: "MISS",
-    whatsappGroupUrl: PANACHE_PARTICIPANT_WHATSAPP_GROUP_URL,
+    whatsappGroupUrl: PANACHE_MISS_WHATSAPP_GROUP_URL,
     successTitle: "Miss Panache Application Received",
     successDescription:
       "Your contestant application is now stored in the Panache registration system. Continue in WhatsApp to finish your registration process.",
-    notificationRecipientEmails: ["glenmue2020@gmail.com"],
+    notificationRecipientEmails: DEFAULT_NOTIFICATION_EMAILS,
   },
   fashionNight: {
     title: "Panache Fashion Night",
@@ -87,7 +90,7 @@ export const competitionRegistrationLinks: Record<
     successTitle: "Fashion Night Application Received",
     successDescription:
       "Your designer application is now stored in the Panache registration system. Continue in WhatsApp to finish your registration process.",
-    notificationRecipientEmails: ["glenmue2020@gmail.com"],
+    notificationRecipientEmails: DEFAULT_NOTIFICATION_EMAILS,
   },
   panache360: {
     title: "Panache 360 Beauty Contest 2026",
@@ -102,7 +105,7 @@ export const competitionRegistrationLinks: Record<
     successTitle: "Panache 360 Application Received",
     successDescription:
       "Your contest application is now stored in the Panache registration system. Continue in WhatsApp to finish your registration process.",
-    notificationRecipientEmails: ["glenmue2020@gmail.com"],
+    notificationRecipientEmails: DEFAULT_NOTIFICATION_EMAILS,
   },
 };
 

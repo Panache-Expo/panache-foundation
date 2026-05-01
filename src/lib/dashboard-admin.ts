@@ -37,6 +37,12 @@ export type CYESVotingNomineePayload = {
   sort_order?: number;
 };
 
+export type CYESVotingNomineePhotoUploadPayload = {
+  fileName: string;
+  contentType: string;
+  base64: string;
+};
+
 const readResponsePayload = async (response: Response) => {
   return (await response.json().catch(() => null)) as
     | {
@@ -46,6 +52,9 @@ const readResponsePayload = async (response: Response) => {
         voting?: CYESVotingPayload;
         category?: CYESAwardCategory;
         nominee?: CYESAwardNominee;
+        photoUrl?: string;
+        photo_url?: string;
+        path?: string;
       }
     | null;
 };
@@ -194,4 +203,32 @@ export const updateCyesVotingNominee = async (
     id,
     updates,
   });
+};
+
+export const uploadCyesVotingNomineePhoto = async (
+  accessKey: string,
+  upload: CYESVotingNomineePhotoUploadPayload
+) => {
+  const response = await fetch(CYES_VOTING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify({
+      action: "uploadNomineePhoto",
+      ...upload,
+    }),
+  });
+  const payload = await readResponsePayload(response);
+  const photoUrl = payload?.photoUrl || payload?.photo_url || "";
+
+  if (!response.ok || !photoUrl) {
+    throw new Error(payload?.message || "Could not upload nominee photo.");
+  }
+
+  return {
+    photoUrl,
+    path: payload?.path || "",
+  };
 };

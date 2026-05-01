@@ -26,11 +26,13 @@ import {
   fetchCyesVotingDashboard,
   updateCyesVotingCategory,
   updateCyesVotingNominee,
+  uploadCyesVotingNomineePhoto,
 } from "@/lib/dashboard-admin";
 import {
   Award,
   BarChart3,
   CheckCircle2,
+  ImagePlus,
   Loader2,
   Plus,
   RefreshCw,
@@ -85,6 +87,83 @@ const statusOptions = [
   { value: "archived", label: "Archived" },
 ] as const;
 
+const NOMINEE_PHOTO_MAX_BYTES = 3 * 1024 * 1024;
+const nomineePhotoTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
+type NomineePhotoFieldProps = {
+  id: string;
+  photoUrl: string;
+  isUploading: boolean;
+  onPhotoUrlChange: (value: string) => void;
+  onFileSelect: (file: File | undefined) => void;
+};
+
+const readFileAsBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read image file."));
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.readAsDataURL(file);
+  });
+
+const NomineePhotoField = ({
+  id,
+  photoUrl,
+  isUploading,
+  onPhotoUrlChange,
+  onFileSelect,
+}: NomineePhotoFieldProps) => (
+  <div className="space-y-3">
+    <Label htmlFor={`${id}PhotoUrl`}>Photo</Label>
+    <div className="grid gap-3 sm:grid-cols-[96px_1fr]">
+      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/30">
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <ImagePlus className="h-8 w-8 text-muted-foreground" />
+        )}
+      </div>
+      <div className="space-y-2">
+        <Input
+          id={`${id}PhotoUrl`}
+          placeholder="Photo URL"
+          value={photoUrl}
+          onChange={(event) => onPhotoUrlChange(event.target.value)}
+        />
+        <div className="relative">
+          <Input
+            id={`${id}PhotoFile`}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            disabled={isUploading}
+            onChange={(event) => {
+              onFileSelect(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+          {isUploading ? (
+            <Loader2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+          ) : null}
+        </div>
+        <p className="text-xs text-muted-foreground">JPG, PNG, WEBP, or GIF up to 3 MB.</p>
+      </div>
+    </div>
+  </div>
+);
+
 const toSortOrder = (value: string) => {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -124,6 +203,7 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingCategory, setIsSavingCategory] = useState(false);
   const [isSavingNominee, setIsSavingNominee] = useState(false);
+  const [isUploadingNomineePhoto, setIsUploadingNomineePhoto] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedNomineeId, setSelectedNomineeId] = useState("");
   const [newCategoryDraft, setNewCategoryDraft] = useState(emptyCategoryDraft);
@@ -361,6 +441,69 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
       });
     } finally {
       setIsSavingNominee(false);
+    }
+  };
+
+  const handleUploadNomineePhoto = async (
+    file: File | undefined,
+    target: "existing" | "new"
+  ) => {
+    if (!file) {
+      return;
+    }
+
+    if (!nomineePhotoTypes.has(file.type)) {
+      toast({
+        title: "Unsupported image",
+        description: "Upload a JPG, PNG, WEBP, or GIF image.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > NOMINEE_PHOTO_MAX_BYTES) {
+      toast({
+        title: "Image too large",
+        description: "Upload an image under 3 MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingNomineePhoto(true);
+    try {
+      const base64 = await readFileAsBase64(file);
+      const upload = await uploadCyesVotingNomineePhoto(accessKey, {
+        fileName: file.name,
+        contentType: file.type,
+        base64,
+      });
+
+      if (target === "existing") {
+        setNomineeDraft((current) => ({
+          ...current,
+          photo_url: upload.photoUrl,
+        }));
+      } else {
+        setNewNomineeDraft((current) => ({
+          ...current,
+          photo_url: upload.photoUrl,
+        }));
+      }
+
+      toast({
+        title: "Photo uploaded",
+        description: "The nominee photo is ready to save.",
+      });
+    } catch (error) {
+      toast({
+        title: "Could not upload photo",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingNomineePhoto(false);
     }
   };
 
@@ -738,14 +881,18 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
                       }))
                     }
                   />
-                  <Input
-                    placeholder="Photo URL"
-                    value={nomineeDraft.photo_url}
-                    onChange={(event) =>
+                  <NomineePhotoField
+                    id="cyesVotingEditNominee"
+                    photoUrl={nomineeDraft.photo_url}
+                    isUploading={isUploadingNomineePhoto}
+                    onPhotoUrlChange={(value) =>
                       setNomineeDraft((current) => ({
                         ...current,
-                        photo_url: event.target.value,
+                        photo_url: value,
                       }))
+                    }
+                    onFileSelect={(file) =>
+                      void handleUploadNomineePhoto(file, "existing")
                     }
                   />
                   <div className="grid gap-4 md:grid-cols-[1fr_120px]">
@@ -848,15 +995,17 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
                     }))
                   }
                 />
-                <Input
-                  placeholder="Photo URL"
-                  value={newNomineeDraft.photo_url}
-                  onChange={(event) =>
+                <NomineePhotoField
+                  id="cyesVotingNewNominee"
+                  photoUrl={newNomineeDraft.photo_url}
+                  isUploading={isUploadingNomineePhoto}
+                  onPhotoUrlChange={(value) =>
                     setNewNomineeDraft((current) => ({
                       ...current,
-                      photo_url: event.target.value,
+                      photo_url: value,
                     }))
                   }
+                  onFileSelect={(file) => void handleUploadNomineePhoto(file, "new")}
                 />
                 <div className="grid gap-4 md:grid-cols-[1fr_120px]">
                   <Select
