@@ -1,6 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -23,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   createCyesVotingCategory,
   createCyesVotingNominee,
+  deleteCyesVotingNominee,
   fetchCyesVotingDashboard,
   updateCyesVotingCategory,
   updateCyesVotingNominee,
@@ -37,6 +49,7 @@ import {
   Plus,
   RefreshCw,
   Save,
+  Trash2,
   Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -203,6 +216,7 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingCategory, setIsSavingCategory] = useState(false);
   const [isSavingNominee, setIsSavingNominee] = useState(false);
+  const [isDeletingNominee, setIsDeletingNominee] = useState(false);
   const [isUploadingNomineePhoto, setIsUploadingNomineePhoto] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedNomineeId, setSelectedNomineeId] = useState("");
@@ -441,6 +455,44 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
       });
     } finally {
       setIsSavingNominee(false);
+    }
+  };
+
+  const handleDeleteNominee = async () => {
+    if (!selectedNominee) {
+      return;
+    }
+
+    const nomineeId = selectedNominee.id;
+    const nomineeName = selectedNominee.name;
+    const categoryId = selectedCategoryId;
+
+    setIsDeletingNominee(true);
+    try {
+      const voting = await deleteCyesVotingNominee(accessKey, nomineeId);
+      setCategories(voting.categories);
+
+      const nextCategory = voting.categories.find(
+        (category) => category.id === categoryId
+      );
+      const nextNominee =
+        nextCategory?.nominees.find((nominee) => nominee.id !== nomineeId) ||
+        nextCategory?.nominees[0];
+      setSelectedNomineeId(nextNominee?.id || "");
+
+      toast({
+        title: "Nominee deleted",
+        description: `${nomineeName} was removed from this category.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Could not delete nominee",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingNominee(false);
     }
   };
 
@@ -927,19 +979,57 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
                       }
                     />
                   </div>
-                  <Button
-                    type="button"
-                    variant="hero"
-                    onClick={() => void handleSaveNominee()}
-                    disabled={isSavingNominee}
-                  >
-                    {isSavingNominee ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="mr-2 h-4 w-4" />
-                    )}
-                    Save Nominee
-                  </Button>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      type="button"
+                      variant="hero"
+                      onClick={() => void handleSaveNominee()}
+                      disabled={isSavingNominee || isDeletingNominee}
+                    >
+                      {isSavingNominee ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      Save Nominee
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          disabled={isSavingNominee || isDeletingNominee}
+                        >
+                          {isDeletingNominee ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="mr-2 h-4 w-4" />
+                          )}
+                          Delete Nominee
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete nominee?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove {selectedNominee.name} from{" "}
+                            {selectedCategory?.name || "this category"}. If the nominee
+                            already has votes, deletion is blocked so voting records stay
+                            intact.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => void handleDeleteNominee()}
+                          >
+                            Delete Nominee
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ) : null}
 

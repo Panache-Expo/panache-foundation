@@ -96,6 +96,7 @@ WITH seeded_categories(slug, name, sort_order) AS (
     ('startup-of-the-year', 'Startup of the Year', 20),
     ('technology-innovator-of-the-year', 'Technology Innovator of the Year', 30),
     ('agribusiness-of-the-year', 'Agribusiness of the Year', 40),
+    ('outstanding-farmer-of-the-year', 'Outstanding Farmer of the Year', 45),
     ('creative-entrepreneur-of-the-year', 'Creative Entrepreneur of the Year', 50),
     ('social-impact-business-of-the-year', 'Social Impact Business of the Year', 60),
     ('community-leader-of-the-year', 'Community Leader of the Year', 70),

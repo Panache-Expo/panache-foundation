@@ -27,6 +27,7 @@ const competitiveCategories = [
   "Startup of the Year",
   "Technology Innovator of the Year",
   "Agribusiness of the Year",
+  "Outstanding Farmer of the Year",
   "Creative Entrepreneur of the Year",
   "Social Impact Business of the Year",
   "Community Leader of the Year",

@@ -205,6 +205,13 @@ export const updateCyesVotingNominee = async (
   });
 };
 
+export const deleteCyesVotingNominee = async (accessKey: string, id: string) => {
+  return mutateCyesVotingDashboard(accessKey, {
+    action: "deleteNominee",
+    id,
+  });
+};
+
 export const uploadCyesVotingNomineePhoto = async (
   accessKey: string,
   upload: CYESVotingNomineePhotoUploadPayload

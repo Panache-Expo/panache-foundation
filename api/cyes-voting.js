@@ -1308,6 +1308,47 @@ const handleAdminAction = async (req, res, supabase, body) => {
     return sendJson(res, 200, { nominee: data, voting });
   }
 
+  if (action === "deleteNominee") {
+    const id = normalizeText(body.id || body.nomineeId);
+    if (!id) {
+      return sendJson(res, 400, { message: "Nominee id is required." });
+    }
+
+    const { count, error: voteCountError } = await supabase
+      .from("cyes_award_votes")
+      .select("id", { count: "exact", head: true })
+      .eq("nominee_id", id);
+
+    if (voteCountError) {
+      return sendJson(res, 400, {
+        message: voteCountError.message || "Could not check nominee votes.",
+      });
+    }
+
+    if ((count || 0) > 0) {
+      return sendJson(res, 409, {
+        message:
+          "This nominee already has votes. Archive the nominee instead so voting records stay intact.",
+      });
+    }
+
+    const { data, error: deleteError } = await supabase
+      .from("cyes_award_nominees")
+      .delete()
+      .eq("id", id)
+      .select(NOMINEE_COLUMNS)
+      .single();
+
+    if (deleteError) {
+      return sendJson(res, 400, {
+        message: deleteError.message || "Could not delete the nominee.",
+      });
+    }
+
+    const voting = await fetchVotingPayload(supabase, { includeDrafts: true });
+    return sendJson(res, 200, { nominee: data, voting });
+  }
+
   return sendJson(res, 400, { message: "Unknown dashboard voting action." });
 };
 
