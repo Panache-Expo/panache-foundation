@@ -9,6 +9,10 @@ const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
 const REGISTRATION_SUPPORT_EMAIL =
   process.env.REGISTRATION_SUPPORT_EMAIL || SMTP_USER || "";
+const ADMIN_NOTIFICATION_EMAILS =
+  process.env.ADMIN_NOTIFICATION_EMAILS ||
+  process.env.PANACHE_NOTIFICATION_EMAILS ||
+  "glenmue2020@gmail.com";
 const PARTICIPANTS_DASHBOARD_PATH =
   process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
 
@@ -238,6 +242,9 @@ export default async function handler(req, res) {
   const submittedAt = normalizeText(body.submittedAt);
   const dashboardUrl = resolveDashboardUrl(req, normalizeText(body.dashboardUrl));
   const adminEmails = normalizeAdminEmails(body.adminEmails);
+  const defaultAdminEmails = normalizeAdminEmails(
+    ADMIN_NOTIFICATION_EMAILS || REGISTRATION_SUPPORT_EMAIL
+  );
 
   if (!applicantEmail || !competitionTitle || !applicationCode) {
     return sendJson(res, 400, {
@@ -295,9 +302,9 @@ export default async function handler(req, res) {
     );
   }
 
-  const hasAdminEmails = adminEmails.length > 0 || Boolean(REGISTRATION_SUPPORT_EMAIL);
+  const hasAdminEmails = adminEmails.length > 0 || defaultAdminEmails.length > 0;
   if ((recipientType === "admin" || recipientType === "both") && hasAdminEmails) {
-    const recipients = adminEmails.length > 0 ? adminEmails : [REGISTRATION_SUPPORT_EMAIL];
+    const recipients = adminEmails.length > 0 ? adminEmails : defaultAdminEmails;
     mailTasks.push(
       Promise.all(
         recipients.map((recipient) =>

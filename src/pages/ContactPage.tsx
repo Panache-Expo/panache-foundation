@@ -73,7 +73,7 @@ export const ContactPage = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const location = useLocation();
   const isCyesRoute = location.pathname.startsWith("/cyes");
-  const targetEmail = isCyesRoute ? CYES_EMAIL : PANACHE_EMAIL;
+  const targetEmail = PANACHE_EMAIL;
   const brandName = isCyesRoute ? "CYES" : "Panache Expo";
   const heroImage = isCyesRoute ? cyesBackdrop : panacheBackdrop;
 
@@ -176,7 +176,7 @@ export const ContactPage = () => {
               description="The goal is simple: make it easy to reach the right person with the right message, whether you are registering, partnering, covering the summit, or looking for awards clarification."
             />
 
-            <div className="mt-10 grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+            <div className="mt-10 grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start w-full">
               <div className="space-y-4">
                 <div className={cyesSurfaceClasses + " px-6 py-7"}>
                   <Mail className="h-8 w-8 text-[#156D3B]" />

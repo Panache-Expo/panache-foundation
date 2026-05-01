@@ -128,7 +128,7 @@ export const CYESInnerHero = ({
                     {chip.label}
                   </p>
                   <p
-                    className={`mt-2 font-sans text-base font-semibold leading-tight tracking-[-0.04em] text-[#171411] ${chip.accentClassName ?? ""}`}
+                    className={`mt-2 font-sans text-base font-semibold leading-tight tracking-[-0.04em] text-[#171411] ${chip.accentClassName ?? ""} overflow-hidden`}
                   >
                     {chip.value}
                   </p>

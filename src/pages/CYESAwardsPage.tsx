@@ -251,6 +251,12 @@ const CYESAwardsPage = () => {
               >
                 Vote Now
               </Link>
+              <Link
+                to="/cyes/leaderboard"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-[#156D3B]/20 bg-[#f3fbf6] px-7 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
+              >
+                Leaderboard
+              </Link>
             </>
           }
           chips={[
