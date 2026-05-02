@@ -803,7 +803,7 @@ const verifyVoteOtp = async (supabase, voter, otp) => {
   return { ok: true, otpRecord };
 };
 
-const buildVoterPayload = (body) => {
+const buildVoterPayload = (body, { requireEmail = true } = {}) => {
   const categoryId = normalizeText(body.categoryId || body.category_id);
   const nomineeId = normalizeText(body.nomineeId || body.nominee_id);
   const voterName = normalizeText(body.voterName || body.voter_name);
@@ -819,7 +819,7 @@ const buildVoterPayload = (body) => {
   if (!voterPhone) {
     return { error: "Enter a valid phone number with country code." };
   }
-  if (!voterEmail) {
+  if (requireEmail && !voterEmail) {
     return { error: "Enter a valid email address for OTP verification." };
   }
 
@@ -937,13 +937,16 @@ const handleRequestOtp = async (req, res, supabase, body) => {
 };
 
 const handleCastVote = async (req, res, supabase, body) => {
-  const { error, voter } = buildVoterPayload(body);
+  const isTrustedAgent = isTrustedVotingAgentRequest(req);
+  const { error, voter } = buildVoterPayload(body, {
+    requireEmail: !isTrustedAgent,
+  });
   if (error) {
     return sendJson(res, 400, { message: error });
   }
 
   const otp = normalizeOtp(body.otp || body.token || body.verificationCode);
-  if (!otp || otp.length !== 6) {
+  if (!isTrustedAgent && (!otp || otp.length !== 6)) {
     return sendJson(res, 400, { message: "Enter the OTP sent to your email." });
   }
 
@@ -958,7 +961,7 @@ const handleCastVote = async (req, res, supabase, body) => {
 
   const ipAddress = getClientIp(req);
   const limit = await enforceRateLimit(supabase, {
-    key: `vote:${ipAddress}:${voter.voterEmail}`,
+    key: `vote:${ipAddress}:${voter.voterEmail || voter.voterPhone}`,
     action: "cast_vote",
     maxAttempts: 8,
     windowSeconds: 60 * 60,
@@ -967,21 +970,41 @@ const handleCastVote = async (req, res, supabase, body) => {
     return sendJson(res, 429, { message: limit.message });
   }
 
-  let otpVerification;
-  try {
-    otpVerification = await verifyVoteOtp(supabase, voter, otp);
-  } catch (otpVerificationError) {
-    console.error("Failed to verify CYES vote OTP", otpVerificationError);
+  let otpVerification = null;
+  if (!isTrustedAgent) {
+    try {
+      otpVerification = await verifyVoteOtp(supabase, voter, otp);
+    } catch (otpVerificationError) {
+      console.error("Failed to verify CYES vote OTP", otpVerificationError);
+      return sendJson(res, 400, {
+        message:
+          otpVerificationError?.code === "42P01"
+            ? "Vote OTP storage is not configured. Apply the latest Supabase migration."
+            : otpVerificationError?.message || "Could not verify the OTP.",
+      });
+    }
+    if (!otpVerification.ok) {
+      return sendJson(res, otpVerification.statusCode || 401, {
+        message: otpVerification.message,
+      });
+    }
+  }
+
+  const { data: existingPhoneVote, error: existingPhoneVoteError } = await supabase
+    .from("cyes_award_votes")
+    .select(VOTE_COLUMNS)
+    .eq("voter_phone", voter.voterPhone)
+    .maybeSingle();
+  if (existingPhoneVoteError) {
     return sendJson(res, 400, {
-      message:
-        otpVerificationError?.code === "42P01"
-          ? "Vote OTP storage is not configured. Apply the latest Supabase migration."
-          : otpVerificationError?.message || "Could not verify the OTP.",
+      message: existingPhoneVoteError.message || "Could not check existing votes.",
+      error: existingPhoneVoteError,
     });
   }
-  if (!otpVerification.ok) {
-    return sendJson(res, otpVerification.statusCode || 401, {
-      message: otpVerification.message,
+  if (existingPhoneVote) {
+    return sendJson(res, 409, {
+      message: "This WhatsApp number has already voted. Each WhatsApp number can cast one CYES vote.",
+      vote: existingPhoneVote,
     });
   }
 
@@ -993,11 +1016,13 @@ const handleCastVote = async (req, res, supabase, body) => {
         nominee_id: voter.nomineeId,
         voter_name: voter.voterName,
         voter_phone: voter.voterPhone,
-        voter_email: voter.voterEmail,
+        voter_email: voter.voterEmail || null,
         supabase_user_id: null,
         ip_address: ipAddress,
         user_agent: normalizeText(req.headers["user-agent"]),
-        verification_provider: "panache-email-otp",
+        verification_provider: isTrustedAgent
+          ? "panache-whatsapp-agent"
+          : "panache-email-otp",
       },
     ])
     .select(VOTE_COLUMNS)
@@ -1006,7 +1031,7 @@ const handleCastVote = async (req, res, supabase, body) => {
   if (insertError) {
     if (insertError.code === "23505") {
       return sendJson(res, 409, {
-        message: "This email address or phone number has already voted in this category.",
+        message: "This WhatsApp number has already voted. Each WhatsApp number can cast one CYES vote.",
       });
     }
 
@@ -1016,12 +1041,14 @@ const handleCastVote = async (req, res, supabase, body) => {
     });
   }
 
-  const { error: markOtpUsedError } = await supabase
-    .from("cyes_vote_email_otps")
-    .update({ used_at: new Date().toISOString() })
-    .eq("id", otpVerification.otpRecord.id);
-  if (markOtpUsedError) {
-    console.error("Failed to mark CYES vote OTP as used", markOtpUsedError);
+  if (otpVerification?.otpRecord?.id) {
+    const { error: markOtpUsedError } = await supabase
+      .from("cyes_vote_email_otps")
+      .update({ used_at: new Date().toISOString() })
+      .eq("id", otpVerification.otpRecord.id);
+    if (markOtpUsedError) {
+      console.error("Failed to mark CYES vote OTP as used", markOtpUsedError);
+    }
   }
 
   const voting = await fetchVotingPayload(supabase);
