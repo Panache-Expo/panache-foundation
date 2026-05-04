@@ -45,6 +45,14 @@ const CYES_VOTE_NOTIFICATION_EMAILS =
   process.env.REGISTRATION_SUPPORT_EMAIL ||
   SMTP_USER ||
   "";
+const CYES_VOTE_ALERT_EMAILS =
+  process.env.CYES_VOTE_ALERT_EMAILS ||
+  process.env.CYES_VOTING_ALERT_EMAILS ||
+  CYES_VOTE_NOTIFICATION_EMAILS ||
+  ADMIN_NOTIFICATION_EMAILS ||
+  process.env.REGISTRATION_SUPPORT_EMAIL ||
+  SMTP_USER ||
+  "";
 const PARTICIPANTS_DASHBOARD_PATH =
   process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
 
@@ -598,8 +606,142 @@ const buildVoteNotificationHtml = ({ vote, category, nominee, dashboardUrl }) =>
   </div>
 `;
 
+const buildVotingIssueAlertText = ({
+  action,
+  message,
+  details,
+  requestSummary,
+  requestUrl,
+  method,
+  ipAddress,
+}) => `
+A CYES voting issue was detected.
+
+Action: ${action || "unknown"}
+Method: ${method || "N/A"}
+URL: ${requestUrl || "N/A"}
+IP: ${ipAddress || "N/A"}
+Message: ${message || "Unknown voting error"}
+
+Request summary:
+${requestSummary || "N/A"}
+
+Details:
+${details || "N/A"}
+`.trim();
+
+const buildVotingIssueAlertHtml = ({
+  action,
+  message,
+  details,
+  requestSummary,
+  requestUrl,
+  method,
+  ipAddress,
+}) => `
+  <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#111827;">
+    <h2 style="margin:0 0 16px;">CYES voting issue detected</h2>
+    <p style="margin:0 0 10px;">Action: <strong>${escapeHtml(action || "unknown")}</strong></p>
+    <p style="margin:0 0 10px;">Method: <strong>${escapeHtml(method || "N/A")}</strong></p>
+    <p style="margin:0 0 10px;">URL: <strong>${escapeHtml(requestUrl || "N/A")}</strong></p>
+    <p style="margin:0 0 10px;">IP: <strong>${escapeHtml(ipAddress || "N/A")}</strong></p>
+    <p style="margin:0 0 14px;">Message: <strong>${escapeHtml(message || "Unknown voting error")}</strong></p>
+    <p style="margin:0 0 8px;"><strong>Request summary</strong></p>
+    <pre style="white-space:pre-wrap;background:#f8fafc;border-radius:10px;padding:12px;margin:0 0 14px;">${escapeHtml(requestSummary || "N/A")}</pre>
+    <p style="margin:0 0 8px;"><strong>Details</strong></p>
+    <pre style="white-space:pre-wrap;background:#f8fafc;border-radius:10px;padding:12px;margin:0;">${escapeHtml(details || "N/A")}</pre>
+  </div>
+`;
+
+const summarizeVotingRequest = (body) => {
+  if (!body || typeof body !== "object") {
+    return "No request body";
+  }
+
+  const summary = {
+    action: normalizeText(body.action),
+    categoryId: normalizeText(body.categoryId || body.category_id),
+    nomineeId: normalizeText(body.nomineeId || body.nominee_id),
+    voterName: normalizeText(body.voterName || body.voter_name),
+    voterEmail: normalizeEmail(body.voterEmail || body.voter_email),
+    voterPhone: normalizePhone(body.voterPhone || body.voter_phone || body.phone),
+  };
+
+  return JSON.stringify(summary, null, 2);
+};
+
+const formatIssueDetails = (error) => {
+  if (!error) {
+    return "No additional error details.";
+  }
+  if (error instanceof Error) {
+    return error.stack || error.message;
+  }
+  if (typeof error === "object") {
+    try {
+      return JSON.stringify(error, null, 2);
+    } catch {
+      return String(error);
+    }
+  }
+  return String(error);
+};
+
+const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
+  const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);
+  if (!recipients.length || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+    return {
+      attempted: false,
+      skipped: true,
+      reason: "Alert email recipients or SMTP configuration missing.",
+    };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+
+  const requestUrl = (() => {
+    const host = normalizeText(req?.headers?.host);
+    if (!host) {
+      return req?.url || "";
+    }
+    return `${resolveProtocol(req)}://${host}${req?.url || ""}`;
+  })();
+
+  const payload = {
+    action,
+    message,
+    details: formatIssueDetails(error),
+    requestSummary: summarizeVotingRequest(body),
+    requestUrl,
+    method: req?.method || "",
+    ipAddress: getClientIp(req),
+  };
+
+  await transporter.sendMail({
+    from: SMTP_FROM,
+    to: recipients.join(", "),
+    subject: `CYES voting issue - ${action || "unknown"}`,
+    text: buildVotingIssueAlertText(payload),
+    html: buildVotingIssueAlertHtml(payload),
+  });
+
+  return {
+    attempted: true,
+    ok: true,
+    recipients,
+  };
+};
+
 const sendVoteNotification = async (req, { vote, category, nominee }) => {
-  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS)[0];
+  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);
   if (!recipients.length) {
     return {
       attempted: false,
@@ -629,7 +771,7 @@ const sendVoteNotification = async (req, { vote, category, nominee }) => {
 
   await transporter.sendMail({
     from: SMTP_FROM,
-    to: recipients,
+    to: recipients.join(", "),
     replyTo: vote.voter_email || undefined,
     subject: `New CYES Awards vote - ${category.name}`,
     text: buildVoteNotificationText({ vote, category, nominee, dashboardUrl }),
@@ -908,6 +1050,14 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     await storeVoteOtp(supabase, { voter, otp, expiresAt });
   } catch (otpStorageError) {
     console.error("Failed to store CYES vote OTP", otpStorageError);
+    await sendVotingIssueAlert(req, {
+      action: "requestOtp.storeOtp",
+      message: "Failed to store CYES vote OTP.",
+      error: otpStorageError,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
     return sendJson(res, 400, {
       message:
         otpStorageError?.code === "42P01"
@@ -916,14 +1066,38 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     });
   }
 
-  const emailResult = await sendVoteOtpEmail({
-    voter,
-    category: selection.category,
-    nominee: selection.nominee,
-    otp,
-    ttlMinutes,
-  });
+  let emailResult;
+  try {
+    emailResult = await sendVoteOtpEmail({
+      voter,
+      category: selection.category,
+      nominee: selection.nominee,
+      otp,
+      ttlMinutes,
+    });
+  } catch (otpEmailError) {
+    console.error("Failed to send CYES vote OTP email", otpEmailError);
+    await sendVotingIssueAlert(req, {
+      action: "requestOtp.sendEmail",
+      message: "Failed to send the CYES vote OTP email.",
+      error: otpEmailError,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
+    return sendJson(res, 500, {
+      message: "Could not send the OTP email.",
+    });
+  }
   if (!emailResult.ok) {
+    await sendVotingIssueAlert(req, {
+      action: "requestOtp.sendEmail",
+      message: emailResult.message || "Could not send the OTP email.",
+      error: emailResult,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
     return sendJson(res, emailResult.statusCode || 500, {
       message: emailResult.message || "Could not send the OTP email.",
     });
@@ -976,6 +1150,14 @@ const handleCastVote = async (req, res, supabase, body) => {
       otpVerification = await verifyVoteOtp(supabase, voter, otp);
     } catch (otpVerificationError) {
       console.error("Failed to verify CYES vote OTP", otpVerificationError);
+      await sendVotingIssueAlert(req, {
+        action: "castVote.verifyOtp",
+        message: "Failed to verify the CYES vote OTP.",
+        error: otpVerificationError,
+        body,
+      }).catch((alertError) => {
+        console.error("Failed to send CYES voting issue alert", alertError);
+      });
       return sendJson(res, 400, {
         message:
           otpVerificationError?.code === "42P01"
@@ -997,6 +1179,14 @@ const handleCastVote = async (req, res, supabase, body) => {
     .eq("voter_phone", voter.voterPhone)
     .maybeSingle();
   if (existingPhoneVoteError) {
+    await sendVotingIssueAlert(req, {
+      action: "castVote.checkExistingVote",
+      message: existingPhoneVoteError.message || "Could not check existing votes.",
+      error: existingPhoneVoteError,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
     return sendJson(res, 400, {
       message: existingPhoneVoteError.message || "Could not check existing votes.",
       error: existingPhoneVoteError,
@@ -1036,6 +1226,14 @@ const handleCastVote = async (req, res, supabase, body) => {
       });
     }
 
+    await sendVotingIssueAlert(req, {
+      action: "castVote.insertVote",
+      message: insertError.message || "Could not save the vote.",
+      error: insertError,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
     return sendJson(res, 400, {
       message: insertError.message || "Could not save the vote.",
       error: insertError,
@@ -1049,6 +1247,14 @@ const handleCastVote = async (req, res, supabase, body) => {
       .eq("id", otpVerification.otpRecord.id);
     if (markOtpUsedError) {
       console.error("Failed to mark CYES vote OTP as used", markOtpUsedError);
+      await sendVotingIssueAlert(req, {
+        action: "castVote.markOtpUsed",
+        message: "Vote OTP was verified, but the OTP record could not be marked as used.",
+        error: markOtpUsedError,
+        body,
+      }).catch((alertError) => {
+        console.error("Failed to send CYES voting issue alert", alertError);
+      });
     }
   }
 
@@ -1066,6 +1272,14 @@ const handleCastVote = async (req, res, supabase, body) => {
     });
   } catch (notificationError) {
     console.error("Failed to send CYES vote notification", notificationError);
+    await sendVotingIssueAlert(req, {
+      action: "castVote.sendNotification",
+      message: "Vote was recorded, but the admin notification email could not be sent.",
+      error: notificationError,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
     notification = {
       attempted: true,
       ok: false,
@@ -1423,6 +1637,18 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error("CYES voting API error", error);
+    const body = parseBody(req);
+    await sendVotingIssueAlert(req, {
+      action: normalizeText(body.action) || "unhandled",
+      message:
+        error instanceof Error
+          ? error.message
+          : error?.message || "Could not complete the CYES voting request.",
+      error,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
     return sendJson(res, 500, {
       message:
         error instanceof Error
