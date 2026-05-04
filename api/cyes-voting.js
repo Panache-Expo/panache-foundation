@@ -599,7 +599,7 @@ const buildVoteNotificationHtml = ({ vote, category, nominee, dashboardUrl }) =>
 `;
 
 const sendVoteNotification = async (req, { vote, category, nominee }) => {
-  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);
+  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS)[0];
   if (!recipients.length) {
     return {
       attempted: false,
