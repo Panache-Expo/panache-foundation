@@ -993,6 +993,7 @@ const handleCastVote = async (req, res, supabase, body) => {
   const { data: existingPhoneVote, error: existingPhoneVoteError } = await supabase
     .from("cyes_award_votes")
     .select(VOTE_COLUMNS)
+    .eq("category_id", voter.categoryId)
     .eq("voter_phone", voter.voterPhone)
     .maybeSingle();
   if (existingPhoneVoteError) {
@@ -1003,7 +1004,7 @@ const handleCastVote = async (req, res, supabase, body) => {
   }
   if (existingPhoneVote) {
     return sendJson(res, 409, {
-      message: "This WhatsApp number has already voted. Each WhatsApp number can cast one CYES vote.",
+      message: "This WhatsApp number has already voted in this category. You can still vote in another category.",
       vote: existingPhoneVote,
     });
   }
@@ -1031,7 +1032,7 @@ const handleCastVote = async (req, res, supabase, body) => {
   if (insertError) {
     if (insertError.code === "23505") {
       return sendJson(res, 409, {
-        message: "This WhatsApp number has already voted. Each WhatsApp number can cast one CYES vote.",
+        message: "This WhatsApp number has already voted in this category. You can still vote in another category.",
       });
     }
 
