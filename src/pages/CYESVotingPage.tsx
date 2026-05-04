@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { CYESAwardCategory } from "@/integrations/supabase/services";
+import type {
+  CYESAwardCategory,
+  CYESAwardNominee,
+} from "@/integrations/supabase/services";
 import { cyesVotingService } from "@/integrations/supabase/services";
 import {
   useCastCyesVote,
@@ -174,6 +177,63 @@ const TurnstileCaptcha = ({
 const getFirstVotableCategory = (categories: CYESAwardCategory[]) =>
   categories.find((category) => category.nominees.length > 0) || categories[0];
 
+const formatVoteCount = (count: number) =>
+  `${count.toLocaleString()} vote${count === 1 ? "" : "s"}`;
+
+const getNomineeClassification = (
+  nominee: CYESAwardNominee,
+  nominees: CYESAwardNominee[]
+) => {
+  const rankedNominees = [...nominees].sort(
+    (left, right) => right.vote_count - left.vote_count
+  );
+  const rank =
+    rankedNominees.findIndex((entry) => entry.id === nominee.id) + 1 || 1;
+  const leadingVotes = rankedNominees[0]?.vote_count || 0;
+  const topBand = Math.max(1, Math.ceil(rankedNominees.length / 3));
+  const middleBand = Math.max(topBand + 1, Math.ceil((rankedNominees.length * 2) / 3));
+
+  if (nominee.vote_count === 0) {
+    return {
+      label: "Awaiting first vote",
+      className: "bg-[#F7F5F1] text-[#6E6255]",
+    };
+  }
+
+  if (rank === 1) {
+    return {
+      label: "Leading",
+      className: "bg-[#EEF9F2] text-[#156D3B]",
+    };
+  }
+
+  if (leadingVotes > 0 && nominee.vote_count >= leadingVotes * 0.8) {
+    return {
+      label: "Close race",
+      className: "bg-[#EEF4FF] text-[#1875D2]",
+    };
+  }
+
+  if (rank <= topBand) {
+    return {
+      label: "Top ranked",
+      className: "bg-[#FFF6E8] text-[#A35A00]",
+    };
+  }
+
+  if (rank <= middleBand) {
+    return {
+      label: "Contender",
+      className: "bg-[#F7F3FF] text-[#6B3FD6]",
+    };
+  }
+
+  return {
+    label: "Rising",
+    className: "bg-[#FFF1F2] text-[#CC2129]",
+  };
+};
+
 const CYESVotingPage = () => {
   const { toast } = useToast();
   const { data: voting, isLoading, error, refetch } = useCyesVoting();
@@ -197,6 +257,15 @@ const CYESVotingPage = () => {
   );
   const selectedNominee = selectedCategory?.nominees.find(
     (nominee) => nominee.id === selectedNomineeId
+  );
+  const selectedCategoryNominees = useMemo(
+    () =>
+      selectedCategory
+        ? [...selectedCategory.nominees].sort(
+            (left, right) => right.vote_count - left.vote_count
+          )
+        : [],
+    [selectedCategory]
   );
 
   const categoryStats = useMemo(() => {
@@ -595,7 +664,8 @@ const CYESVotingPage = () => {
                         </h2>
                         {selectedCategory ? (
                           <p className="mt-3 font-sans text-sm leading-relaxed text-[#171411]/66">
-                            {selectedCategory.name}
+                            {selectedCategory.name}. Live vote totals and current standing
+                            are shown below to help you choose.
                           </p>
                         ) : null}
                       </div>
@@ -611,56 +681,75 @@ const CYESVotingPage = () => {
                     </div>
 
                     <div className="mt-6 grid gap-4">
-                      {selectedCategory?.nominees.length ? (
-                        selectedCategory.nominees.map((nominee) => (
-                          <button
-                            key={nominee.id}
-                            type="button"
-                            className={`grid gap-4 rounded-[1.4rem] border p-4 text-left transition-colors md:grid-cols-[86px_1fr_auto] md:items-center ${
-                              nominee.id === selectedNomineeId
-                                ? "border-[#156D3B] bg-[#f3fbf6]"
-                                : "border-black/8 bg-white/74 hover:border-[#156D3B]/35"
-                            }`}
-                            onClick={() => {
-                              setSelectedNomineeId(nominee.id);
-                              resetOtpAndCaptcha();
-                              setVotingStep("details");
-                            }}
-                          >
-                            <div className="h-20 w-20 overflow-hidden rounded-[1.1rem] bg-[#eef2f6]">
-                              {nominee.photo_url ? (
-                                <img
-                                  src={nominee.photo_url}
-                                  alt={nominee.name}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center">
-                                  <Award className="h-8 w-8 text-[#171411]/34" />
+                      {selectedCategoryNominees.length ? (
+                        selectedCategoryNominees.map((nominee, index) => {
+                          const classification = getNomineeClassification(
+                            nominee,
+                            selectedCategoryNominees
+                          );
+
+                          return (
+                            <button
+                              key={nominee.id}
+                              type="button"
+                              className={`grid gap-4 rounded-[1.4rem] border p-4 text-left transition-colors md:grid-cols-[86px_1fr_auto] md:items-center ${
+                                nominee.id === selectedNomineeId
+                                  ? "border-[#156D3B] bg-[#f3fbf6]"
+                                  : "border-black/8 bg-white/74 hover:border-[#156D3B]/35"
+                              }`}
+                              onClick={() => {
+                                setSelectedNomineeId(nominee.id);
+                                resetOtpAndCaptcha();
+                                setVotingStep("details");
+                              }}
+                            >
+                              <div className="h-20 w-20 overflow-hidden rounded-[1.1rem] bg-[#eef2f6]">
+                                {nominee.photo_url ? (
+                                  <img
+                                    src={nominee.photo_url}
+                                    alt={nominee.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center">
+                                    <Award className="h-8 w-8 text-[#171411]/34" />
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="font-sans text-[1.15rem] font-semibold leading-tight text-[#171411]">
+                                    {nominee.name}
+                                  </p>
+                                  <span className="inline-flex items-center rounded-full bg-[#171411]/6 px-2.5 py-1 font-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#171411]/72">
+                                    #{index + 1}
+                                  </span>
                                 </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-sans text-[1.15rem] font-semibold leading-tight text-[#171411]">
-                                {nominee.name}
-                              </p>
-                              {nominee.organization ? (
-                                <p className="mt-1 font-sans text-sm text-[#156D3B]">
-                                  {nominee.organization}
-                                </p>
-                              ) : null}
-                              {nominee.bio ? (
-                                <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                                  {nominee.bio}
-                                </p>
-                              ) : null}
-                            </div>
-                            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 font-sans text-sm font-semibold text-[#171411] shadow-[0_8px_22px_rgba(17,16,14,0.06)]">
-                              <Vote className="h-4 w-4 text-[#CC2129]" />
-                              Vote
-                            </span>
-                          </button>
-                        ))
+                                {nominee.organization ? (
+                                  <p className="mt-1 font-sans text-sm text-[#156D3B]">
+                                    {nominee.organization}
+                                  </p>
+                                ) : null}
+                                {nominee.bio ? (
+                                  <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
+                                    {nominee.bio}
+                                  </p>
+                                ) : null}
+                              </div>
+                              <div className="flex flex-col items-start gap-2 md:items-end">
+                                <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 font-sans text-sm font-semibold text-[#171411] shadow-[0_8px_22px_rgba(17,16,14,0.06)]">
+                                  <Vote className="h-4 w-4 text-[#CC2129]" />
+                                  {formatVoteCount(nominee.vote_count)}
+                                </span>
+                                <span
+                                  className={`inline-flex rounded-full px-3 py-1 font-sans text-xs font-semibold ${classification.className}`}
+                                >
+                                  {classification.label}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })
                       ) : (
                         <p className="rounded-[1.4rem] border border-dashed border-black/10 bg-white/70 px-5 py-6 font-sans text-sm text-[#171411]/64">
                           No active nominees have been added to this category yet.
