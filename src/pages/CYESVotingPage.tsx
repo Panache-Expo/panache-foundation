@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import type { CYESAwardCategory } from "@/integrations/supabase/services";
 import { cyesVotingService } from "@/integrations/supabase/services";
 import {
@@ -29,12 +28,13 @@ import honDonald from "@/assets/HonDonald.jpeg";
 import speaker2 from "@/assets/speaker2.jpeg";
 import {
   Award,
+  ArrowLeft,
+  ArrowRight,
   BarChart3,
   CheckCircle2,
   Loader2,
   Mail,
   RefreshCw,
-  ShieldCheck,
   Vote,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -64,6 +64,8 @@ type FallbackCaptcha = {
   question: string;
   expiresAt: number;
 };
+
+type VotingStep = "category" | "nominee" | "details" | "verify";
 
 type TurnstileCaptchaProps = {
   siteKey: string;
@@ -177,13 +179,13 @@ const CYESVotingPage = () => {
   const { data: voting, isLoading, error, refetch } = useCyesVoting();
   const requestOtp = useRequestCyesVoteOtp();
   const castVote = useCastCyesVote();
+  const [votingStep, setVotingStep] = useState<VotingStep>("category");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedNomineeId, setSelectedNomineeId] = useState("");
   const [voterName, setVoterName] = useState("");
   const [voterPhone, setVoterPhone] = useState("");
   const [voterEmail, setVoterEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
   const [fallbackCaptcha, setFallbackCaptcha] = useState<FallbackCaptcha | null>(null);
@@ -210,6 +212,39 @@ const CYESVotingPage = () => {
       votes: voting?.total_votes || 0,
     };
   }, [categories, voting?.total_votes]);
+
+  const votingSteps: Array<{ id: VotingStep; label: string; description: string }> = [
+    {
+      id: "category",
+      label: "Category",
+      description: "Choose where your vote should count.",
+    },
+    {
+      id: "nominee",
+      label: "Nominee",
+      description: "Pick one nominee in that category.",
+    },
+    {
+      id: "details",
+      label: "Details",
+      description: "Add your name and contact details.",
+    },
+    {
+      id: "verify",
+      label: "Verify",
+      description: "Enter the code and submit.",
+    },
+  ];
+  const activeStepIndex = Math.max(
+    votingSteps.findIndex((step) => step.id === votingStep),
+    0
+  );
+  const voteSummary =
+    selectedNominee && selectedCategory
+      ? `${selectedNominee.name} - ${selectedCategory.name}`
+      : selectedCategory
+        ? selectedCategory.name
+        : "No selection yet";
 
   const loadFallbackCaptcha = useCallback(async () => {
     if (turnstileSiteKey) {
@@ -249,7 +284,7 @@ const CYESVotingPage = () => {
       (nominee) => nominee.id === selectedNomineeId
     );
     if (!nomineeStillAvailable) {
-      setSelectedNomineeId(selectedCategory.nominees[0]?.id || "");
+      setSelectedNomineeId("");
     }
   }, [selectedCategory, selectedNomineeId]);
 
@@ -259,7 +294,6 @@ const CYESVotingPage = () => {
 
   const resetOtpAndCaptcha = () => {
     setOtp("");
-    setOtpSent(false);
     setCaptchaToken("");
     setCaptchaResetSignal((current) => current + 1);
     void loadFallbackCaptcha();
@@ -267,7 +301,6 @@ const CYESVotingPage = () => {
 
   const resetOtpForFieldChange = () => {
     setOtp("");
-    setOtpSent(false);
     setCaptchaToken("");
   };
 
@@ -303,7 +336,7 @@ const CYESVotingPage = () => {
         captchaChallengeId: fallbackCaptcha?.id,
         captchaAnswer,
       });
-      setOtpSent(true);
+      setVotingStep("verify");
       toast({
         title: "OTP sent",
         description: "Check your email for the verification code.",
@@ -339,6 +372,8 @@ const CYESVotingPage = () => {
         title: "Vote recorded",
         description: `${selectedNominee.name} has received your vote for ${selectedCategory.name}.`,
       });
+      setSelectedNomineeId("");
+      setVotingStep("category");
       resetOtpAndCaptcha();
       void refetch();
     } catch (voteError) {
@@ -370,16 +405,10 @@ const CYESVotingPage = () => {
           description="Support outstanding entrepreneurs, leaders, and institutions across each open CYECD Awards category. Votes are verified by email before they are counted."
           actions={
             <>
-              <a href="#cyes-voting-board">
+              <a href="#cyes-voting-flow">
                 <Button className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92">
                   Start Voting
                 </Button>
-              </a>
-              <a
-                href="#cyes-voting-form"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/76 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
-              >
-                Verify Email
               </a>
               <Link
                 to="/cyes/leaderboard"
@@ -412,16 +441,16 @@ const CYESVotingPage = () => {
           mobileImageClassName="rotate-[10deg]"
         />
 
-        <section id="cyes-voting-board" className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
+        <section id="cyes-voting-flow" className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
           <CYESSectionIntro
-            eyebrow="Voting board"
+            eyebrow="Guided voting"
             title={
               <>
-                Categories and
-                <span className="block font-display">nominees</span>
+                Vote in
+                <span className="block font-display">four clear steps</span>
               </>
             }
-            description="Each category accepts one verified vote per email address and phone number. You can return to vote in another category after completing the current vote."
+            description="Choose a category, choose a nominee, verify your email, and submit. You can vote once in each category with the same phone number."
           />
 
           {isLoading ? (
@@ -444,61 +473,145 @@ const CYESVotingPage = () => {
               </Button>
             </div>
           ) : categories.length ? (
-            <div className="mt-10 grid gap-5 lg:grid-cols-[0.42fr_0.58fr]">
-              <div className="space-y-3">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    className={`w-full rounded-[1.55rem] border px-5 py-4 text-left transition-colors ${
-                      category.id === selectedCategoryId
-                        ? "border-[#156D3B] bg-white shadow-[0_16px_38px_rgba(17,16,14,0.07)]"
-                        : "border-black/8 bg-white/62 hover:border-[#156D3B]/40"
-                    }`}
-                    onClick={() => {
-                      setSelectedCategoryId(category.id);
-                      resetOtpAndCaptcha();
-                    }}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-sans text-[1.02rem] font-semibold leading-tight text-[#171411]">
-                          {category.name}
-                        </p>
-                        <p className="mt-2 font-sans text-sm text-[#171411]/62">
-                          {category.nominees.length} nominees
-                        </p>
-                      </div>
-                      <BarChart3 className="mt-1 h-4 w-4 flex-shrink-0 text-[#1875D2]" />
-                    </div>
-                  </button>
-                ))}
-              </div>
+            <div className="mt-10 grid gap-6 lg:grid-cols-[0.34fr_0.66fr] lg:items-start">
+              <aside className={cyesSurfaceClasses + " px-4 py-4 lg:sticky lg:top-24"}>
+                <div className="grid gap-3">
+                  {votingSteps.map((step, index) => {
+                    const isCurrent = step.id === votingStep;
+                    const isComplete = index < activeStepIndex;
+                    return (
+                      <button
+                        key={step.id}
+                        type="button"
+                        className={`rounded-[1.15rem] border px-4 py-3 text-left transition-colors ${
+                          isCurrent
+                            ? "border-[#156D3B] bg-[#f3fbf6]"
+                            : isComplete
+                              ? "border-[#156D3B]/15 bg-white"
+                              : "border-black/8 bg-white/60"
+                        }`}
+                        onClick={() => {
+                          if (index <= activeStepIndex) {
+                            setVotingStep(step.id);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span
+                            className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                              isComplete
+                                ? "bg-[#156D3B] text-white"
+                                : isCurrent
+                                  ? "bg-white text-[#156D3B]"
+                                  : "bg-[#171411]/8 text-[#171411]/58"
+                            }`}
+                          >
+                            {isComplete ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
+                          </span>
+                          <span>
+                            <span className="block font-sans text-sm font-semibold text-[#171411]">
+                              {step.label}
+                            </span>
+                            <span className="mt-1 block font-sans text-xs leading-relaxed text-[#171411]/58">
+                              {step.description}
+                            </span>
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
 
-              <div className={cyesSurfaceClasses + " px-5 py-5 md:px-6 md:py-6"}>
-                {selectedCategory ? (
-                  <>
+                <div className="mt-5 rounded-[1.2rem] border border-black/8 bg-white/72 px-4 py-4">
+                  <p className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-[#156D3B]">
+                    Current vote
+                  </p>
+                  <p className="mt-2 font-sans text-base font-semibold leading-tight text-[#171411]">
+                    {voteSummary}
+                  </p>
+                </div>
+              </aside>
+
+              <div className={cyesSurfaceClasses + " px-5 py-6 md:px-7 md:py-7"}>
+                {votingStep === "category" ? (
+                  <div>
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <p className="font-sans text-sm font-semibold uppercase tracking-[0.12em] text-[#156D3B]">
-                          Selected category
+                          Step 1
                         </p>
                         <h2 className="mt-2 font-sans text-[1.8rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
-                          {selectedCategory.name}
+                          Choose a category
                         </h2>
-                        {selectedCategory.description ? (
-                          <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/68">
-                            {selectedCategory.description}
-                          </p>
-                        ) : null}
                       </div>
                       <div className="rounded-2xl bg-[#eef5fb] px-4 py-3 text-sm font-semibold text-[#1875D2]">
-                        {selectedCategory.vote_count} votes
+                        {categoryStats.openCategories} open
                       </div>
                     </div>
 
+                    <div className="mt-6 grid gap-3 md:grid-cols-2">
+                      {categories.map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          className={`rounded-[1.35rem] border px-5 py-4 text-left transition-colors ${
+                            category.id === selectedCategoryId
+                              ? "border-[#156D3B] bg-[#f3fbf6]"
+                              : "border-black/8 bg-white/74 hover:border-[#156D3B]/35"
+                          }`}
+                          onClick={() => {
+                            setSelectedCategoryId(category.id);
+                            setSelectedNomineeId("");
+                            resetOtpAndCaptcha();
+                            setVotingStep("nominee");
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className="font-sans text-[1.02rem] font-semibold leading-tight text-[#171411]">
+                                {category.name}
+                              </p>
+                              <p className="mt-2 font-sans text-sm text-[#171411]/62">
+                                {category.nominees.length} nominees
+                              </p>
+                            </div>
+                            <BarChart3 className="mt-1 h-4 w-4 flex-shrink-0 text-[#1875D2]" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {votingStep === "nominee" ? (
+                  <div>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="font-sans text-sm font-semibold uppercase tracking-[0.12em] text-[#156D3B]">
+                          Step 2
+                        </p>
+                        <h2 className="mt-2 font-sans text-[1.8rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
+                          Choose a nominee
+                        </h2>
+                        {selectedCategory ? (
+                          <p className="mt-3 font-sans text-sm leading-relaxed text-[#171411]/66">
+                            {selectedCategory.name}
+                          </p>
+                        ) : null}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => setVotingStep("category")}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Categories
+                      </Button>
+                    </div>
+
                     <div className="mt-6 grid gap-4">
-                      {selectedCategory.nominees.length ? (
+                      {selectedCategory?.nominees.length ? (
                         selectedCategory.nominees.map((nominee) => (
                           <button
                             key={nominee.id}
@@ -511,6 +624,7 @@ const CYESVotingPage = () => {
                             onClick={() => {
                               setSelectedNomineeId(nominee.id);
                               resetOtpAndCaptcha();
+                              setVotingStep("details");
                             }}
                           >
                             <div className="h-20 w-20 overflow-hidden rounded-[1.1rem] bg-[#eef2f6]">
@@ -541,10 +655,10 @@ const CYESVotingPage = () => {
                                 </p>
                               ) : null}
                             </div>
-                            <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 font-sans text-sm font-semibold text-[#171411] shadow-[0_8px_22px_rgba(17,16,14,0.06)]">
+                            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 font-sans text-sm font-semibold text-[#171411] shadow-[0_8px_22px_rgba(17,16,14,0.06)]">
                               <Vote className="h-4 w-4 text-[#CC2129]" />
-                              {nominee.vote_count}
-                            </div>
+                              Vote
+                            </span>
                           </button>
                         ))
                       ) : (
@@ -553,7 +667,217 @@ const CYESVotingPage = () => {
                         </p>
                       )}
                     </div>
-                  </>
+                  </div>
+                ) : null}
+
+                {votingStep === "details" ? (
+                  <form className="grid gap-5" onSubmit={handleRequestOtp}>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="font-sans text-sm font-semibold uppercase tracking-[0.12em] text-[#156D3B]">
+                          Step 3
+                        </p>
+                        <h2 className="mt-2 font-sans text-[1.8rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
+                          Add your details
+                        </h2>
+                        <p className="mt-3 font-sans text-sm leading-relaxed text-[#171411]/66">
+                          {voteSummary}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => setVotingStep("nominee")}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Nominees
+                      </Button>
+                    </div>
+
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="cyesVoterName" className="font-sans text-sm font-semibold text-[#171411]">
+                          Full name
+                        </Label>
+                        <Input
+                          id="cyesVoterName"
+                          className={cyesInputClasses + " mt-2"}
+                          value={voterName}
+                          onChange={(event) => setVoterName(event.target.value)}
+                          placeholder="Your full name"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="cyesVoterPhone" className="font-sans text-sm font-semibold text-[#171411]">
+                          Phone number
+                        </Label>
+                        <Input
+                          id="cyesVoterPhone"
+                          type="tel"
+                          className={cyesInputClasses + " mt-2"}
+                          value={voterPhone}
+                          onChange={(event) => {
+                            setVoterPhone(event.target.value);
+                            resetOtpForFieldChange();
+                          }}
+                          placeholder="+237 6XX XXX XXX"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="cyesVoterEmail" className="font-sans text-sm font-semibold text-[#171411]">
+                        Email
+                      </Label>
+                      <Input
+                        id="cyesVoterEmail"
+                        type="email"
+                        className={cyesInputClasses + " mt-2"}
+                        value={voterEmail}
+                        onChange={(event) => {
+                          setVoterEmail(event.target.value);
+                          resetOtpForFieldChange();
+                        }}
+                        placeholder="name@example.com"
+                        required
+                      />
+                    </div>
+
+                    {turnstileSiteKey ? (
+                      <div className="rounded-[1.3rem] border border-black/8 bg-white/74 px-4 py-4">
+                        <TurnstileCaptcha
+                          siteKey={turnstileSiteKey}
+                          resetSignal={captchaResetSignal}
+                          onToken={setCaptchaToken}
+                        />
+                      </div>
+                    ) : (
+                      <div className="rounded-[1.3rem] border border-black/8 bg-white/74 px-4 py-4">
+                        <div className="flex flex-wrap items-end gap-3">
+                          <div className="min-w-[150px] flex-1">
+                            <Label htmlFor="cyesCaptchaAnswer" className="font-sans text-sm font-semibold text-[#171411]">
+                              CAPTCHA: {fallbackCaptcha?.question || "..."}
+                            </Label>
+                            <Input
+                              id="cyesCaptchaAnswer"
+                              inputMode="numeric"
+                              className={cyesInputClasses + " mt-2"}
+                              value={captchaAnswer}
+                              onChange={(event) => setCaptchaAnswer(event.target.value)}
+                              required
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-11 rounded-full"
+                            onClick={() => void loadFallbackCaptcha()}
+                          >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Reload
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                      disabled={requestOtp.isPending || !selectedNominee}
+                    >
+                      {requestOtp.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Mail className="mr-2 h-4 w-4" />
+                      )}
+                      Send OTP
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </form>
+                ) : null}
+
+                {votingStep === "verify" ? (
+                  <div>
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="font-sans text-sm font-semibold uppercase tracking-[0.12em] text-[#156D3B]">
+                          Step 4
+                        </p>
+                        <h2 className="mt-2 font-sans text-[1.8rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
+                          Verify and submit
+                        </h2>
+                        <p className="mt-3 font-sans text-sm leading-relaxed text-[#171411]/66">
+                          Enter the six-digit code sent to {voterEmail || "your email"}.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => setVotingStep("details")}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Details
+                      </Button>
+                    </div>
+
+                    <div className="mt-6 rounded-[1.3rem] border border-[#156D3B]/20 bg-[#f3fbf6] px-4 py-4">
+                      <p className="font-sans text-sm text-[#171411]/62">Submitting</p>
+                      <p className="mt-1 font-sans text-[1.1rem] font-semibold leading-tight text-[#171411]">
+                        {voteSummary}
+                      </p>
+                    </div>
+
+                    <div className="mt-6">
+                      <Label className="font-sans text-sm font-semibold text-[#171411]">
+                        OTP code
+                      </Label>
+                      <InputOTP
+                        maxLength={6}
+                        value={otp}
+                        onChange={setOtp}
+                        containerClassName="mt-3"
+                      >
+                        <InputOTPGroup>
+                          {Array.from({ length: 6 }).map((_, index) => (
+                            <InputOTPSlot
+                              key={index}
+                              index={index}
+                              className="h-11 w-11 border-[#156D3B]/25 bg-white text-base"
+                            />
+                          ))}
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        className="h-12 rounded-full bg-[#156D3B] px-7 font-sans text-sm font-semibold text-white hover:bg-[#156D3B]/92"
+                        onClick={() => void handleCastVote()}
+                        disabled={castVote.isPending || otp.length < 4}
+                      >
+                        {castVote.isPending ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Vote className="mr-2 h-4 w-4" />
+                        )}
+                        Submit Vote
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 rounded-full"
+                        onClick={resetOtpAndCaptcha}
+                      >
+                        Request new code
+                      </Button>
+                    </div>
+                  </div>
                 ) : null}
               </div>
             </div>
@@ -564,209 +888,6 @@ const CYESVotingPage = () => {
               </p>
             </div>
           )}
-        </section>
-
-        <section id="cyes-voting-form" className="mx-auto mt-20 max-w-6xl px-6 md:px-24">
-          <div className="grid gap-6 lg:grid-cols-[0.48fr_0.52fr] lg:items-start">
-            <div>
-              <CYESSectionIntro
-                eyebrow="Verified vote"
-                title={
-                  <>
-                    Confirm your
-                    <span className="block font-display">email address</span>
-                  </>
-                }
-                description="Your vote is counted after the email OTP is verified. The same email address and phone number can vote once in each category."
-              />
-
-              <div className="mt-8 grid gap-4">
-                {[
-                  {
-                    icon: ShieldCheck,
-                    title: "CAPTCHA checked",
-                    description: "Voting requests are screened before OTP delivery.",
-                  },
-                  {
-                    icon: Mail,
-                    title: "OTP verified",
-                    description: "We send a six-digit verification code to your email.",
-                  },
-                  {
-                    icon: CheckCircle2,
-                    title: "One vote counted",
-                    description: "Unique email and phone rules block repeat votes.",
-                  },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <article key={item.title} className={cyesSurfaceClasses + " px-5 py-5"}>
-                      <Icon className="h-6 w-6 text-[#156D3B]" />
-                      <h3 className="mt-4 font-sans text-[1.1rem] font-semibold leading-tight text-[#171411]">
-                        {item.title}
-                      </h3>
-                      <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                        {item.description}
-                      </p>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
-
-            <form
-              className={cyesSurfaceClasses + " px-5 py-6 md:px-7 md:py-7"}
-              onSubmit={handleRequestOtp}
-            >
-              <div className="mb-6 rounded-[1.3rem] border border-black/8 bg-white/74 px-4 py-4">
-                <p className="font-sans text-sm text-[#171411]/62">Current vote</p>
-                <p className="mt-1 font-sans text-[1.1rem] font-semibold leading-tight text-[#171411]">
-                  {selectedNominee && selectedCategory
-                    ? `${selectedNominee.name} - ${selectedCategory.name}`
-                    : "Select a nominee above"}
-                </p>
-              </div>
-
-              <div className="grid gap-5">
-                <div>
-                  <Label htmlFor="cyesVoterName" className="font-sans text-sm font-semibold text-[#171411]">
-                    Full name
-                  </Label>
-                  <Input
-                    id="cyesVoterName"
-                    className={cyesInputClasses + " mt-2"}
-                    value={voterName}
-                    onChange={(event) => setVoterName(event.target.value)}
-                    placeholder="Your full name"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="cyesVoterPhone" className="font-sans text-sm font-semibold text-[#171411]">
-                    Phone number
-                  </Label>
-                  <Input
-                    id="cyesVoterPhone"
-                    type="tel"
-                    className={cyesInputClasses + " mt-2"}
-                    value={voterPhone}
-                    onChange={(event) => {
-                      setVoterPhone(event.target.value);
-                      resetOtpForFieldChange();
-                    }}
-                    placeholder="+237 6XX XXX XXX"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="cyesVoterEmail" className="font-sans text-sm font-semibold text-[#171411]">
-                    Email
-                  </Label>
-                  <Input
-                    id="cyesVoterEmail"
-                    type="email"
-                    className={cyesInputClasses + " mt-2"}
-                    value={voterEmail}
-                    onChange={(event) => {
-                      setVoterEmail(event.target.value);
-                      resetOtpForFieldChange();
-                    }}
-                    placeholder="name@example.com"
-                    required
-                  />
-                </div>
-
-                {turnstileSiteKey ? (
-                  <div className="rounded-[1.3rem] border border-black/8 bg-white/74 px-4 py-4">
-                    <TurnstileCaptcha
-                      siteKey={turnstileSiteKey}
-                      resetSignal={captchaResetSignal}
-                      onToken={setCaptchaToken}
-                    />
-                  </div>
-                ) : (
-                  <div className="rounded-[1.3rem] border border-black/8 bg-white/74 px-4 py-4">
-                    <div className="flex flex-wrap items-end gap-3">
-                      <div className="min-w-[150px] flex-1">
-                        <Label htmlFor="cyesCaptchaAnswer" className="font-sans text-sm font-semibold text-[#171411]">
-                          CAPTCHA: {fallbackCaptcha?.question || "..."}
-                        </Label>
-                        <Input
-                          id="cyesCaptchaAnswer"
-                          inputMode="numeric"
-                          className={cyesInputClasses + " mt-2"}
-                          value={captchaAnswer}
-                          onChange={(event) => setCaptchaAnswer(event.target.value)}
-                          required
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-11 rounded-full"
-                        onClick={() => void loadFallbackCaptcha()}
-                      >
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Reload
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {otpSent ? (
-                  <div className="rounded-[1.3rem] border border-[#156D3B]/20 bg-[#f3fbf6] px-4 py-4">
-                    <Label className="font-sans text-sm font-semibold text-[#171411]">
-                      OTP code
-                    </Label>
-                    <InputOTP
-                      maxLength={6}
-                      value={otp}
-                      onChange={setOtp}
-                      containerClassName="mt-3"
-                    >
-                      <InputOTPGroup>
-                        {Array.from({ length: 6 }).map((_, index) => (
-                          <InputOTPSlot
-                            key={index}
-                            index={index}
-                            className="h-11 w-11 border-[#156D3B]/25 bg-white text-base"
-                          />
-                        ))}
-                      </InputOTPGroup>
-                    </InputOTP>
-                    <Button
-                      type="button"
-                      className="mt-5 h-12 rounded-full bg-[#156D3B] px-7 font-sans text-sm font-semibold text-white hover:bg-[#156D3B]/92"
-                      onClick={() => void handleCastVote()}
-                      disabled={castVote.isPending || otp.length < 4}
-                    >
-                      {castVote.isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Vote className="mr-2 h-4 w-4" />
-                      )}
-                      Submit Vote
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    type="submit"
-                    className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
-                    disabled={requestOtp.isPending || !selectedNominee}
-                  >
-                    {requestOtp.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Mail className="mr-2 h-4 w-4" />
-                    )}
-                    Send OTP
-                  </Button>
-                )}
-              </div>
-            </form>
-          </div>
         </section>
       </main>
 
