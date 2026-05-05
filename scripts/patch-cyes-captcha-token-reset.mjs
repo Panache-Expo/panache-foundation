@@ -55,7 +55,7 @@ patchFile(votingPagePath, [
   RefreshCw,`,
   },
   {
-    description: "CYES WhatsApp voting helper constants",
+    description: "CYES WhatsApp voting and optimized image helpers",
     originalSnippet: `const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";`,
     patchedSnippet: `const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 const cyesWhatsAppBotNumber = "237674230406";
@@ -77,6 +77,20 @@ const buildCyesWhatsAppVoteHref = ({
   ].filter(Boolean);
 
   return \`https://wa.me/\${cyesWhatsAppBotNumber}?text=\${encodeURIComponent(lines.join("\\n"))}\`;
+};
+
+const getOptimizedSupabaseImageUrl = (imageUrl?: string | null) => {
+  if (!imageUrl || !imageUrl.includes("/storage/v1/object/public/")) {
+    return imageUrl || "";
+  }
+
+  const optimizedUrl = imageUrl.replace(
+    "/storage/v1/object/public/",
+    "/storage/v1/render/image/public/"
+  );
+  const separator = optimizedUrl.includes("?") ? "&" : "?";
+
+  return \`${optimizedUrl}\${separator}width=300&height=300&resize=cover&quality=60\`;
 };`,
   },
   {
@@ -125,6 +139,21 @@ const buildCyesWhatsAppVoteHref = ({
 
                     <Button
                       type="submit"`,
+  },
+  {
+    description: "CYES nominee image transformations and lazy loading",
+    originalSnippet: `                                  <img
+                                    src={nominee.photo_url}
+                                    alt={nominee.name}
+                                    className="h-full w-full object-cover"
+                                  />`,
+    patchedSnippet: `                                  <img
+                                    src={getOptimizedSupabaseImageUrl(nominee.photo_url)}
+                                    alt={nominee.name}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="h-full w-full object-cover"
+                                  />`,
   },
 ]);
 
