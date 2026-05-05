@@ -64,22 +64,16 @@ const buildCyesWhatsAppVoteHref = ({
   nomineeName,
   categoryName,
   voterName,
-  voterPhone,
-  voterEmail,
 }: {
   nomineeName?: string;
   categoryName?: string;
   voterName?: string;
-  voterPhone?: string;
-  voterEmail?: string;
 }) => {
   const lines = [
     nomineeName && categoryName
       ? \`Hi, I want to vote for \${nomineeName} in the \${categoryName} category for the CYES Awards.\`
       : "Hi, I want to vote for the CYES Awards through WhatsApp.",
     voterName ? \`My name is \${voterName}.\` : "Please guide me through the voting process.",
-    voterPhone ? \`Phone: \${voterPhone}.\` : "",
-    voterEmail ? \`Email: \${voterEmail}.\` : "",
   ].filter(Boolean);
 
   return \`https://wa.me/\${cyesWhatsAppBotNumber}?text=\${encodeURIComponent(lines.join("\\n"))}\`;
@@ -97,10 +91,8 @@ const buildCyesWhatsAppVoteHref = ({
         nomineeName: selectedNominee?.name,
         categoryName: selectedCategory?.name,
         voterName,
-        voterPhone,
-        voterEmail,
       }),
-    [selectedCategory?.name, selectedNominee?.name, voterEmail, voterName, voterPhone]
+    [selectedCategory?.name, selectedNominee?.name, voterName]
   );
 
   const loadFallbackCaptcha = useCallback(async () => {`,
@@ -116,7 +108,7 @@ const buildCyesWhatsAppVoteHref = ({
                             Prefer WhatsApp voting?
                           </p>
                           <p className="mt-1 font-sans text-sm leading-relaxed text-[#171411]/66">
-                            If you do not want to deal with OTP, open WhatsApp with your selected nominee, category, and details already filled in.
+                            If you do not want to deal with OTP, open WhatsApp with your selected nominee, category, and name already filled in.
                           </p>
                         </div>
                         <a
