@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/fix-cyes-whatsapp-patch-script.mjs && node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && vite",
+    "dev": "node scripts/fix-cyes-whatsapp-patch-script.mjs && node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && node scripts/optimize-cyes-runtime.mjs && vite",
     "dev:api": "node scripts/local-api-server.mjs",
-    "build": "node scripts/fix-cyes-whatsapp-patch-script.mjs && node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && vite build",
-    "build:dev": "node scripts/fix-cyes-whatsapp-patch-script.mjs && node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && vite build --mode development",
+    "build": "node scripts/fix-cyes-whatsapp-patch-script.mjs && node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && node scripts/optimize-cyes-runtime.mjs && vite build",
+    "build:dev": "node scripts/fix-cyes-whatsapp-patch-script.mjs && node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && node scripts/optimize-cyes-runtime.mjs && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
   },
