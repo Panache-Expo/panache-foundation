@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/patch-cyes-captcha-token-reset.mjs && vite",
+    "dev": "node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && vite",
     "dev:api": "node scripts/local-api-server.mjs",
-    "build": "node scripts/patch-cyes-captcha-token-reset.mjs && vite build",
-    "build:dev": "node scripts/patch-cyes-captcha-token-reset.mjs && vite build --mode development",
+    "build": "node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && vite build",
+    "build:dev": "node scripts/patch-cyes-captcha-token-reset.mjs && node scripts/disable-cyes-voting-alert-emails.mjs && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
   },
