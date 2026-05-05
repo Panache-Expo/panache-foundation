@@ -1,2 +1,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
-console.log(readFileSync, writeFileSync);
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const root = path.resolve(__dirname, "..");
+const fp = path.join(root, "api", "cyes-voting.js");
+let s = readFileSync(fp, "utf8");
+const oldText = `const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || "";`;
+const newText = `${oldText}\nconst CYES_EVENT_FAST_VOTE =\n  String(process.env.CYES_EVENT_FAST_VOTE || "true").toLowerCase() === "true";`;
+if (!s.includes("CYES_EVENT_FAST_VOTE")) s = s.replace(oldText, newText);
+writeFileSync(fp, s);
