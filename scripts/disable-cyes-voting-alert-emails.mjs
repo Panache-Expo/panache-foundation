@@ -8,24 +8,49 @@ const repoRoot = path.resolve(__dirname, "..");
 const votingApiPath = path.join(repoRoot, "api", "cyes-voting.js");
 
 let source = readFileSync(votingApiPath, "utf8");
+let didPatch = false;
 
-const originalSnippet = `const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
-  const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);`;
+const applyPatch = ({ originalSnippet, patchedSnippet, description }) => {
+  if (source.includes(patchedSnippet)) {
+    return;
+  }
 
-const patchedSnippet = `const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
-  return {
-    attempted: false,
-    skipped: true,
-    reason: "CYES voting issue alert emails are temporarily disabled.",
-  };
-
-  const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);`;
-
-if (!source.includes(patchedSnippet)) {
   if (!source.includes(originalSnippet)) {
-    throw new Error("Could not disable CYES voting issue alert emails: target snippet was not found.");
+    throw new Error(`Could not apply ${description}: target snippet was not found.`);
   }
 
   source = source.replace(originalSnippet, patchedSnippet);
+  didPatch = true;
+};
+
+applyPatch({
+  description: "CYES voting issue alert email disable patch",
+  originalSnippet: `const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
+  const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);`,
+  patchedSnippet: `const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
+  return {
+    attempted: false,
+    skipped: true,
+    reason: "CYES voting issue alert emails are disabled in code.",
+  };
+
+  const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);`,
+});
+
+applyPatch({
+  description: "CYES new vote admin notification email disable patch",
+  originalSnippet: `const sendVoteNotification = async (req, { vote, category, nominee }) => {
+  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);`,
+  patchedSnippet: `const sendVoteNotification = async (req, { vote, category, nominee }) => {
+  return {
+    attempted: false,
+    skipped: true,
+    reason: "CYES new vote admin notification emails are disabled in code.",
+  };
+
+  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);`,
+});
+
+if (didPatch) {
   writeFileSync(votingApiPath, source);
 }
