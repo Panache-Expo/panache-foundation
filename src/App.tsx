@@ -29,6 +29,7 @@ import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
 import ParticipantsDashboardPage from "./pages/ParticipantsDashboardPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
+import { DeveloperContactCta } from "./components/DeveloperContactCta";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +104,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <DeveloperContactCta />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<FoundationHome />} />
