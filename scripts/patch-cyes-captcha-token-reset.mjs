@@ -46,6 +46,94 @@ patchFile(votingPagePath, [
     setOtp("");
   };`,
   },
+  {
+    description: "CYES WhatsApp icon import",
+    originalSnippet: `  Mail,
+  RefreshCw,`,
+    patchedSnippet: `  Mail,
+  MessageCircle,
+  RefreshCw,`,
+  },
+  {
+    description: "CYES WhatsApp voting helper constants",
+    originalSnippet: `const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";`,
+    patchedSnippet: `const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
+const cyesWhatsAppBotNumber = "237674230406";
+
+const buildCyesWhatsAppVoteHref = ({
+  nomineeName,
+  categoryName,
+  voterName,
+  voterPhone,
+  voterEmail,
+}: {
+  nomineeName?: string;
+  categoryName?: string;
+  voterName?: string;
+  voterPhone?: string;
+  voterEmail?: string;
+}) => {
+  const lines = [
+    nomineeName && categoryName
+      ? \`Hi, I want to vote for \${nomineeName} in the \${categoryName} category for the CYES Awards.\`
+      : "Hi, I want to vote for the CYES Awards through WhatsApp.",
+    voterName ? \`My name is \${voterName}.\` : "Please guide me through the voting process.",
+    voterPhone ? \`Phone: \${voterPhone}.\` : "",
+    voterEmail ? \`Email: \${voterEmail}.\` : "",
+  ].filter(Boolean);
+
+  return \`https://wa.me/\${cyesWhatsAppBotNumber}?text=\${encodeURIComponent(lines.join("\\n"))}\`;
+};`,
+  },
+  {
+    description: "CYES selected vote WhatsApp href",
+    originalSnippet: `        : "No selection yet";
+
+  const loadFallbackCaptcha = useCallback(async () => {`,
+    patchedSnippet: `        : "No selection yet";
+  const selectedVoteWhatsAppHref = useMemo(
+    () =>
+      buildCyesWhatsAppVoteHref({
+        nomineeName: selectedNominee?.name,
+        categoryName: selectedCategory?.name,
+        voterName,
+        voterPhone,
+        voterEmail,
+      }),
+    [selectedCategory?.name, selectedNominee?.name, voterEmail, voterName, voterPhone]
+  );
+
+  const loadFallbackCaptcha = useCallback(async () => {`,
+  },
+  {
+    description: "CYES details WhatsApp vote option",
+    originalSnippet: `                    <Button
+                      type="submit"`,
+    patchedSnippet: `                    <div className="rounded-[1.35rem] border border-[#25D366]/25 bg-[#f3fbf6] px-4 py-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="font-sans text-sm font-semibold text-[#156D3B]">
+                            Prefer WhatsApp voting?
+                          </p>
+                          <p className="mt-1 font-sans text-sm leading-relaxed text-[#171411]/66">
+                            If you do not want to deal with OTP, open WhatsApp with your selected nominee, category, and details already filled in.
+                          </p>
+                        </div>
+                        <a
+                          href={selectedVoteWhatsAppHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-[#25D366] px-5 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#22c55e]"
+                        >
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Vote using WhatsApp
+                        </a>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"`,
+  },
 ]);
 
 patchFile(votingApiPath, [
