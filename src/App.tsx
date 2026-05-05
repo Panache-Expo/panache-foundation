@@ -30,6 +30,7 @@ import ParticipantsDashboardPage from "./pages/ParticipantsDashboardPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 import { DeveloperContactCta } from "./components/DeveloperContactCta";
+import { initGoogleAnalytics, trackPageView } from "./lib/analytics";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +54,8 @@ const ScrollToTop = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    initGoogleAnalytics();
+    trackPageView(pathname);
   }, [pathname]);
 
   return null;
