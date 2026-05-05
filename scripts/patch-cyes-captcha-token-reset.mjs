@@ -32,6 +32,7 @@ const patchFile = (filePath, replacements) => {
 
 const votingPagePath = path.join(repoRoot, "src", "pages", "CYESVotingPage.tsx");
 const votingApiPath = path.join(repoRoot, "api", "cyes-voting.js");
+const footerPath = path.join(repoRoot, "src", "components", "Footer.tsx");
 
 patchFile(votingPagePath, [
   {
@@ -136,5 +137,27 @@ patchFile(votingApiPath, [
     categories: categoriesWithNominees,
     total_votes: totalVotes,
   };`,
+  },
+]);
+
+patchFile(footerPath, [
+  {
+    description: "developer footer credit",
+    originalSnippet: `        <p>&copy; 2026 Panache Expo. All rights reserved.</p>`,
+    patchedSnippet: `        <div className="space-y-1">
+          <p>&copy; 2026 Panache Expo. All rights reserved.</p>
+          <p className="text-xs text-[#11100e]/58">
+            Website crafted by
+            <a
+              href="https://wa.me/237657560828?text=Hi%20Glen%2C%20I%20saw%20the%20Panache%20Foundation%20website%20and%20I%27d%20like%20to%20discuss%20building%20something%20similar."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 font-semibold text-[#11100e] underline-offset-4 transition-opacity hover:opacity-70 hover:underline"
+            >
+              Glen Mue
+            </a>
+            . Need a website or voting platform like this? Contact me.
+          </p>
+        </div>`,
   },
 ]);
