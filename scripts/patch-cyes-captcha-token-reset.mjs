@@ -70,6 +70,63 @@ patchFile(votingApiPath, [
   let nominees = [];`,
   },
   {
+    description: "CYES aggregate category and nominee vote counts",
+    originalSnippet: `  let votes = [];
+  if (categoryIds.length) {
+    const { data: voteData, error: voteError } = await supabase
+      .from("cyes_award_votes")
+      .select("category_id, nominee_id")
+      .in("category_id", categoryIds);
+
+    if (voteError) {
+      throw voteError;
+    }
+    votes = voteData || [];
+  }
+
+  const nomineeVoteCounts = votes.reduce((accumulator, vote) => {
+    accumulator[vote.nominee_id] = (accumulator[vote.nominee_id] || 0) + 1;
+    return accumulator;
+  }, {});
+
+  const categoryVoteCounts = votes.reduce((accumulator, vote) => {
+    accumulator[vote.category_id] = (accumulator[vote.category_id] || 0) + 1;
+    return accumulator;
+  }, {});`,
+    patchedSnippet: `  let nomineeVoteCounts = {};
+  let categoryVoteCounts = {};
+
+  if (categoryIds.length) {
+    const { data: nomineeCountData, error: nomineeCountError } = await supabase
+      .from("cyes_nominee_vote_counts")
+      .select("nominee_id, category_id, vote_count")
+      .in("category_id", categoryIds);
+
+    if (nomineeCountError) {
+      throw nomineeCountError;
+    }
+
+    nomineeVoteCounts = (nomineeCountData || []).reduce((accumulator, entry) => {
+      accumulator[entry.nominee_id] = entry.vote_count || 0;
+      return accumulator;
+    }, {});
+
+    const { data: categoryCountData, error: categoryCountError } = await supabase
+      .from("cyes_category_vote_counts")
+      .select("category_id, vote_count")
+      .in("category_id", categoryIds);
+
+    if (categoryCountError) {
+      throw categoryCountError;
+    }
+
+    categoryVoteCounts = (categoryCountData || []).reduce((accumulator, entry) => {
+      accumulator[entry.category_id] = entry.vote_count || 0;
+      return accumulator;
+    }, {});
+  }`,
+  },
+  {
     description: "CYES exact total vote count return",
     originalSnippet: `  return {
     categories: categoriesWithNominees,
