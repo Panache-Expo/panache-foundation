@@ -37,6 +37,7 @@ import {
   CheckCircle2,
   Loader2,
   Mail,
+  MessageCircle,
   RefreshCw,
   Vote,
 } from "lucide-react";
@@ -100,6 +101,40 @@ const votingHeroCards = [
 ];
 
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
+const cyesWhatsAppBotNumber = "237674230406";
+
+const buildCyesWhatsAppVoteHref = ({
+  nomineeName,
+  categoryName,
+  voterName,
+}: {
+  nomineeName?: string;
+  categoryName?: string;
+  voterName?: string;
+}) => {
+  const lines = [
+    nomineeName && categoryName
+      ? `Hi, I want to vote for ${nomineeName} in the ${categoryName} category for the CYES Awards.`
+      : "Hi, I want to vote for the CYES Awards through WhatsApp.",
+    voterName ? `My name is ${voterName}.` : "Please guide me through the voting process.",
+  ].filter(Boolean);
+
+  return `https://wa.me/${cyesWhatsAppBotNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
+};
+
+const getOptimizedSupabaseImageUrl = (imageUrl?: string | null) => {
+  if (!imageUrl || !imageUrl.includes("/storage/v1/object/public/")) {
+    return imageUrl || "";
+  }
+
+  const optimizedUrl = imageUrl.replace(
+    "/storage/v1/object/public/",
+    "/storage/v1/render/image/public/"
+  );
+  const separator = optimizedUrl.includes("?") ? "&" : "?";
+
+  return `${optimizedUrl}${separator}width=300&height=300&resize=cover&quality=60`;
+};
 
 const TurnstileCaptcha = ({
   siteKey,
@@ -314,6 +349,15 @@ const CYESVotingPage = () => {
       : selectedCategory
         ? selectedCategory.name
         : "No selection yet";
+  const selectedVoteWhatsAppHref = useMemo(
+    () =>
+      buildCyesWhatsAppVoteHref({
+        nomineeName: selectedNominee?.name,
+        categoryName: selectedCategory?.name,
+        voterName,
+      }),
+    [selectedCategory?.name, selectedNominee?.name, voterName]
+  );
 
   const loadFallbackCaptcha = useCallback(async () => {
     if (turnstileSiteKey) {
@@ -370,7 +414,6 @@ const CYESVotingPage = () => {
 
   const resetOtpForFieldChange = () => {
     setOtp("");
-    setCaptchaToken("");
   };
 
   const handleRequestOtp = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -706,8 +749,10 @@ const CYESVotingPage = () => {
                               <div className="h-20 w-20 overflow-hidden rounded-[1.1rem] bg-[#eef2f6]">
                                 {nominee.photo_url ? (
                                   <img
-                                    src={nominee.photo_url}
+                                    src={getOptimizedSupabaseImageUrl(nominee.photo_url)}
                                     alt={nominee.name}
+                                    loading="lazy"
+                                    decoding="async"
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
@@ -873,6 +918,28 @@ const CYESVotingPage = () => {
                       </div>
                     )}
 
+                    <div className="rounded-[1.35rem] border border-[#25D366]/25 bg-[#f3fbf6] px-4 py-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="font-sans text-sm font-semibold text-[#156D3B]">
+                            Prefer WhatsApp voting?
+                          </p>
+                          <p className="mt-1 font-sans text-sm leading-relaxed text-[#171411]/66">
+                            If you do not want to deal with OTP, open WhatsApp with your selected nominee, category, and name already filled in.
+                          </p>
+                        </div>
+                        <a
+                          href={selectedVoteWhatsAppHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-[#25D366] px-5 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#22c55e]"
+                        >
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Vote using WhatsApp
+                        </a>
+                      </div>
+                    </div>
+
                     <Button
                       type="submit"
                       className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
@@ -961,7 +1028,10 @@ const CYESVotingPage = () => {
                         type="button"
                         variant="outline"
                         className="h-12 rounded-full"
-                        onClick={resetOtpAndCaptcha}
+                        onClick={() => {
+                          resetOtpAndCaptcha();
+                          setVotingStep("details");
+                        }}
                       >
                         Request new code
                       </Button>

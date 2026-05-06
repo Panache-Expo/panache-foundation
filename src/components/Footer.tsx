@@ -257,7 +257,21 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
       </div>
 
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-2 pt-4 text-sm font-medium text-[#11100e]/80 md:flex-row md:items-center md:justify-between">
-        <p>&copy; 2026 Panache Expo. All rights reserved.</p>
+        <div className="space-y-1">
+          <p>&copy; 2026 Panache Expo. All rights reserved.</p>
+          <p className="text-xs text-[#11100e]/58">
+            Website crafted by
+            <a
+              href="https://wa.me/237657560828?text=Hi%20Glen%2C%20I%20saw%20the%20Panache%20Foundation%20website%20and%20I%27d%20like%20to%20discuss%20building%20something%20similar."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-1 font-semibold text-[#11100e] underline-offset-4 transition-opacity hover:opacity-70 hover:underline"
+            >
+              Glen Mue
+            </a>
+            . Need a website or voting platform like this? Contact me.
+          </p>
+        </div>
 
         <div className="flex flex-wrap items-center gap-6">
           <a href="#" className="transition-opacity hover:opacity-60">

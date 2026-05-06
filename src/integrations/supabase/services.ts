@@ -25,6 +25,8 @@ export type CYESVotingPayload = {
   total_votes: number;
 };
 
+export type CYESVoteStatus = 'completed' | 'pending_otp' | 'unknown';
+
 export type CYESVoteRequestPayload = {
   categoryId: string;
   nomineeId: string;
@@ -129,7 +131,12 @@ const readCyesVotingResponse = async (response: Response) => {
           question: string;
           expiresAt: number;
         };
-        vote?: Pick<CYESAwardVote, 'id' | 'category_id' | 'nominee_id' | 'created_at'>;
+        voteStatus?: CYESVoteStatus;
+        expiresAt?: string;
+        vote?: Pick<
+          CYESAwardVote,
+          'id' | 'category_id' | 'nominee_id' | 'status' | 'created_at'
+        >;
       }
     | null;
 };

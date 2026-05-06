@@ -10,8 +10,16 @@ const votingApiPath = path.join(repoRoot, "api", "cyes-voting.js");
 let source = readFileSync(votingApiPath, "utf8");
 let didPatch = false;
 
-const applyPatch = ({ originalSnippet, patchedSnippet, description }) => {
-  if (source.includes(patchedSnippet)) {
+const applyPatch = ({
+  originalSnippet,
+  patchedSnippet,
+  description,
+  alreadyPatchedSnippet,
+}) => {
+  if (
+    source.includes(patchedSnippet) ||
+    (alreadyPatchedSnippet && source.includes(alreadyPatchedSnippet))
+  ) {
     return;
   }
 
@@ -35,6 +43,7 @@ applyPatch({
   };
 
   const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);`,
+  alreadyPatchedSnippet: `reason: "CYES voting issue alert emails are disabled in code.",`,
 });
 
 applyPatch({
@@ -49,6 +58,7 @@ applyPatch({
   };
 
   const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);`,
+  alreadyPatchedSnippet: `reason: "CYES new vote admin notification emails are disabled in code.",`,
 });
 
 if (didPatch) {

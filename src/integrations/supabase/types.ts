@@ -221,9 +221,13 @@ export type Database = {
           id: string
           ip_address: string | null
           nominee_id: string
+          otp_expires_at: string | null
+          status: string
           supabase_user_id: string | null
           user_agent: string | null
+          updated_at: string
           verification_provider: string
+          verified_at: string | null
           voter_email: string | null
           voter_name: string
           voter_phone: string
@@ -234,9 +238,13 @@ export type Database = {
           id?: string
           ip_address?: string | null
           nominee_id: string
+          otp_expires_at?: string | null
+          status?: string
           supabase_user_id?: string | null
           user_agent?: string | null
+          updated_at?: string
           verification_provider?: string
+          verified_at?: string | null
           voter_email?: string | null
           voter_name: string
           voter_phone: string
@@ -247,9 +255,13 @@ export type Database = {
           id?: string
           ip_address?: string | null
           nominee_id?: string
+          otp_expires_at?: string | null
+          status?: string
           supabase_user_id?: string | null
           user_agent?: string | null
+          updated_at?: string
           verification_provider?: string
+          verified_at?: string | null
           voter_email?: string | null
           voter_name?: string
           voter_phone?: string

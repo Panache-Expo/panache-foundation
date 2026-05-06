@@ -7,22 +7,32 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 
 const patchFile = (filePath, replacements) => {
-  let source = readFileSync(filePath, "utf8");
+  let source = readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
   let didPatch = false;
 
   for (const { originalSnippet, patchedSnippet, description } of replacements) {
-    if (source.includes(patchedSnippet)) {
+    const originalSnippetLf = originalSnippet.replace(/\r\n/g, "\n");
+    const patchedSnippetLf = patchedSnippet.replace(/\r\n/g, "\n");
+
+    if (source.includes(patchedSnippet) || source.includes(patchedSnippetLf)) {
       continue;
     }
 
-    if (!source.includes(originalSnippet)) {
-      throw new Error(
-        `Could not patch ${path.relative(repoRoot, filePath)}: ${description} snippet was not found.`
-      );
+    if (source.includes(originalSnippet)) {
+      source = source.replace(originalSnippet, patchedSnippet);
+      didPatch = true;
+      continue;
     }
 
-    source = source.replace(originalSnippet, patchedSnippet);
-    didPatch = true;
+    if (source.includes(originalSnippetLf)) {
+      source = source.replace(originalSnippetLf, patchedSnippetLf);
+      didPatch = true;
+      continue;
+    }
+
+    throw new Error(
+      `Could not patch ${path.relative(repoRoot, filePath)}: ${description} snippet was not found.`
+    );
   }
 
   if (didPatch) {
@@ -90,7 +100,7 @@ const getOptimizedSupabaseImageUrl = (imageUrl?: string | null) => {
   );
   const separator = optimizedUrl.includes("?") ? "&" : "?";
 
-  return \`${optimizedUrl}\${separator}width=300&height=300&resize=cover&quality=60\`;
+  return \`\${optimizedUrl}\${separator}width=300&height=300&resize=cover&quality=60\`;
 };`,
   },
   {
@@ -169,7 +179,8 @@ patchFile(votingApiPath, [
     const { count, error: totalVotesError } = await supabase
       .from("cyes_award_votes")
       .select("id", { count: "exact", head: true })
-      .in("category_id", categoryIds);
+      .in("category_id", categoryIds)
+      .in("status", COUNTED_VOTE_STATUSES);
 
     if (totalVotesError) {
       throw totalVotesError;
@@ -187,7 +198,8 @@ patchFile(votingApiPath, [
     const { data: voteData, error: voteError } = await supabase
       .from("cyes_award_votes")
       .select("category_id, nominee_id")
-      .in("category_id", categoryIds);
+      .in("category_id", categoryIds)
+      .in("status", COUNTED_VOTE_STATUSES);
 
     if (voteError) {
       throw voteError;

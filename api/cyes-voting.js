@@ -15,6 +15,8 @@ const CYES_VOTE_OTP_TTL_MINUTES = Number.parseInt(
   process.env.CYES_VOTE_OTP_TTL_MINUTES || "10",
   10
 );
+const CYES_VOTE_OTP_MIN_TTL_MINUTES = 10;
+const CYES_VOTE_OTP_MAX_TTL_MINUTES = 15;
 const CYES_VOTE_OTP_SECRET =
   process.env.CYES_VOTE_OTP_SECRET ||
   CYES_VOTING_AGENT_KEY ||
@@ -61,7 +63,14 @@ const CATEGORY_COLUMNS =
 const NOMINEE_COLUMNS =
   "id, category_id, name, organization, bio, photo_url, status, sort_order, created_at, updated_at";
 const VOTE_COLUMNS =
-  "id, category_id, nominee_id, voter_name, voter_phone, voter_email, created_at";
+  "id, category_id, nominee_id, voter_name, voter_phone, voter_email, status, otp_expires_at, verified_at, created_at, updated_at";
+
+const VOTE_STATUS_COMPLETED = "completed";
+const VOTE_STATUS_VERIFIED = "verified";
+const VOTE_STATUS_PENDING_OTP = "pending_otp";
+const VOTE_STATUS_UNKNOWN = "unknown";
+const COUNTED_VOTE_STATUSES = [VOTE_STATUS_COMPLETED, VOTE_STATUS_VERIFIED];
+const REUSABLE_VOTE_STATUSES = [VOTE_STATUS_PENDING_OTP, VOTE_STATUS_UNKNOWN];
 
 const allowedStatuses = new Set(["active", "draft", "archived"]);
 const allowedNomineePhotoTypes = new Set([
@@ -70,6 +79,13 @@ const allowedNomineePhotoTypes = new Set([
   "image/webp",
   "image/gif",
 ]);
+
+const setPublicVotingCacheHeaders = (res) => {
+  res.setHeader(
+    "Cache-Control",
+    "public, s-maxage=30, stale-while-revalidate=120"
+  );
+};
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
@@ -473,6 +489,22 @@ const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
   }
 
   const categoryIds = (categories || []).map((category) => category.id);
+  let totalVotes = 0;
+
+  if (categoryIds.length) {
+    const { count, error: totalVotesError } = await supabase
+      .from("cyes_award_votes")
+      .select("id", { count: "exact", head: true })
+      .in("category_id", categoryIds)
+      .in("status", COUNTED_VOTE_STATUSES);
+
+    if (totalVotesError) {
+      throw totalVotesError;
+    }
+
+    totalVotes = count || 0;
+  }
+
   let nominees = [];
   if (categoryIds.length) {
     let nomineeQuery = supabase
@@ -493,28 +525,38 @@ const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
     nominees = nomineeData || [];
   }
 
-  let votes = [];
+  let nomineeVoteCounts = {};
+  let categoryVoteCounts = {};
+
   if (categoryIds.length) {
-    const { data: voteData, error: voteError } = await supabase
-      .from("cyes_award_votes")
-      .select("category_id, nominee_id")
+    const { data: nomineeCountData, error: nomineeCountError } = await supabase
+      .from("cyes_nominee_vote_counts")
+      .select("nominee_id, category_id, vote_count")
       .in("category_id", categoryIds);
 
-    if (voteError) {
-      throw voteError;
+    if (nomineeCountError) {
+      throw nomineeCountError;
     }
-    votes = voteData || [];
+
+    nomineeVoteCounts = (nomineeCountData || []).reduce((accumulator, entry) => {
+      accumulator[entry.nominee_id] = entry.vote_count || 0;
+      return accumulator;
+    }, {});
+
+    const { data: categoryCountData, error: categoryCountError } = await supabase
+      .from("cyes_category_vote_counts")
+      .select("category_id, vote_count")
+      .in("category_id", categoryIds);
+
+    if (categoryCountError) {
+      throw categoryCountError;
+    }
+
+    categoryVoteCounts = (categoryCountData || []).reduce((accumulator, entry) => {
+      accumulator[entry.category_id] = entry.vote_count || 0;
+      return accumulator;
+    }, {});
   }
-
-  const nomineeVoteCounts = votes.reduce((accumulator, vote) => {
-    accumulator[vote.nominee_id] = (accumulator[vote.nominee_id] || 0) + 1;
-    return accumulator;
-  }, {});
-
-  const categoryVoteCounts = votes.reduce((accumulator, vote) => {
-    accumulator[vote.category_id] = (accumulator[vote.category_id] || 0) + 1;
-    return accumulator;
-  }, {});
 
   const categoriesWithNominees = (categories || []).map((category) => ({
     ...category,
@@ -529,7 +571,7 @@ const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
 
   return {
     categories: categoriesWithNominees,
-    total_votes: votes.length,
+    total_votes: totalVotes,
   };
 };
 
@@ -687,7 +729,61 @@ const formatIssueDetails = (error) => {
   return String(error);
 };
 
+const logCyesVotingEvent = async (supabase, event) => {
+  if (!supabase || !event?.event_type) {
+    return { attempted: false, skipped: true };
+  }
+
+  try {
+    const { error } = await supabase.from("cyes_voting_events").insert([
+      {
+        event_type: event.event_type,
+        action: event.action || null,
+        category_id: event.category_id || null,
+        nominee_id: event.nominee_id || null,
+        voter_name: event.voter_name || null,
+        voter_email: event.voter_email || null,
+        voter_phone: event.voter_phone || null,
+        message: event.message || null,
+        metadata: event.metadata || {},
+      },
+    ]);
+
+    if (error) {
+      return { attempted: true, ok: false, error: error.message };
+    }
+
+    return { attempted: true, ok: true };
+  } catch (logError) {
+    return {
+      attempted: true,
+      ok: false,
+      error: logError instanceof Error ? logError.message : String(logError),
+    };
+  }
+};
+
 const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
+  const bodySummary = body && typeof body === "object" ? body : {};
+  const supabase = createAdminClient();
+  await logCyesVotingEvent(supabase, {
+    event_type: "api_error",
+    action,
+    category_id: normalizeText(bodySummary.categoryId || bodySummary.category_id),
+    nominee_id: normalizeText(bodySummary.nomineeId || bodySummary.nominee_id),
+    voter_name: normalizeText(bodySummary.voterName || bodySummary.voter_name),
+    voter_email: normalizeEmail(bodySummary.voterEmail || bodySummary.voter_email),
+    voter_phone: normalizePhone(bodySummary.voterPhone || bodySummary.voter_phone || bodySummary.phone),
+    message,
+    metadata: { details: formatIssueDetails(error) },
+  });
+
+  return {
+    attempted: false,
+    skipped: true,
+    reason: "CYES voting issue alert emails are disabled in code.",
+  };
+
   const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);
   if (!recipients.length || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
     return {
@@ -741,6 +837,28 @@ const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
 };
 
 const sendVoteNotification = async (req, { vote, category, nominee }) => {
+  const supabase = createAdminClient();
+  await logCyesVotingEvent(supabase, {
+    event_type: "vote_recorded",
+    action: "castVote",
+    category_id: vote?.category_id || category?.id || null,
+    nominee_id: vote?.nominee_id || nominee?.id || null,
+    voter_name: vote?.voter_name || null,
+    voter_email: vote?.voter_email || null,
+    voter_phone: vote?.voter_phone || null,
+    message: "Vote recorded",
+    metadata: {
+      category_name: category?.name || null,
+      nominee_name: nominee?.name || null,
+    },
+  });
+
+  return {
+    attempted: false,
+    skipped: true,
+    reason: "CYES new vote admin notification emails are disabled in code.",
+  };
+
   const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);
   if (!recipients.length) {
     return {
@@ -786,9 +904,15 @@ const sendVoteNotification = async (req, { vote, category, nominee }) => {
 };
 
 const getVoteOtpTtlMinutes = () =>
-  Number.isFinite(CYES_VOTE_OTP_TTL_MINUTES) && CYES_VOTE_OTP_TTL_MINUTES > 0
-    ? CYES_VOTE_OTP_TTL_MINUTES
-    : 10;
+  Math.min(
+    CYES_VOTE_OTP_MAX_TTL_MINUTES,
+    Math.max(
+      CYES_VOTE_OTP_MIN_TTL_MINUTES,
+      Number.isFinite(CYES_VOTE_OTP_TTL_MINUTES) && CYES_VOTE_OTP_TTL_MINUTES > 0
+        ? CYES_VOTE_OTP_TTL_MINUTES
+        : CYES_VOTE_OTP_MIN_TTL_MINUTES
+    )
+  );
 
 const normalizeOtp = (value) => {
   const normalized = normalizeText(value);
@@ -878,17 +1002,227 @@ const cleanupExpiredVoteOtps = async (supabase) => {
     .lt("expires_at", cleanupBefore);
 };
 
+const expireStalePendingVotes = async (supabase) => {
+  const nowIso = new Date().toISOString();
+  const updates = {
+    status: VOTE_STATUS_UNKNOWN,
+    updated_at: nowIso,
+  };
+
+  const { error: expiredPendingError } = await supabase
+    .from("cyes_award_votes")
+    .update(updates)
+    .eq("status", VOTE_STATUS_PENDING_OTP)
+    .lt("otp_expires_at", nowIso);
+
+  if (expiredPendingError) {
+    throw expiredPendingError;
+  }
+
+  const { error: missingExpiryError } = await supabase
+    .from("cyes_award_votes")
+    .update(updates)
+    .eq("status", VOTE_STATUS_PENDING_OTP)
+    .is("otp_expires_at", null);
+
+  if (missingExpiryError) {
+    throw missingExpiryError;
+  }
+};
+
+const findVoteByContact = async (
+  supabase,
+  voter,
+  statuses,
+  { freshPendingOnly = false, preferPhone = false } = {}
+) => {
+  const contacts = preferPhone
+    ? [
+        ["voter_phone", voter.voterPhone, "phone"],
+        ["voter_email", voter.voterEmail, "email"],
+      ]
+    : [
+        ["voter_email", voter.voterEmail, "email"],
+        ["voter_phone", voter.voterPhone, "phone"],
+      ];
+
+  for (const [column, value, contactType] of contacts) {
+    if (!value) {
+      continue;
+    }
+
+    let query = supabase
+      .from("cyes_award_votes")
+      .select(VOTE_COLUMNS)
+      .eq("category_id", voter.categoryId)
+      .eq(column, value)
+      .in("status", statuses)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (freshPendingOnly) {
+      query = query.gte("otp_expires_at", new Date().toISOString());
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error) {
+      throw error;
+    }
+    if (data) {
+      return { vote: data, contactType };
+    }
+  }
+
+  return { vote: null, contactType: null };
+};
+
+const findCompletedVoteByContact = async (supabase, voter) =>
+  findVoteByContact(supabase, voter, COUNTED_VOTE_STATUSES);
+
+const findReusableVoteAttempt = async (supabase, voter) =>
+  findVoteByContact(supabase, voter, REUSABLE_VOTE_STATUSES, {
+    preferPhone: true,
+  });
+
+const buildVoteWritePayload = ({
+  voter,
+  ipAddress,
+  userAgent,
+  status,
+  expiresAt = null,
+  isTrustedAgent = false,
+}) => {
+  const nowIso = new Date().toISOString();
+  return {
+    category_id: voter.categoryId,
+    nominee_id: voter.nomineeId,
+    voter_name: voter.voterName,
+    voter_phone: voter.voterPhone,
+    voter_email: voter.voterEmail || null,
+    supabase_user_id: null,
+    ip_address: ipAddress,
+    user_agent: userAgent,
+    verification_provider: isTrustedAgent
+      ? "panache-whatsapp-agent"
+      : "panache-email-otp",
+    status,
+    otp_expires_at: status === VOTE_STATUS_PENDING_OTP ? expiresAt : null,
+    verified_at: status === VOTE_STATUS_COMPLETED ? nowIso : null,
+    updated_at: nowIso,
+  };
+};
+
+const savePendingVoteAttempt = async (
+  supabase,
+  { voter, ipAddress, userAgent, expiresAt }
+) => {
+  const { vote: reusableVote } = await findReusableVoteAttempt(supabase, voter);
+  const payload = buildVoteWritePayload({
+    voter,
+    ipAddress,
+    userAgent,
+    status: VOTE_STATUS_PENDING_OTP,
+    expiresAt,
+  });
+
+  const query = reusableVote
+    ? supabase
+        .from("cyes_award_votes")
+        .update(payload)
+        .eq("id", reusableVote.id)
+    : supabase.from("cyes_award_votes").insert([payload]);
+
+  const { data, error } = await query.select(VOTE_COLUMNS).single();
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+const markVoteAttemptUnknown = async (supabase, voteId) => {
+  if (!voteId) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("cyes_award_votes")
+    .update({
+      status: VOTE_STATUS_UNKNOWN,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", voteId)
+    .eq("status", VOTE_STATUS_PENDING_OTP);
+
+  if (error) {
+    throw error;
+  }
+};
+
+const recordCompletedVote = async (
+  supabase,
+  { voter, ipAddress, userAgent, isTrustedAgent }
+) => {
+  const { vote: reusableVote } = await findReusableVoteAttempt(supabase, voter);
+  const payload = buildVoteWritePayload({
+    voter,
+    ipAddress,
+    userAgent,
+    status: VOTE_STATUS_COMPLETED,
+    isTrustedAgent,
+  });
+
+  const query = reusableVote
+    ? supabase
+        .from("cyes_award_votes")
+        .update(payload)
+        .eq("id", reusableVote.id)
+    : supabase.from("cyes_award_votes").insert([payload]);
+
+  const { data, error } = await query.select(VOTE_COLUMNS).single();
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
 const storeVoteOtp = async (supabase, { voter, otp, expiresAt }) => {
-  const { error } = await supabase.from("cyes_vote_email_otps").insert([
-    {
-      category_id: voter.categoryId,
-      nominee_id: voter.nomineeId,
-      voter_email: voter.voterEmail,
-      voter_phone: voter.voterPhone,
-      otp_hash: hashVoteOtp(voter, otp),
-      expires_at: expiresAt,
-    },
-  ]);
+  const { data: existingOtp, error: lookupError } = await supabase
+    .from("cyes_vote_email_otps")
+    .select("id")
+    .eq("category_id", voter.categoryId)
+    .eq("nominee_id", voter.nomineeId)
+    .eq("voter_email", voter.voterEmail)
+    .eq("voter_phone", voter.voterPhone)
+    .is("used_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw lookupError;
+  }
+
+  const otpPayload = {
+    otp_hash: hashVoteOtp(voter, otp),
+    attempts: 0,
+    expires_at: expiresAt,
+    created_at: new Date().toISOString(),
+  };
+
+  const { error } = existingOtp
+    ? await supabase
+        .from("cyes_vote_email_otps")
+        .update(otpPayload)
+        .eq("id", existingOtp.id)
+    : await supabase.from("cyes_vote_email_otps").insert([
+        {
+          category_id: voter.categoryId,
+          nominee_id: voter.nomineeId,
+          voter_email: voter.voterEmail,
+          voter_phone: voter.voterPhone,
+          ...otpPayload,
+        },
+      ]);
 
   if (error) {
     throw error;
@@ -917,6 +1251,7 @@ const verifyVoteOtp = async (supabase, voter, otp) => {
     return {
       ok: false,
       statusCode: 401,
+      voteStatus: VOTE_STATUS_UNKNOWN,
       message: "OTP is invalid or expired. Please request a new code.",
     };
   }
@@ -926,6 +1261,7 @@ const verifyVoteOtp = async (supabase, voter, otp) => {
     return {
       ok: false,
       statusCode: 429,
+      voteStatus: VOTE_STATUS_PENDING_OTP,
       message: "Too many incorrect OTP attempts. Please request a new code.",
     };
   }
@@ -938,11 +1274,12 @@ const verifyVoteOtp = async (supabase, voter, otp) => {
     return {
       ok: false,
       statusCode: 401,
+      voteStatus: VOTE_STATUS_PENDING_OTP,
       message: "OTP is incorrect. Please check the code and try again.",
     };
   }
 
-  return { ok: true, otpRecord };
+  return { ok: true, otpRecord, voteStatus: VOTE_STATUS_PENDING_OTP };
 };
 
 const buildVoterPayload = (body, { requireEmail = true } = {}) => {
@@ -979,7 +1316,10 @@ const buildVoterPayload = (body, { requireEmail = true } = {}) => {
 const handleRequestOtp = async (req, res, supabase, body) => {
   const { error, voter } = buildVoterPayload(body);
   if (error) {
-    return sendJson(res, 400, { message: error });
+    return sendJson(res, 400, {
+      message: error,
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
   }
 
   const selection = await fetchVotingSelection(
@@ -988,13 +1328,19 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     voter.nomineeId
   );
   if (!selection.ok) {
-    return sendJson(res, selection.statusCode, { message: selection.message });
+    return sendJson(res, selection.statusCode, {
+      message: selection.message,
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
   }
 
   if (!isTrustedVotingAgentRequest(req)) {
     const captcha = await verifyCaptcha(req, body);
     if (!captcha.ok) {
-      return sendJson(res, 400, { message: captcha.message });
+      return sendJson(res, 400, {
+        message: captcha.message,
+        voteStatus: VOTE_STATUS_UNKNOWN,
+      });
     }
   }
 
@@ -1006,45 +1352,61 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     windowSeconds: 10 * 60,
   });
   if (!limit.ok) {
-    return sendJson(res, 429, { message: limit.message });
-  }
-  await cleanupExpiredVoteOtps(supabase).catch(() => null);
-
-  const { data: existingEmailVote, error: existingEmailVoteError } = await supabase
-    .from("cyes_award_votes")
-    .select("id")
-    .eq("category_id", voter.categoryId)
-    .eq("voter_email", voter.voterEmail)
-    .maybeSingle();
-
-  if (existingEmailVoteError) {
-    throw existingEmailVoteError;
-  }
-  if (existingEmailVote) {
-    return sendJson(res, 409, {
-      message: "This email address has already voted in this category.",
+    return sendJson(res, 429, {
+      message: limit.message,
+      voteStatus: VOTE_STATUS_UNKNOWN,
     });
   }
+  await cleanupExpiredVoteOtps(supabase).catch(() => null);
+  await expireStalePendingVotes(supabase);
 
-  const { data: existingPhoneVote, error: existingPhoneVoteError } = await supabase
-    .from("cyes_award_votes")
-    .select("id")
-    .eq("category_id", voter.categoryId)
-    .eq("voter_phone", voter.voterPhone)
-    .maybeSingle();
+  const { vote: existingVote, contactType } = await findCompletedVoteByContact(
+    supabase,
+    voter
+  );
 
-  if (existingPhoneVoteError) {
-    throw existingPhoneVoteError;
-  }
-  if (existingPhoneVote) {
+  if (existingVote) {
     return sendJson(res, 409, {
-      message: "This phone number has already voted in this category.",
+      message:
+        contactType === "email"
+          ? "This email address has already voted in this category."
+          : "This phone number has already voted in this category.",
+      voteStatus: VOTE_STATUS_COMPLETED,
+      vote: existingVote,
     });
   }
 
   const ttlMinutes = getVoteOtpTtlMinutes();
   const otp = createVoteOtpCode();
   const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
+  const userAgent = normalizeText(req.headers["user-agent"]);
+  let pendingVote = null;
+
+  try {
+    pendingVote = await savePendingVoteAttempt(supabase, {
+      voter,
+      ipAddress,
+      userAgent,
+      expiresAt,
+    });
+  } catch (pendingVoteError) {
+    console.error("Failed to save pending CYES vote attempt", pendingVoteError);
+    await sendVotingIssueAlert(req, {
+      action: "requestOtp.savePendingVote",
+      message: "Failed to save the pending CYES vote attempt.",
+      error: pendingVoteError,
+      body,
+    }).catch((alertError) => {
+      console.error("Failed to send CYES voting issue alert", alertError);
+    });
+    return sendJson(res, 400, {
+      message:
+        pendingVoteError?.code === "42703"
+          ? "Vote status tracking is not configured. Apply the latest Supabase migration."
+          : pendingVoteError?.message || "Could not prepare the pending vote.",
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
+  }
 
   try {
     await storeVoteOtp(supabase, { voter, otp, expiresAt });
@@ -1058,11 +1420,15 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     }).catch((alertError) => {
       console.error("Failed to send CYES voting issue alert", alertError);
     });
+    await markVoteAttemptUnknown(supabase, pendingVote?.id).catch((statusError) => {
+      console.error("Failed to clear pending CYES vote attempt", statusError);
+    });
     return sendJson(res, 400, {
       message:
         otpStorageError?.code === "42P01"
           ? "Vote OTP storage is not configured. Apply the latest Supabase migration."
           : otpStorageError?.message || "Could not prepare the OTP.",
+      voteStatus: VOTE_STATUS_UNKNOWN,
     });
   }
 
@@ -1085,8 +1451,12 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     }).catch((alertError) => {
       console.error("Failed to send CYES voting issue alert", alertError);
     });
+    await markVoteAttemptUnknown(supabase, pendingVote?.id).catch((statusError) => {
+      console.error("Failed to clear pending CYES vote attempt", statusError);
+    });
     return sendJson(res, 500, {
       message: "Could not send the OTP email.",
+      voteStatus: VOTE_STATUS_UNKNOWN,
     });
   }
   if (!emailResult.ok) {
@@ -1098,8 +1468,12 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     }).catch((alertError) => {
       console.error("Failed to send CYES voting issue alert", alertError);
     });
+    await markVoteAttemptUnknown(supabase, pendingVote?.id).catch((statusError) => {
+      console.error("Failed to clear pending CYES vote attempt", statusError);
+    });
     return sendJson(res, emailResult.statusCode || 500, {
       message: emailResult.message || "Could not send the OTP email.",
+      voteStatus: VOTE_STATUS_UNKNOWN,
     });
   }
 
@@ -1107,6 +1481,8 @@ const handleRequestOtp = async (req, res, supabase, body) => {
     message: "OTP sent.",
     email: voter.voterEmail,
     expiresAt,
+    voteStatus: VOTE_STATUS_PENDING_OTP,
+    vote: pendingVote,
   });
 };
 
@@ -1116,12 +1492,18 @@ const handleCastVote = async (req, res, supabase, body) => {
     requireEmail: !isTrustedAgent,
   });
   if (error) {
-    return sendJson(res, 400, { message: error });
+    return sendJson(res, 400, {
+      message: error,
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
   }
 
   const otp = normalizeOtp(body.otp || body.token || body.verificationCode);
   if (!isTrustedAgent && (!otp || otp.length !== 6)) {
-    return sendJson(res, 400, { message: "Enter the OTP sent to your email." });
+    return sendJson(res, 400, {
+      message: "Enter the OTP sent to your email.",
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
   }
 
   const selection = await fetchVotingSelection(
@@ -1130,7 +1512,10 @@ const handleCastVote = async (req, res, supabase, body) => {
     voter.nomineeId
   );
   if (!selection.ok) {
-    return sendJson(res, selection.statusCode, { message: selection.message });
+    return sendJson(res, selection.statusCode, {
+      message: selection.message,
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
   }
 
   const ipAddress = getClientIp(req);
@@ -1141,7 +1526,28 @@ const handleCastVote = async (req, res, supabase, body) => {
     windowSeconds: 60 * 60,
   });
   if (!limit.ok) {
-    return sendJson(res, 429, { message: limit.message });
+    return sendJson(res, 429, {
+      message: limit.message,
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
+  }
+  await cleanupExpiredVoteOtps(supabase).catch(() => null);
+  await expireStalePendingVotes(supabase);
+
+  const { vote: existingVote, contactType } = await findCompletedVoteByContact(
+    supabase,
+    voter
+  );
+
+  if (existingVote) {
+    return sendJson(res, 409, {
+      message:
+        contactType === "email"
+          ? "This email address has already voted in this category."
+          : "This WhatsApp number has already voted in this category. You can still vote in another category.",
+      voteStatus: VOTE_STATUS_COMPLETED,
+      vote: existingVote,
+    });
   }
 
   let otpVerification = null;
@@ -1163,80 +1569,46 @@ const handleCastVote = async (req, res, supabase, body) => {
           otpVerificationError?.code === "42P01"
             ? "Vote OTP storage is not configured. Apply the latest Supabase migration."
             : otpVerificationError?.message || "Could not verify the OTP.",
+        voteStatus: VOTE_STATUS_UNKNOWN,
       });
     }
     if (!otpVerification.ok) {
       return sendJson(res, otpVerification.statusCode || 401, {
         message: otpVerification.message,
+        voteStatus: otpVerification.voteStatus || VOTE_STATUS_UNKNOWN,
       });
     }
   }
 
-  const { data: existingPhoneVote, error: existingPhoneVoteError } = await supabase
-    .from("cyes_award_votes")
-    .select(VOTE_COLUMNS)
-    .eq("category_id", voter.categoryId)
-    .eq("voter_phone", voter.voterPhone)
-    .maybeSingle();
-  if (existingPhoneVoteError) {
-    await sendVotingIssueAlert(req, {
-      action: "castVote.checkExistingVote",
-      message: existingPhoneVoteError.message || "Could not check existing votes.",
-      error: existingPhoneVoteError,
-      body,
-    }).catch((alertError) => {
-      console.error("Failed to send CYES voting issue alert", alertError);
+  let vote;
+  try {
+    vote = await recordCompletedVote(supabase, {
+      voter,
+      ipAddress,
+      userAgent: normalizeText(req.headers["user-agent"]),
+      isTrustedAgent,
     });
-    return sendJson(res, 400, {
-      message: existingPhoneVoteError.message || "Could not check existing votes.",
-      error: existingPhoneVoteError,
-    });
-  }
-  if (existingPhoneVote) {
-    return sendJson(res, 409, {
-      message: "This WhatsApp number has already voted in this category. You can still vote in another category.",
-      vote: existingPhoneVote,
-    });
-  }
-
-  const { data: vote, error: insertError } = await supabase
-    .from("cyes_award_votes")
-    .insert([
-      {
-        category_id: voter.categoryId,
-        nominee_id: voter.nomineeId,
-        voter_name: voter.voterName,
-        voter_phone: voter.voterPhone,
-        voter_email: voter.voterEmail || null,
-        supabase_user_id: null,
-        ip_address: ipAddress,
-        user_agent: normalizeText(req.headers["user-agent"]),
-        verification_provider: isTrustedAgent
-          ? "panache-whatsapp-agent"
-          : "panache-email-otp",
-      },
-    ])
-    .select(VOTE_COLUMNS)
-    .single();
-
-  if (insertError) {
-    if (insertError.code === "23505") {
+  } catch (writeVoteError) {
+    if (writeVoteError?.code === "23505") {
       return sendJson(res, 409, {
-        message: "This WhatsApp number has already voted in this category. You can still vote in another category.",
+        message:
+          "This WhatsApp number has already voted in this category. You can still vote in another category.",
+        voteStatus: VOTE_STATUS_COMPLETED,
       });
     }
 
     await sendVotingIssueAlert(req, {
-      action: "castVote.insertVote",
-      message: insertError.message || "Could not save the vote.",
-      error: insertError,
+      action: "castVote.saveVote",
+      message: writeVoteError.message || "Could not save the vote.",
+      error: writeVoteError,
       body,
     }).catch((alertError) => {
       console.error("Failed to send CYES voting issue alert", alertError);
     });
     return sendJson(res, 400, {
-      message: insertError.message || "Could not save the vote.",
-      error: insertError,
+      message: writeVoteError.message || "Could not save the vote.",
+      error: writeVoteError,
+      voteStatus: VOTE_STATUS_UNKNOWN,
     });
   }
 
@@ -1292,6 +1664,7 @@ const handleCastVote = async (req, res, supabase, body) => {
 
   return sendJson(res, 200, {
     message: "Vote recorded.",
+    voteStatus: VOTE_STATUS_COMPLETED,
     vote,
     voting,
     notification,
@@ -1559,7 +1932,8 @@ const handleAdminAction = async (req, res, supabase, body) => {
     const { count, error: voteCountError } = await supabase
       .from("cyes_award_votes")
       .select("id", { count: "exact", head: true })
-      .eq("nominee_id", id);
+      .eq("nominee_id", id)
+      .in("status", COUNTED_VOTE_STATUSES);
 
     if (voteCountError) {
       return sendJson(res, 400, {
@@ -1615,8 +1989,13 @@ export default async function handler(req, res) {
         return sendJson(res, 200, { captcha: createFallbackCaptcha() });
       }
 
+      const includeDrafts = isAuthorizedDashboardRequest(req);
+      if (!includeDrafts) {
+        setPublicVotingCacheHeaders(res);
+      }
+
       const voting = await fetchVotingPayload(supabase, {
-        includeDrafts: isAuthorizedDashboardRequest(req),
+        includeDrafts,
       });
       return sendJson(res, 200, { voting });
     }
@@ -1654,9 +2033,13 @@ export default async function handler(req, res) {
         error instanceof Error
           ? error.message
           : error?.message || "Could not complete the CYES voting request.",
+      voteStatus: VOTE_STATUS_UNKNOWN,
     });
   }
 
   res.setHeader("Allow", "GET,POST,OPTIONS");
-  return sendJson(res, 405, { message: "Method not allowed." });
+  return sendJson(res, 405, {
+    message: "Method not allowed.",
+    voteStatus: VOTE_STATUS_UNKNOWN,
+  });
 }
