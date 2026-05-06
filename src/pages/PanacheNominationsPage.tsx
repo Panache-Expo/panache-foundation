@@ -80,9 +80,9 @@ const categories = [
       "Must demonstrate consistent professional barbering excellence, client base growth, technical skill, and visible industry impact.",
   },
   {
-    value: "Hairstylist of the Year",
+    value: "Hair and Wig Specialist of the Year",
     description:
-      "Must show creativity, professional service delivery, portfolio consistency, and strong client or event presence.",
+      "Must show creativity, professional hair service delivery, wig styling or installation skill, portfolio consistency, and strong client or event presence.",
   },
   {
     value: "Braider of the Year",
@@ -105,11 +105,6 @@ const categories = [
       "Must show expertise in lash extensions, design precision, safety standards, and consistent client results.",
   },
   {
-    value: "Wig Installation Specialist of the Year",
-    description:
-      "Must demonstrate advanced wig construction or installation techniques, finishing quality, and professional delivery.",
-  },
-  {
     value: "Fashion Designer of the Year",
     description:
       "Must show original collections, runway or commercial presence, brand identity, and creative consistency.",
@@ -120,9 +115,19 @@ const categories = [
       "Must have less than 5 years of active professional practice and show strong growth trajectory and innovation.",
   },
   {
-    value: "Model of the Year",
+    value: "Male Model of the Year",
     description:
-      "Must demonstrate professional modeling portfolio, runway/editorial experience, brand collaborations, and industry conduct.",
+      "Must demonstrate a strong professional modeling portfolio, runway or editorial experience, brand collaborations, consistency, and industry conduct.",
+  },
+  {
+    value: "Female Model of the Year",
+    description:
+      "Must demonstrate a strong professional modeling portfolio, runway or editorial experience, brand collaborations, consistency, and industry conduct.",
+  },
+  {
+    value: "Emerging Model of the Year",
+    description:
+      "Must be within the early professional modeling stage and show strong growth, visibility, discipline, and potential in the industry.",
   },
   {
     value: "Fashion Stylist of the Year",
@@ -159,6 +164,14 @@ const categories = [
     description:
       "Must have demonstrated excellence in fashion or beauty photography within the last 24 months, supported by a strong portfolio with clear industry impact.",
   },
+];
+
+const juryEvaluationItems = [
+  "Impact",
+  "Professionalism",
+  "Creativity",
+  "Consistency",
+  "Contribution to their industry/community",
 ];
 
 const PanacheNominationsPage = () => {
@@ -574,6 +587,69 @@ const PanacheNominationsPage = () => {
                 </Button>
               </div>
             </form>
+          </ExpoSurface>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.78fr,1.22fr] lg:items-start">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Voting & selection criteria
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.85rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  Panache D&apos;or Awards 2026 winners combine public support and jury evaluation.
+                </h2>
+                <p className="mt-4 font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  Winners of the Panache D&apos;or Awards 2026 will be determined through a transparent process that combines online public paid votes with the decision of the jury committee.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-[1.45rem] border border-black/8 bg-[#f8f2e8] px-5 py-5">
+                  <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
+                    Public votes
+                  </p>
+                  <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
+                    70%
+                  </p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
+                    Online public paid votes. Each online vote costs 100 CFA and there is no limit to the number of votes a nominee can receive.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.45rem] border border-black/8 bg-[#fcfbf8] px-5 py-5">
+                  <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
+                    Jury decision
+                  </p>
+                  <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
+                    30%
+                  </p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
+                    Jury committee evaluation based on professional merit, documented work, and contribution to the industry or community.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.45rem] border border-black/8 bg-white px-5 py-5 md:col-span-2">
+                  <p className="font-sans text-sm font-semibold text-[#171411]">
+                    Jury evaluation areas
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {juryEvaluationItems.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-full border border-black/8 bg-[#f8f2e8] px-4 py-2 font-sans text-sm font-medium text-[#171411]/72"
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 font-sans text-sm leading-relaxed text-[#171411]/66">
+                    Nominees are encouraged to actively campaign, promote their nomination, and mobilize their audience throughout the voting period.
+                  </p>
+                </div>
+              </div>
+            </div>
           </ExpoSurface>
         </section>
 
