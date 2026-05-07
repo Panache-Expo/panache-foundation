@@ -1,3 +1,4 @@
+import "./add-cyes-vote-analytics-panel.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
