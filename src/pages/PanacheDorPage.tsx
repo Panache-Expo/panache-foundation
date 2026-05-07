@@ -42,6 +42,14 @@ const winnerPackageItems = [
   "DJI Pocket 3 vlogging camera",
 ];
 
+const juryEvaluationItems = [
+  "Impact",
+  "Professionalism",
+  "Creativity",
+  "Consistency",
+  "Contribution to their industry/community",
+];
+
 const PanacheDorPage = () => {
   return (
     <div className="min-h-screen bg-[#f4f3ef]">
@@ -154,6 +162,78 @@ const PanacheDorPage = () => {
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
                   Explore nominations or contact the team if you want award clarification.
                 </p>
+              </div>
+            </div>
+          </ExpoSurface>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-6xl">
+          <ExpoSurface className="overflow-hidden">
+            <div className="grid gap-8 lg:grid-cols-[0.78fr,1.22fr] lg:items-start">
+              <div>
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Voting & selection criteria
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.85rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
+                  Panache D&apos;or Awards 2026 winners combine public support and professional evaluation.
+                </h2>
+                <p className="mt-4 font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  Winners of the Panache D&apos;or Awards 2026 will be determined through a transparent voting and judging process combining both public support and professional evaluation.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-[1.45rem] border border-black/8 bg-[#f8f2e8] px-5 py-5">
+                  <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
+                    Online public paid votes
+                  </p>
+                  <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
+                    70%
+                  </p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
+                    Each online vote costs 100 CFA (approximately $0.17 USD), allowing supporters, fans, friends, and communities to actively support their favorite nominees.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.45rem] border border-black/8 bg-[#fcfbf8] px-5 py-5">
+                  <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
+                    Jury committee decision
+                  </p>
+                  <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
+                    30%
+                  </p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
+                    The jury committee consists of selected professionals and industry personalities who evaluate nominees using clear professional criteria.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.45rem] border border-black/8 bg-white px-5 py-5 md:col-span-2">
+                  <p className="font-sans text-sm font-semibold text-[#171411]">
+                    No vote limit
+                  </p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
+                    There is no limit to the number of votes a nominee can receive. Supporters can vote as many times as possible to increase their nominee&apos;s chances of winning.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.45rem] border border-black/8 bg-white px-5 py-5 md:col-span-2">
+                  <p className="font-sans text-sm font-semibold text-[#171411]">
+                    Jury evaluation areas
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {juryEvaluationItems.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-full border border-black/8 bg-[#f8f2e8] px-4 py-2 font-sans text-sm font-medium text-[#171411]/72"
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 font-sans text-sm leading-relaxed text-[#171411]/66">
+                    We encourage all nominees to actively campaign, promote their nomination, and mobilize their audience throughout the voting period.
+                  </p>
+                </div>
               </div>
             </div>
           </ExpoSurface>
