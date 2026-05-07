@@ -18,37 +18,75 @@ import {
 import type { CYESAwardCategory, CYESAwardNominee } from "@/integrations/supabase/services";
 import { useToast } from "@/hooks/use-toast";
 import { fetchCyesVotingDashboard } from "@/lib/dashboard-admin";
-import { Award, BarChart3, Loader2, RefreshCw, Search, Trophy, Users } from "lucide-react";
+import {
+  Award,
+  BarChart3,
+  Loader2,
+  Mail,
+  MessageCircle,
+  RefreshCw,
+  Search,
+  Trophy,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type CYESVotingAnalyticsProps = {
   accessKey: string;
 };
 
-type NomineeAnalyticsRow = CYESAwardNominee & {
-  categoryName: string;
+type VoteSourceBreakdown = {
+  total_votes: number;
+  otp_votes: number;
+  whatsapp_votes: number;
 };
 
-const formatNumber = (value: number) => new Intl.NumberFormat("en-US").format(value);
+type CategoryAnalyticsRow = CYESAwardCategory & {
+  source_breakdown?: VoteSourceBreakdown | null;
+};
 
-const getTopCategoryName = (categories: CYESAwardCategory[]) =>
+type NomineeAnalyticsRow = CYESAwardNominee & {
+  categoryName: string;
+  source_breakdown?: VoteSourceBreakdown | null;
+};
+
+type CYESVotingAnalyticsPayload = {
+  categories: CategoryAnalyticsRow[];
+  total_votes: number;
+  source_breakdown?: VoteSourceBreakdown | null;
+};
+
+const emptyBreakdown: VoteSourceBreakdown = {
+  total_votes: 0,
+  otp_votes: 0,
+  whatsapp_votes: 0,
+};
+
+const formatNumber = (value: number) => new Intl.NumberFormat("en-US").format(value || 0);
+
+const formatPercentage = (part: number, total: number) =>
+  total ? `${((part / total) * 100).toFixed(1)}%` : "0%";
+
+const getBreakdown = (value?: VoteSourceBreakdown | null) => value || emptyBreakdown;
+
+const getTopCategoryName = (categories: CategoryAnalyticsRow[]) =>
   [...categories].sort((left, right) => right.vote_count - left.vote_count)[0]?.name || "No votes yet";
 
 const getCategoryShare = (votes: number, totalVotes: number) =>
   totalVotes ? `${((votes / totalVotes) * 100).toFixed(1)}%` : "0%";
 
-const flattenNominees = (categories: CYESAwardCategory[]) =>
+const flattenNominees = (categories: CategoryAnalyticsRow[]) =>
   categories.flatMap((category) =>
     category.nominees.map((nominee) => ({
       ...nominee,
       categoryName: category.name,
     }))
-  );
+  ) as NomineeAnalyticsRow[];
 
 export const CYESVotingAnalytics = ({ accessKey }: CYESVotingAnalyticsProps) => {
   const { toast } = useToast();
-  const [categories, setCategories] = useState<CYESAwardCategory[]>([]);
+  const [categories, setCategories] = useState<CategoryAnalyticsRow[]>([]);
   const [totalVotes, setTotalVotes] = useState(0);
+  const [sourceBreakdown, setSourceBreakdown] = useState<VoteSourceBreakdown>(emptyBreakdown);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -57,9 +95,10 @@ export const CYESVotingAnalytics = ({ accessKey }: CYESVotingAnalyticsProps) => 
 
     setIsLoading(true);
     try {
-      const voting = await fetchCyesVotingDashboard(accessKey);
-      setCategories(voting.categories);
-      setTotalVotes(voting.total_votes);
+      const voting = (await fetchCyesVotingDashboard(accessKey)) as CYESVotingAnalyticsPayload;
+      setCategories(voting.categories || []);
+      setTotalVotes(voting.total_votes || 0);
+      setSourceBreakdown(voting.source_breakdown || emptyBreakdown);
     } catch (error) {
       toast({
         title: "Vote analytics unavailable",
@@ -101,7 +140,7 @@ export const CYESVotingAnalytics = ({ accessKey }: CYESVotingAnalyticsProps) => 
         .slice(0, 10),
       topNominees: filteredNominees
         .sort((left, right) => right.vote_count - left.vote_count)
-        .slice(0, 20) as NomineeAnalyticsRow[],
+        .slice(0, 20),
     };
   }, [categories, searchQuery]);
 
@@ -113,7 +152,7 @@ export const CYESVotingAnalytics = ({ accessKey }: CYESVotingAnalyticsProps) => 
             CYES Vote Analytics
           </CardTitle>
           <CardDescription>
-            Track total votes, top categories, and the leading nominees from the admin panel.
+            WhatsApp votes are votes without an email. OTP/website votes are votes with an email.
           </CardDescription>
         </div>
         <Button type="button" variant="outline" onClick={() => void loadAnalytics()} disabled={isLoading}>
@@ -138,19 +177,29 @@ export const CYESVotingAnalytics = ({ accessKey }: CYESVotingAnalyticsProps) => 
           </div>
           <div className="rounded-2xl border border-border/60 bg-muted/20 p-5">
             <div className="flex items-center gap-3">
-              <Award className="h-5 w-5 text-rose-gold" />
+              <MessageCircle className="h-5 w-5 text-emerald-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Open categories</p>
-                <p className="text-3xl font-semibold text-primary">{analytics.openCategories}</p>
+                <p className="text-sm text-muted-foreground">WhatsApp votes</p>
+                <p className="text-3xl font-semibold text-primary">
+                  {formatNumber(sourceBreakdown.whatsapp_votes)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatPercentage(sourceBreakdown.whatsapp_votes, sourceBreakdown.total_votes || totalVotes)} of votes
+                </p>
               </div>
             </div>
           </div>
           <div className="rounded-2xl border border-border/60 bg-muted/20 p-5">
             <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-emerald-600" />
+              <Mail className="h-5 w-5 text-rose-gold" />
               <div>
-                <p className="text-sm text-muted-foreground">Active nominees</p>
-                <p className="text-3xl font-semibold text-primary">{analytics.activeNominees}</p>
+                <p className="text-sm text-muted-foreground">OTP / website votes</p>
+                <p className="text-3xl font-semibold text-primary">
+                  {formatNumber(sourceBreakdown.otp_votes)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatPercentage(sourceBreakdown.otp_votes, sourceBreakdown.total_votes || totalVotes)} of votes
+                </p>
               </div>
             </div>
           </div>
@@ -170,40 +219,51 @@ export const CYESVotingAnalytics = ({ accessKey }: CYESVotingAnalyticsProps) => 
             <div className="mb-5">
               <h3 className="font-display text-xl text-primary">Top categories</h3>
               <p className="text-sm text-muted-foreground">
-                Share is calculated against all recorded CYES votes.
+                Breakdown uses email presence: no email = WhatsApp, email = OTP/website.
               </p>
             </div>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Votes</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">WhatsApp</TableHead>
+                  <TableHead className="text-right">OTP</TableHead>
                   <TableHead className="text-right">Share</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {analytics.topCategories.length ? (
-                  analytics.topCategories.map((category) => (
-                    <TableRow key={category.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-primary">{category.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {category.nominees.length} nominees
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-primary">
-                        {formatNumber(category.vote_count)}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {getCategoryShare(category.vote_count, totalVotes)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  analytics.topCategories.map((category) => {
+                    const breakdown = getBreakdown(category.source_breakdown);
+                    return (
+                      <TableRow key={category.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-primary">{category.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {category.nominees.length} nominees
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-primary">
+                          {formatNumber(category.vote_count)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatNumber(breakdown.whatsapp_votes)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatNumber(breakdown.otp_votes)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {getCategoryShare(category.vote_count, totalVotes)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                       No category votes yet.
                     </TableCell>
                   </TableRow>
@@ -235,32 +295,43 @@ export const CYESVotingAnalytics = ({ accessKey }: CYESVotingAnalyticsProps) => 
                 <TableRow>
                   <TableHead>Nominee</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Votes</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">WhatsApp</TableHead>
+                  <TableHead className="text-right">OTP</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {analytics.topNominees.length ? (
-                  analytics.topNominees.map((nominee) => (
-                    <TableRow key={nominee.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-primary">{nominee.name}</p>
-                          {nominee.organization ? (
-                            <p className="text-xs text-muted-foreground">{nominee.organization}</p>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {nominee.categoryName}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-primary">
-                        {formatNumber(nominee.vote_count)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  analytics.topNominees.map((nominee) => {
+                    const breakdown = getBreakdown(nominee.source_breakdown);
+                    return (
+                      <TableRow key={nominee.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-primary">{nominee.name}</p>
+                            {nominee.organization ? (
+                              <p className="text-xs text-muted-foreground">{nominee.organization}</p>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {nominee.categoryName}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-primary">
+                          {formatNumber(nominee.vote_count)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatNumber(breakdown.whatsapp_votes)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatNumber(breakdown.otp_votes)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                       No nominees match your search.
                     </TableCell>
                   </TableRow>
