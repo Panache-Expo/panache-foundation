@@ -1,3 +1,4 @@
+import "./patch-cyes-vote-breakdowns.mjs";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
