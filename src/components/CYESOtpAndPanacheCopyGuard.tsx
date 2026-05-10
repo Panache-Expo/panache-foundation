@@ -81,7 +81,9 @@ const disableEmailOtpButtons = () => {
     button.setAttribute("disabled", "true");
     button.setAttribute("aria-disabled", "true");
     button.classList.add("cursor-not-allowed", "opacity-60");
-    button.textContent = "Email OTP temporarily unavailable";
+    if (button.textContent !== "Email OTP temporarily unavailable") {
+      button.textContent = "Email OTP temporarily unavailable";
+    }
   }
 };
 
@@ -111,7 +113,11 @@ export const CYESOtpAndPanacheCopyGuard = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
+    let runs = 0;
+
     const apply = () => {
+      runs += 1;
+
       if (pathname === "/cyes/vote") {
         disableEmailOtpButtons();
         ensureWhatsAppNotice();
@@ -123,10 +129,14 @@ export const CYESOtpAndPanacheCopyGuard = () => {
     };
 
     apply();
-    const observer = new MutationObserver(apply);
-    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    const intervalId = window.setInterval(() => {
+      apply();
+      if (runs >= 12) {
+        window.clearInterval(intervalId);
+      }
+    }, 700);
 
-    return () => observer.disconnect();
+    return () => window.clearInterval(intervalId);
   }, [pathname]);
 
   return null;
