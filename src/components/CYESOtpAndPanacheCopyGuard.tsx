@@ -28,6 +28,12 @@ const textReplacements: Array<[string, string]> = [
   ["Official Panache ambassador status", "Official Panache D'or ambassador status"],
   ["Online public paid votes", "People's Choice online votes"],
   ["70%", "100%"],
+  ["Jury committee decision", "Most voted nominee wins"],
+  ["30%", "Wins"],
+  [
+    "The jury committee consists of selected professionals and industry personalities who evaluate nominees using clear professional criteria.",
+    "The Panache People's Choice Award goes to the nominee with the highest number of online votes during the voting period.",
+  ],
   [
     "Each online vote costs 100 CFA (approximately $0.17 USD), allowing supporters, fans, friends, and communities to actively support their favorite nominees.",
     "The Panache People's Choice Award goes to the Panache D'or nominee with the highest number of online votes.",
