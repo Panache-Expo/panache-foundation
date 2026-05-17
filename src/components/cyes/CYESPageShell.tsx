@@ -34,13 +34,36 @@ export const cyesTextareaClasses =
 export const cyesSelectTriggerClasses =
   "mt-2 h-12 rounded-[1rem] border-black/10 bg-white/76 px-4 font-sans text-[#171411] shadow-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-1 focus-visible:ring-[#156D3B]";
 
-export const CYESFloatingLogo = () => (
-  <div className="absolute left-0 top-0 z-20 px-6 py-4 md:px-24 md:py-6">
+export const MINJEC_LOGO_URL =
+  "https://www.minjec.gov.cm/portail/images/logo.png";
+
+export const CYESMinjecLogoLockup = ({
+  className = "",
+}: {
+  className?: string;
+}) => (
+  <div
+    className={`flex items-center gap-2 rounded-full border border-black/8 bg-[#f7f8f3]/88 px-3 py-2 shadow-[0_12px_30px_rgba(17,16,14,0.06)] backdrop-blur ${className}`}
+  >
     <img
       src={cyesFrameLogo}
       alt="CYES logo"
-      className="pointer-events-none h-10 w-auto object-contain md:h-12"
+      className="h-9 w-auto object-contain md:h-11"
     />
+    <span className="flex h-10 w-8 items-center justify-center font-sans text-2xl font-black leading-none text-[#171411] md:h-11 md:w-9 md:text-3xl">
+      &amp;
+    </span>
+    <img
+      src={MINJEC_LOGO_URL}
+      alt="MINJEC logo"
+      className="h-9 w-auto object-contain md:h-11"
+    />
+  </div>
+);
+
+export const CYESFloatingLogo = () => (
+  <div className="absolute left-0 top-0 z-20 px-6 py-4 md:px-24 md:py-6">
+    <CYESMinjecLogoLockup />
   </div>
 );
 

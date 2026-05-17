@@ -27,6 +27,7 @@ import sponsor15 from "@/assets/sponsors/sponsor15.jpeg";
 import aaFoundation from "@/assets/sponsors/aa-foundation.jpeg";
 import kemLogo from "@/assets/sponsors/kem-logo-blanc.png";
 import kovrLogo from "@/assets/sponsors/kovr-cosmetics.svg";
+import primeVenturesLogo from "@/assets/sponsors/prime-ventures-holdings.png";
 
 const sponsors = [
   { name: "Sponsor 1", logo: sponsor1 },
@@ -65,7 +66,18 @@ const panacheOfficialSponsors = [
 
 const panacheSponsors = [...sponsors];
 
+const cyesOfficialSponsors = [
+  {
+    name: "Prime Ventures Holdings Ltd",
+    logo: primeVenturesLogo,
+    role: "Official CYES sponsor",
+    className: "bg-[#f7f8f3]",
+    imageClassName: "max-h-[9rem] px-5",
+  },
+];
+
 const cyesSponsors = [
+  ...cyesOfficialSponsors.map(({ name, logo }) => ({ name, logo })),
   ...sponsors,
   { name: "AA Foundation", logo: aaFoundation },
 ];
@@ -199,10 +211,60 @@ export const SponsorsMarquee = ({
         </div>
 
         <p className="max-w-[34rem] font-sans text-[clamp(1.35rem,2.8vw,2rem)] font-medium leading-[1.2] tracking-[-0.03em] text-[#11100e] md:pt-2">
-          Proudly supported by leading organizations championing beauty,
-          fashion, and youth empowerment.
+          {isCyesVariant
+            ? "Proudly supported by organizations championing youth entrepreneurship, civic leadership, and event visibility."
+            : "Proudly supported by leading organizations championing beauty, fashion, and youth empowerment."}
         </p>
       </div>
+
+      {isCyesVariant ? (
+        <div className="mx-auto mb-12 max-w-7xl px-6">
+          <div className="rounded-[2.2rem] border border-black/8 bg-white/78 px-5 py-6 shadow-[0_18px_40px_rgba(17,16,14,0.06)] backdrop-blur-sm md:px-7 md:py-7">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+              <div className="max-w-[28rem]">
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#156D3B]">
+                  Official CYES Sponsor
+                </p>
+                <h3 className="mt-3 font-sans text-[clamp(1.9rem,3vw,2.8rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-[#11100e]">
+                  Prime Ventures Holdings Ltd is backing the CYES 2026 experience.
+                </h3>
+                <p className="mt-3 font-sans text-sm leading-relaxed text-[#11100e]/68 md:text-base">
+                  Their support helps strengthen the summit, awards visibility,
+                  and youth entrepreneurship platform.
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                {cyesOfficialSponsors.map((sponsor) => (
+                  <div
+                    key={sponsor.name}
+                    className="overflow-hidden rounded-[1.65rem] border border-black/8 bg-[#f8f5ef] shadow-[0_16px_32px_rgba(17,16,14,0.06)]"
+                  >
+                    <div
+                      className={`flex min-h-[15rem] items-center justify-center ${sponsor.className}`}
+                    >
+                      <img
+                        src={sponsor.logo}
+                        alt={sponsor.name}
+                        className={`max-w-full object-contain ${sponsor.imageClassName}`}
+                      />
+                    </div>
+
+                    <div className="border-t border-black/6 bg-white/88 px-4 py-4">
+                      <p className="font-sans text-sm font-semibold tracking-[-0.03em] text-[#11100e]">
+                        {sponsor.name}
+                      </p>
+                      <p className="mt-1 font-sans text-sm leading-relaxed text-[#11100e]/62">
+                        {sponsor.role}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {!isCyesVariant ? (
         <div className="mx-auto mb-12 max-w-7xl px-6">

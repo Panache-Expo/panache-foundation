@@ -3,11 +3,11 @@ import { useMemo, useRef } from "react";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { SponsorsMarquee } from "@/components/SponsorsMarquee";
+import { CYESMinjecLogoLockup } from "@/components/cyes/CYESPageShell";
 import { Button } from "@/components/ui/button";
 import { CYES_WHATSAPP_CHANNEL_URL } from "@/lib/registration-links";
 import cyesEvent from "@/assets/CYES.jpeg";
 import cyesAwards from "@/assets/CYESCDAwards.jpeg";
-import cyesFrameLogo from "@/assets/CYESFrameLogo.svg";
 import honDonald from "@/assets/HonDonald.jpeg";
 import speaker1 from "@/assets/speaker1.jpeg";
 import speaker2 from "@/assets/speaker2.jpeg";
@@ -189,7 +189,6 @@ const statementCards = [
 ];
 const aboutCyesDescription =
   "The Cameroon Youth Entrepreneurial Summit & Awards is a flagship initiative dedicated to nurturing entrepreneurial talent, empowering innovation, and celebrating the achievements of young Cameroonian entrepreneurs.";
-const MINJEC_LOGO_URL = "https://www.minjec.gov.cm/portail/images/logo.png";
 
 const TiltCard = ({ image, alt, className }: TiltPhoto) => (
   <div
@@ -353,21 +352,7 @@ const CYESPage = () => {
 
       <main className="pb-20 pt-28 md:pb-24 md:pt-36">
         <div className="absolute left-0 top-0 z-30 px-6 py-4 md:px-24 md:py-6">
-          <div className="flex items-center gap-2 rounded-full border border-black/8 bg-[#f7f8f3]/88 px-3 py-2 shadow-[0_12px_30px_rgba(17,16,14,0.06)] backdrop-blur">
-            <img
-              src={cyesFrameLogo}
-              alt="CYES logo"
-              className="h-9 w-auto object-contain md:h-11"
-            />
-            <span className="flex h-10 w-8 items-center justify-center font-sans text-2xl font-black leading-none text-[#171411] md:h-11 md:w-9 md:text-3xl">
-              &amp;
-            </span>
-            <img
-              src={MINJEC_LOGO_URL}
-              alt="MINJEC logo"
-              className="h-9 w-auto object-contain md:h-11"
-            />
-          </div>
+          <CYESMinjecLogoLockup />
         </div>
         <section
           ref={heroSectionRef}
