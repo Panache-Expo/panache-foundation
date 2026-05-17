@@ -11,21 +11,34 @@ export type CYESAwardVote = Tables['cyes_award_votes']['Row'];
 export type Profile = Tables['profiles']['Row'];
 export type CompetitionApplicationInsert = Tables['competition_applications']['Insert'];
 
+export type VoteSourceBreakdown = {
+  total_votes: number;
+  otp_votes: number;
+  whatsapp_votes: number;
+};
+
 export type CYESAwardNominee = CYESAwardNomineeRow & {
   vote_count: number;
+  source_breakdown?: VoteSourceBreakdown | null;
 };
 
 export type CYESAwardCategory = CYESAwardCategoryRow & {
   vote_count: number;
+  source_breakdown?: VoteSourceBreakdown | null;
   nominees: CYESAwardNominee[];
 };
 
 export type CYESVotingPayload = {
   categories: CYESAwardCategory[];
   total_votes: number;
+  source_breakdown?: VoteSourceBreakdown | null;
+  voting_closed?: boolean;
+  voting_closed_at?: string;
+  announcement_channel_url?: string;
+  closed_message?: string;
 };
 
-export type CYESVoteStatus = 'completed' | 'pending_otp' | 'unknown';
+export type CYESVoteStatus = 'completed' | 'pending_otp' | 'closed' | 'unknown';
 
 export type CYESVoteRequestPayload = {
   categoryId: string;

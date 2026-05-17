@@ -127,7 +127,7 @@ const processSteps = [
   "Submit your application through the form below.",
   "Complete payment through Ayati to lock your place in the pool.",
   "Applications are reviewed and the final shortlist is selected.",
-  "Only 20 businesses will pitch live in Buea on 16 July 2026.",
+  "Only 20 businesses will pitch live in Buea during 9-11 July 2026.",
   "A jury panel evaluates every pitch and selects the strongest idea.",
 ];
 
@@ -183,7 +183,7 @@ const CYESPitchCompetitionPage = () => {
     if (!availablePhysically) {
       toast({
         title:
-          "Please confirm your availability to pitch in Buea on July 16, 2026",
+          "Please confirm your availability to pitch in Buea from July 9-11, 2026",
         variant: "destructive",
       });
       return;
@@ -239,7 +239,7 @@ const CYESPitchCompetitionPage = () => {
           available_physically: availablePhysically,
           agreed_to_declaration: agreedToDeclaration,
           registration_deadline: "2026-06-10",
-          event_date: "2026-07-16",
+          event_date: "2026-07-09 to 2026-07-11",
         },
       });
 
@@ -335,7 +335,7 @@ const CYESPitchCompetitionPage = () => {
             },
             {
               label: "Pitch date",
-              value: "16 July 2026",
+              value: "9-11 July 2026",
               accentClassName: "text-[#156D3B]",
             },
           ]}
@@ -395,7 +395,7 @@ const CYESPitchCompetitionPage = () => {
                 {[
                   "Young entrepreneurs and startup founders",
                   "Businesses with a clear problem-solution fit",
-                  "Operators who can pitch live in Buea on 16 July 2026",
+                  "Operators who can pitch live in Buea during 9-11 July 2026",
                   "Ideas with scale, traction, or strong community value",
                 ].map((item) => (
                   <div
@@ -806,7 +806,7 @@ const CYESPitchCompetitionPage = () => {
                       </div>
                       <div>
                         <Label className="font-sans text-sm font-semibold text-[#171411]">
-                          Are you available to pitch physically in Buea on 16 July 2026?
+                          Are you available to pitch physically in Buea during 9-11 July 2026?
                         </Label>
                         <Select
                           value={availablePhysically}

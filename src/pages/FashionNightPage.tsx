@@ -80,7 +80,7 @@ const FashionNightPage = () => {
         panelTitle="Collections, judged in the room."
         panelDescription="This is not a loose showcase. Designers are selected, the presentation has structure, and the room is built to notice both styling and discipline."
         panelItems={[
-          { label: "Date", value: "18 July 2026" },
+          { label: "Date", value: "9-11 July 2026" },
           { label: "Venue", value: "Chariot Hotel, Buea" },
           { label: "Entry route", value: "Designer application" },
         ]}

@@ -32,22 +32,21 @@ const recognitionCards = [
   },
 ];
 
-const winnerPackageItems = [
-  "1.5 million FCFA cash package",
+const peoplesChoiceHighlights = [
   "Free business website",
-  "Pro video advert",
+  "Professional video advert",
   "Media tours",
-  "Featured on the official website",
-  "Official Panache ambassador status",
+  "Feature on our official website",
+  "Official Panache D'or ambassador status",
   "DJI Pocket 3 vlogging camera",
 ];
 
 const juryEvaluationItems = [
-  "Impact",
-  "Professionalism",
-  "Creativity",
-  "Consistency",
-  "Contribution to their industry/community",
+  "Community mobilisation",
+  "Consistent campaigning",
+  "Audience turnout",
+  "Supporter engagement",
+  "Vote momentum",
 ];
 
 const PanacheDorPage = () => {
@@ -175,35 +174,35 @@ const PanacheDorPage = () => {
                   Voting & selection criteria
                 </p>
                 <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.85rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
-                  Panache D&apos;or Awards 2026 winners combine public support and professional evaluation.
+                  The Panache People&apos;s Choice Award is decided entirely by public online support.
                 </h2>
                 <p className="mt-4 font-sans text-[1rem] leading-relaxed text-[#171411]/68">
-                  Winners of the Panache D&apos;or Awards 2026 will be determined through a transparent voting and judging process combining both public support and professional evaluation.
+                  The Panache People&apos;s Choice Award recognises the Panache D&apos;or nominee who mobilises the highest number of online votes during the voting period.
                 </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-[1.45rem] border border-black/8 bg-[#f8f2e8] px-5 py-5">
                   <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
-                    Online public paid votes
+                    People&apos;s Choice online votes
                   </p>
                   <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
-                    70%
+                    100%
                   </p>
                   <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
-                    Each online vote costs 100 CFA (approximately $0.17 USD), allowing supporters, fans, friends, and communities to actively support their favorite nominees.
+                    The Panache People&apos;s Choice Award goes to the Panache D&apos;or nominee with the highest number of online votes.
                   </p>
                 </div>
 
                 <div className="rounded-[1.45rem] border border-black/8 bg-[#fcfbf8] px-5 py-5">
                   <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
-                    Jury committee decision
+                    Most voted nominee wins
                   </p>
                   <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
-                    30%
+                    Wins
                   </p>
                   <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
-                    The jury committee consists of selected professionals and industry personalities who evaluate nominees using clear professional criteria.
+                    The Panache People&apos;s Choice Award goes to the nominee with the highest number of online votes during the voting period.
                   </p>
                 </div>
 
@@ -218,7 +217,7 @@ const PanacheDorPage = () => {
 
                 <div className="rounded-[1.45rem] border border-black/8 bg-white px-5 py-5 md:col-span-2">
                   <p className="font-sans text-sm font-semibold text-[#171411]">
-                    Jury evaluation areas
+                    Public mobilisation
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {juryEvaluationItems.map((item) => (
@@ -231,7 +230,7 @@ const PanacheDorPage = () => {
                     ))}
                   </div>
                   <p className="mt-4 font-sans text-sm leading-relaxed text-[#171411]/66">
-                    We encourage all nominees to actively campaign, promote their nomination, and mobilize their audience throughout the voting period.
+                    This special recognition is 100% based on online votes and rewards nominees who mobilise strong public support throughout the voting period.
                   </p>
                 </div>
               </div>
@@ -243,25 +242,27 @@ const PanacheDorPage = () => {
           <div className="grid gap-6 overflow-hidden rounded-[1.8rem] border border-black/8 bg-white p-6 md:grid-cols-[0.82fr_1.18fr] md:p-8 lg:grid-cols-[0.82fr_1.18fr]">
             <div>
               <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-                Winner package
+                Panache People&apos;s Choice Award
               </p>
               <h2 className="mt-3 font-sans text-[clamp(2rem,3.1vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
-                Panache D&apos;or comes with a full visibility and growth package.
+                The nominee with the most votes receives a visibility and business-growth package.
               </h2>
               <p className="mt-4 max-w-[40ch] font-sans text-[1rem] leading-relaxed text-[#171411]/72">
-                The Panache D&apos;or winner goes with 1.5 million FCFA and a
-                business-building prize package designed to extend visibility
-                beyond the award night itself.
+                The Panache People&apos;s Choice Award is for the Panache D&apos;or
+                nominee with the highest number of online votes. The winner
+                receives a visibility and business-growth package designed to
+                extend their recognition beyond the award night itself.
               </p>
               <p className="mt-3 font-sans text-[0.98rem] leading-relaxed text-[#171411]/72">
-                It is structured to support brand growth, media exposure,
-                content creation, and the winner&apos;s position as one of the
-                public faces of Panache.
+                This special recognition is 100% based on online votes and is
+                structured to support brand growth, media exposure, content
+                creation, and the winner&apos;s position as one of the public faces
+                of Panache.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {winnerPackageItems.map((item, index) => (
+              {peoplesChoiceHighlights.map((item, index) => (
                 <div
                   key={item}
                   className={[

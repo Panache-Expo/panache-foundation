@@ -78,7 +78,7 @@ const CharityNightPage = () => {
         panelTitle="A social room with a real purpose."
         panelDescription="The night is designed to feel elevated, but the point remains clear: create visibility and support around the people and programmes shaping opportunity."
         panelItems={[
-          { label: "Date", value: "16 July 2026" },
+          { label: "Date", value: "9-11 July 2026" },
           { label: "Venue", value: "Chariot Hotel, Buea" },
           { label: "Best for", value: "Guests, partners, supporters" },
         ]}

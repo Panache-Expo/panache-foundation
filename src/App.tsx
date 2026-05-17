@@ -30,7 +30,6 @@ import ParticipantsDashboardPage from "./pages/ParticipantsDashboardPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 import { DeveloperContactCta } from "./components/DeveloperContactCta";
-import { CYESOtpAndPanacheCopyGuard } from "./components/CYESOtpAndPanacheCopyGuard";
 import { initGoogleAnalytics, trackPageView } from "./lib/analytics";
 
 const queryClient = new QueryClient({
@@ -109,7 +108,6 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <DeveloperContactCta />
-          <CYESOtpAndPanacheCopyGuard />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<FoundationHome />} />

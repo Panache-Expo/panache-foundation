@@ -13,6 +13,9 @@ export const PANACHE_RUNWAY_WHATSAPP_GROUP_URL =
 export const PANACHE_MISS_WHATSAPP_GROUP_URL =
   import.meta.env.VITE_MISS_WHATSAPP_GROUP_URL ||
   "https://chat.whatsapp.com/D6IHg69vpuSJtmPX6TIDtu?mode=gi_t";
+export const CYES_WHATSAPP_CHANNEL_URL =
+  import.meta.env.VITE_CYES_WHATSAPP_CHANNEL_URL ||
+  "https://whatsapp.com/channel/0029VbCSW4AJkK7G4Ng47j2D";
 
 export interface CompetitionRegistrationConfig {
   title: string;
@@ -31,11 +34,35 @@ export interface CompetitionRegistrationConfig {
 }
 
 const DEFAULT_NOTIFICATION_EMAILS = ["glenmue2020@gmail.com"];
+const CYES_NOTIFICATION_EMAILS = [
+  ...DEFAULT_NOTIFICATION_EMAILS,
+  "info.cyescyecdawards@gmail.com",
+];
 
 export const competitionRegistrationLinks: Record<
-  "cyesPitch" | "exhibitionStands" | "missPanache" | "fashionNight" | "panache360",
+  | "cyesSummit"
+  | "cyesPitch"
+  | "exhibitionStands"
+  | "missPanache"
+  | "fashionNight"
+  | "panache360",
   CompetitionRegistrationConfig
 > = {
+  cyesSummit: {
+    title: "CYES Summit Registration",
+    description:
+      "Save your CYES attendance details first, then continue to the official WhatsApp channel for updates.",
+    postSubmitAction: "redirect_whatsapp",
+    paymentMode: "free",
+    path: "/cyes/register",
+    competitionSlug: "cyes-summit-registration",
+    codePrefix: "CYES",
+    whatsappGroupUrl: CYES_WHATSAPP_CHANNEL_URL,
+    successTitle: "CYES Registration Received",
+    successDescription:
+      "Your registration is now saved in the Panache registration system. Continue to the CYES WhatsApp channel for event updates.",
+    notificationRecipientEmails: CYES_NOTIFICATION_EMAILS,
+  },
   cyesPitch: {
     title: "CYES Business Pitch Competition",
     description:

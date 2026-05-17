@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { SponsorsMarquee } from "@/components/SponsorsMarquee";
 import { Button } from "@/components/ui/button";
+import { CYES_WHATSAPP_CHANNEL_URL } from "@/lib/registration-links";
 import cyesEvent from "@/assets/CYES.jpeg";
 import cyesAwards from "@/assets/CYESCDAwards.jpeg";
 import cyesFrameLogo from "@/assets/CYESFrameLogo.svg";
@@ -13,7 +14,7 @@ import speaker2 from "@/assets/speaker2.jpeg";
 import speaker3 from "@/assets/speaker3.jpeg";
 import speaker4 from "@/assets/speaker4.jpeg";
 import speaker5 from "@/assets/speaker5.jpeg";
-import { ArrowRight, Award, Lightbulb, Mic, Users } from "lucide-react";
+import { ArrowRight, Award, Lightbulb, MessageCircle, Mic, Users } from "lucide-react";
 import {
   motion,
   type MotionValue,
@@ -81,60 +82,57 @@ const heroPhotos: TiltPhoto[] = [
   {
     image: speaker2,
     alt: "CYES beauty portrait",
-    className: "left-[56%] top-[4%] w-[20%] rotate-[-4deg]",
+    className: "left-[64%] top-[0%] w-[18%]",
     parallaxY: [0, -44],
     parallaxX: [0, -12],
   },
   {
     image: cyesAwards,
     alt: "CYES awards audience",
-    className: "left-[27%] top-[39%] w-[22%] rotate-[10deg]",
+    className: "left-[76%] top-[20%] w-[25%]",
     parallaxY: [0, -22],
     parallaxX: [0, 10],
   },
   {
-    image: speaker1,
-    alt: "CYES speaker portrait",
-    className: "left-[56%] top-[73%] w-[22%] rotate-[6deg]",
-    parallaxY: [0, 26],
-    parallaxX: [0, -8],
-  },
-  {
     image: cyesEvent,
     alt: "CYES event atmosphere",
-    className: "left-[62%] top-[18%] w-[35%] rotate-[0deg]",
+    className: "left-[36%] top-[64%] w-[23%]",
     parallaxY: [0, -58],
     parallaxScale: [1, 1.035],
-  },
-];
-
-const heroSupportPhotos: TiltPhoto[] = [
-  {
-    image: speaker4,
-    alt: "CYES support portrait one",
-    className: "left-[-5%] top-[18%] w-[15%] rotate-[-8deg]",
-    parallaxY: [0, -18],
-    parallaxX: [0, -10],
-  },
-  {
-    image: speaker3,
-    alt: "CYES support keynote image",
-    className: "left-[7%] top-[70%] w-[20%] rotate-[6deg]",
-    parallaxY: [0, 24],
-    parallaxX: [0, 8],
   },
   {
     image: speaker5,
     alt: "CYES support guest image",
-    className: "left-[25%] top-[0%] w-[22%] rotate-[-5deg]",
+    className: "left-[68%] top-[66%] w-[19%]",
     parallaxY: [0, -34],
     parallaxX: [0, 12],
   },
   {
+    image: speaker4,
+    alt: "CYES panel conversation below hero",
+    className: "left-[-3%] top-[55%] w-[12%]",
+    parallaxY: [0, -12],
+    parallaxX: [0, -6],
+  },
+  {
+    image: speaker3,
+    alt: "CYES speaker below hero",
+    className: "left-[7%] top-[69%] w-[16%]",
+    parallaxY: [0, 16],
+    parallaxX: [0, 8],
+  },
+  {
+    image: speaker1,
+    alt: "CYES microphone moment below hero",
+    className: "left-[22%] top-[49%] w-[18%]",
+    parallaxY: [0, -18],
+    parallaxX: [0, 4],
+  },
+  {
     image: honDonald,
-    alt: "Featured summit voice",
-    className: "left-[43%] top-[70%] w-[22%] rotate-[-8deg]",
-    parallaxY: [0, 30],
+    alt: "CYES featured guest below hero",
+    className: "left-[52%] top-[38%] w-[17%]",
+    parallaxY: [0, 14],
     parallaxX: [0, -6],
   },
 ];
@@ -191,6 +189,7 @@ const statementCards = [
 ];
 const aboutCyesDescription =
   "The Cameroon Youth Entrepreneurial Summit & Awards is a flagship initiative dedicated to nurturing entrepreneurial talent, empowering innovation, and celebrating the achievements of young Cameroonian entrepreneurs.";
+const MINJEC_LOGO_URL = "https://www.minjec.gov.cm/portail/images/logo.png";
 
 const TiltCard = ({ image, alt, className }: TiltPhoto) => (
   <div
@@ -216,10 +215,14 @@ const ParallaxTiltCard = ({
   const x = useTransform(progress, [0, 1], parallaxX);
   const y = useTransform(progress, [0, 1], parallaxY);
   const scale = useTransform(progress, [0, 1], parallaxScale);
+  const rotate = useMemo(() => {
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    return direction * (3 + Math.random() * 6);
+  }, []);
 
   return (
     <motion.div
-      style={{ x, y, scale }}
+      style={{ x, y, scale, rotate }}
       className={`absolute aspect-[4/5] overflow-hidden rounded-[0.9rem] bg-white shadow-[0_22px_50px_rgba(17,16,14,0.1)] will-change-transform md:rounded-[1.05rem] ${className}`}
     >
       <img src={image} alt={alt} className="h-full w-full object-cover" />
@@ -349,20 +352,30 @@ const CYESPage = () => {
       <Header />
 
       <main className="pb-20 pt-28 md:pb-24 md:pt-36">
-        <div className="absolute left-0 top-0 px-6 py-4 md:px-24 md:py-6">
-          <img
-            src={cyesFrameLogo}
-            alt="CYES logo"
-            className="pointer-events-none  z-30 h-10 w-auto object-contain md:h-12"
-          />
+        <div className="absolute left-0 top-0 z-30 px-6 py-4 md:px-24 md:py-6">
+          <div className="flex items-center gap-2 rounded-full border border-black/8 bg-[#f7f8f3]/88 px-3 py-2 shadow-[0_12px_30px_rgba(17,16,14,0.06)] backdrop-blur">
+            <img
+              src={cyesFrameLogo}
+              alt="CYES logo"
+              className="h-9 w-auto object-contain md:h-11"
+            />
+            <span className="flex h-10 w-8 items-center justify-center font-sans text-2xl font-black leading-none text-[#171411] md:h-11 md:w-9 md:text-3xl">
+              &amp;
+            </span>
+            <img
+              src={MINJEC_LOGO_URL}
+              alt="MINJEC logo"
+              className="h-9 w-auto object-contain md:h-11"
+            />
+          </div>
         </div>
         <section
           ref={heroSectionRef}
           className="relative w-full overflow-visible px-6 md:px-24"
         >
-          <div className="relative mt-12 min-h-[42rem] sm:min-h-[46rem] md:min-h-[62rem] lg:min-h-[48rem] overflow-visible">
+          <div className="relative mt-12 min-h-[42rem] overflow-visible md:min-h-[51rem] lg:min-h-[50rem] xl:min-h-[52rem]">
             <div className="relative z-20 flex justify-start">
-              <div className="max-w-[32rem]">
+              <div className="max-w-[43rem]">
                 <motion.h1
                   {...getHeadingRevealProps(shouldReduceMotion)}
                   className="leading-none text-[#171411] text-[clamp(2.35rem,11vw,3.35rem)] md:text-[clamp(3.1rem,5.4vw,5.4rem)]"
@@ -395,17 +408,38 @@ const CYESPage = () => {
                   </div>
                 </motion.h1>
 
+                <p className="mt-5 max-w-[27rem] font-sans text-[0.78rem] font-semibold uppercase tracking-[0.14em] text-[#156D3B]">
+                  Under the patronage of Ministry Of Youth Affairs and Civic
+                  Education
+                </p>
+
+                <p className="mt-3 font-sans text-[1rem] font-semibold text-[#171411]">
+                  9-11 July 2026 - Buea, Cameroon
+                </p>
+
                 <p className="mt-5 font-sans text-[1.4rem] leading-relaxed font-semibold text-[#171411]/72">
                   Empowering the next generation of Cameroonian entrepreneurs
                   through mentorship, networking, and recognition of outstanding
                   achievements.
                 </p>
 
-                <Link to="/cyes/register" className="mt-7 inline-flex">
-                  <Button className="h-11 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white hover:bg-[#171411]/90">
-                    Register now
-                  </Button>
-                </Link>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link to="/cyes/register" className="inline-flex">
+                    <Button className="h-11 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white hover:bg-[#171411]/90">
+                      Register now
+                    </Button>
+                  </Link>
+
+                  <a
+                    href={CYES_WHATSAPP_CHANNEL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-11 items-center justify-center rounded-full border border-[#25D366]/25 bg-white/80 px-6 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4 text-[#25D366]" />
+                    Join channel
+                  </a>
+                </div>
 
                 <div className="relative mt-12 flex h-[19rem] items-center justify-center md:hidden">
                   <div className="absolute h-[17rem] w-[min(72vw,16rem)] rotate-[3deg] overflow-hidden rounded-[0.85rem] bg-white shadow-[0_24px_56px_rgba(17,16,14,0.16)]">
@@ -435,17 +469,7 @@ const CYESPage = () => {
               </div>
             </div>
 
-            <div className="pointer-events-none absolute inset-x-0 left-[-3%] top-[19rem] z-10 hidden h-[12.5rem] overflow-visible md:block md:left-0 md:top-[22rem] md:h-[12.5rem]">
-              {heroSupportPhotos.map((photo) => (
-                <ParallaxTiltCard
-                  key={photo.alt + photo.className}
-                  {...photo}
-                  progress={heroScrollProgress}
-                />
-              ))}
-            </div>
-
-            <div className="pointer-events-none absolute left-[5%] right-[-10%] top-[20.5rem] z-10 hidden h-[31rem] overflow-visible md:block md:left-[14%] md:right-[-6%] md:top-[24rem] md:h-[38rem] lg:left-[28%] lg:right-[-8%] lg:top-[-0.5rem] lg:h-[41rem]">
+            <div className="pointer-events-none absolute inset-0 z-10 hidden overflow-visible md:block">
               {heroPhotos.map((photo) => (
                 <ParallaxTiltCard
                   key={photo.alt + photo.className}
@@ -608,6 +632,16 @@ const CYESPage = () => {
                     Register now
                   </Button>
                 </Link>
+
+                <a
+                  href={CYES_WHATSAPP_CHANNEL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#25D366]/25 bg-[#f3fbf6] px-6 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
+                >
+                  <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                  Join announcements channel
+                </a>
 
                 <Link
                   to="/cyes/contact"

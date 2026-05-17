@@ -58,7 +58,10 @@ export const useCyesVoting = () => {
   return useQuery({
     queryKey: queryKeys.cyesVoting.public,
     queryFn: cyesVotingService.getVoting,
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
   });
 };
 

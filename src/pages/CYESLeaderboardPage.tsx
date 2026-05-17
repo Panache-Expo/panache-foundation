@@ -13,6 +13,7 @@ import type {
   CYESAwardNominee,
 } from "@/integrations/supabase/services";
 import { useCyesVoting } from "@/hooks/useSupabase";
+import { CYES_WHATSAPP_CHANNEL_URL } from "@/lib/registration-links";
 import cyesAwards from "@/assets/CYESCDAwards.jpeg";
 import cyesEvent from "@/assets/CYES.jpeg";
 import honDonald from "@/assets/HonDonald.jpeg";
@@ -22,6 +23,7 @@ import {
   BarChart3,
   Crown,
   Loader2,
+  MessageCircle,
   Medal,
   RefreshCw,
   Search,
@@ -230,6 +232,7 @@ const CYESLeaderboardPage = () => {
   const activeCategoryCount = rankedCategories.filter(
     (category) => category.rankedNominees.length > 0
   ).length;
+  const channelUrl = voting?.announcement_channel_url || CYES_WHATSAPP_CHANNEL_URL;
 
   return (
     <div className="min-h-screen bg-[#f7f8f3] text-[#171411]">
@@ -247,7 +250,7 @@ const CYESLeaderboardPage = () => {
               vote standings.
             </>
           }
-          description="Participants and supporters can see current vote totals, category positions, and the nominees leading each public voting category."
+          description="Voting has ended, and participants can now review public vote totals, category positions, and the nominees leading each CYECD Awards category."
           actions={
             <>
               <a href="#leaderboard">
@@ -255,12 +258,15 @@ const CYESLeaderboardPage = () => {
                   View Standings
                 </Button>
               </a>
-              <Link
-                to="/cyes/vote"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/76 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
+              <a
+                href={channelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-[#25D366]/25 bg-white/76 px-7 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
               >
-                Cast a Vote
-              </Link>
+                <MessageCircle className="mr-2 h-4 w-4 text-[#25D366]" />
+                Join Channel
+              </a>
             </>
           }
           chips={[
@@ -288,15 +294,37 @@ const CYESLeaderboardPage = () => {
 
         <section id="leaderboard" className="mx-auto mt-16 max-w-6xl px-6 md:px-24">
           <CYESSectionIntro
-            eyebrow="Live results"
+            eyebrow="Final results"
             title={
               <>
                 Find your rank,
-                <span className="block font-display">follow the race</span>
+                <span className="block font-display">review the standings</span>
               </>
             }
-            description="Search by nominee, organization, or category. Vote counts update whenever the public voting data refreshes."
+            description="Voting ended on 17 May 2026 at 00:00 WAT. Search by nominee, organization, or category to review the public standings."
           />
+
+          <div className="mt-10 rounded-[1.35rem] border border-[#25D366]/20 bg-[#f3fbf6] px-5 py-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="font-sans text-sm font-semibold uppercase tracking-[0.12em] text-[#156D3B]">
+                  Voting closed
+                </p>
+                <p className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/70">
+                  No new CYES Awards votes can be submitted. Follow the WhatsApp channel for event announcements, finalist updates, and next steps.
+                </p>
+              </div>
+              <a
+                href={channelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-11 shrink-0 items-center justify-center rounded-full bg-[#25D366] px-5 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#22c55e]"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Join CYES Channel
+              </a>
+            </div>
+          </div>
 
           <div className="mt-10 grid gap-4 lg:grid-cols-[0.42fr_0.58fr]">
             <div className={cyesSurfaceClasses + " px-5 py-5"}>

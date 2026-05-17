@@ -71,6 +71,24 @@ const VOTE_STATUS_PENDING_OTP = "pending_otp";
 const VOTE_STATUS_UNKNOWN = "unknown";
 const COUNTED_VOTE_STATUSES = [VOTE_STATUS_COMPLETED, VOTE_STATUS_VERIFIED];
 const REUSABLE_VOTE_STATUSES = [VOTE_STATUS_PENDING_OTP, VOTE_STATUS_UNKNOWN];
+const CYES_EMAIL_OTP_TEMPORARILY_DISABLED = true;
+const CYES_EMAIL_OTP_DISABLED_MESSAGE =
+  "Email OTP voting is temporarily unavailable. Please use WhatsApp voting for the moment.";
+const CYES_ANNOUNCEMENT_CHANNEL_URL =
+  process.env.CYES_ANNOUNCEMENT_CHANNEL_URL ||
+  process.env.VITE_CYES_WHATSAPP_CHANNEL_URL ||
+  "https://whatsapp.com/channel/0029VbCSW4AJkK7G4Ng47j2D";
+const CYES_VOTING_CLOSED =
+  String(process.env.CYES_VOTING_CLOSED ?? "true")
+    .trim()
+    .toLowerCase() !== "false";
+const CYES_VOTING_CLOSED_AT =
+  process.env.CYES_VOTING_CLOSED_AT || "2026-05-17T00:00:00+01:00";
+const CYES_VOTING_CLOSED_LABEL =
+  process.env.CYES_VOTING_CLOSED_LABEL || "17 May 2026 at 00:00 WAT";
+const CYES_VOTING_CLOSED_MESSAGE =
+  process.env.CYES_VOTING_CLOSED_MESSAGE ||
+  `CYES Awards voting ended on ${CYES_VOTING_CLOSED_LABEL}. Follow the CYES WhatsApp channel for announcements: ${CYES_ANNOUNCEMENT_CHANNEL_URL}`;
 
 const allowedStatuses = new Set(["active", "draft", "archived"]);
 const allowedNomineePhotoTypes = new Set([
@@ -92,6 +110,20 @@ const sendJson = (res, statusCode, payload) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.end(JSON.stringify(payload));
 };
+
+const getVotingClosureMetadata = () => ({
+  voting_closed: CYES_VOTING_CLOSED,
+  voting_closed_at: CYES_VOTING_CLOSED_AT,
+  announcement_channel_url: CYES_ANNOUNCEMENT_CHANNEL_URL,
+  closed_message: CYES_VOTING_CLOSED_MESSAGE,
+});
+
+const sendVotingClosed = (res) =>
+  sendJson(res, 403, {
+    message: CYES_VOTING_CLOSED_MESSAGE,
+    voteStatus: "closed",
+    ...getVotingClosureMetadata(),
+  });
 
 const parseBody = (req) => {
   if (req.body && typeof req.body === "object") {
@@ -472,6 +504,70 @@ const enforceRateLimit = async (
   return { ok: true };
 };
 
+const fetchVoteSourceAnalytics = async (supabase, categoryIds) => {
+  const empty = {
+    totals: { total_votes: 0, otp_votes: 0, whatsapp_votes: 0 },
+    byCategory: {},
+    byNominee: {},
+  };
+
+  if (!categoryIds.length) {
+    return empty;
+  }
+
+  const pageSize = 1000;
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("cyes_award_votes")
+      .select("category_id, nominee_id, voter_email")
+      .in("category_id", categoryIds)
+      .in("status", COUNTED_VOTE_STATUSES)
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    const votes = data || [];
+    for (const vote of votes) {
+      const isOtpVote = Boolean(normalizeText(vote.voter_email));
+      const sourceKey = isOtpVote ? "otp_votes" : "whatsapp_votes";
+
+      empty.totals.total_votes += 1;
+      empty.totals[sourceKey] += 1;
+
+      if (vote.category_id) {
+        empty.byCategory[vote.category_id] = empty.byCategory[vote.category_id] || {
+          total_votes: 0,
+          otp_votes: 0,
+          whatsapp_votes: 0,
+        };
+        empty.byCategory[vote.category_id].total_votes += 1;
+        empty.byCategory[vote.category_id][sourceKey] += 1;
+      }
+
+      if (vote.nominee_id) {
+        empty.byNominee[vote.nominee_id] = empty.byNominee[vote.nominee_id] || {
+          total_votes: 0,
+          otp_votes: 0,
+          whatsapp_votes: 0,
+        };
+        empty.byNominee[vote.nominee_id].total_votes += 1;
+        empty.byNominee[vote.nominee_id][sourceKey] += 1;
+      }
+    }
+
+    if (votes.length < pageSize) {
+      break;
+    }
+    from += pageSize;
+  }
+
+  return empty;
+};
+
 const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
   let categoryQuery = supabase
     .from("cyes_award_categories")
@@ -527,6 +623,9 @@ const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
 
   let nomineeVoteCounts = {};
   let categoryVoteCounts = {};
+  const voteSourceAnalytics = includeDrafts
+    ? await fetchVoteSourceAnalytics(supabase, categoryIds)
+    : null;
 
   if (categoryIds.length) {
     const { data: nomineeCountData, error: nomineeCountError } = await supabase
@@ -561,17 +660,21 @@ const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
   const categoriesWithNominees = (categories || []).map((category) => ({
     ...category,
     vote_count: categoryVoteCounts[category.id] || 0,
+    source_breakdown: voteSourceAnalytics?.byCategory?.[category.id] || null,
     nominees: nominees
       .filter((nominee) => nominee.category_id === category.id)
       .map((nominee) => ({
         ...nominee,
         vote_count: nomineeVoteCounts[nominee.id] || 0,
+        source_breakdown: voteSourceAnalytics?.byNominee?.[nominee.id] || null,
       })),
   }));
 
   return {
     categories: categoriesWithNominees,
     total_votes: totalVotes,
+    source_breakdown: voteSourceAnalytics?.totals || null,
+    ...getVotingClosureMetadata(),
   };
 };
 
@@ -783,57 +886,6 @@ const sendVotingIssueAlert = async (req, { action, message, error, body }) => {
     skipped: true,
     reason: "CYES voting issue alert emails are disabled in code.",
   };
-
-  const recipients = normalizeEmailList(CYES_VOTE_ALERT_EMAILS);
-  if (!recipients.length || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
-    return {
-      attempted: false,
-      skipped: true,
-      reason: "Alert email recipients or SMTP configuration missing.",
-    };
-  }
-
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-
-  const requestUrl = (() => {
-    const host = normalizeText(req?.headers?.host);
-    if (!host) {
-      return req?.url || "";
-    }
-    return `${resolveProtocol(req)}://${host}${req?.url || ""}`;
-  })();
-
-  const payload = {
-    action,
-    message,
-    details: formatIssueDetails(error),
-    requestSummary: summarizeVotingRequest(body),
-    requestUrl,
-    method: req?.method || "",
-    ipAddress: getClientIp(req),
-  };
-
-  await transporter.sendMail({
-    from: SMTP_FROM,
-    to: recipients.join(", "),
-    subject: `CYES voting issue - ${action || "unknown"}`,
-    text: buildVotingIssueAlertText(payload),
-    html: buildVotingIssueAlertHtml(payload),
-  });
-
-  return {
-    attempted: true,
-    ok: true,
-    recipients,
-  };
 };
 
 const sendVoteNotification = async (req, { vote, category, nominee }) => {
@@ -857,49 +909,6 @@ const sendVoteNotification = async (req, { vote, category, nominee }) => {
     attempted: false,
     skipped: true,
     reason: "CYES new vote admin notification emails are disabled in code.",
-  };
-
-  const recipients = normalizeEmailList(CYES_VOTE_NOTIFICATION_EMAILS);
-  if (!recipients.length) {
-    return {
-      attempted: false,
-      skipped: true,
-      reason: "No vote notification recipients configured.",
-    };
-  }
-
-  if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
-    return {
-      attempted: false,
-      skipped: true,
-      reason: "SMTP is not configured on the server.",
-    };
-  }
-
-  const dashboardUrl = resolveDashboardUrl(req);
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-
-  await transporter.sendMail({
-    from: SMTP_FROM,
-    to: recipients.join(", "),
-    replyTo: vote.voter_email || undefined,
-    subject: `New CYES Awards vote - ${category.name}`,
-    text: buildVoteNotificationText({ vote, category, nominee, dashboardUrl }),
-    html: buildVoteNotificationHtml({ vote, category, nominee, dashboardUrl }),
-  });
-
-  return {
-    attempted: true,
-    ok: true,
-    recipients,
   };
 };
 
@@ -1314,6 +1323,13 @@ const buildVoterPayload = (body, { requireEmail = true } = {}) => {
 };
 
 const handleRequestOtp = async (req, res, supabase, body) => {
+  if (CYES_EMAIL_OTP_TEMPORARILY_DISABLED && !isTrustedVotingAgentRequest(req)) {
+    return sendJson(res, 503, {
+      message: CYES_EMAIL_OTP_DISABLED_MESSAGE,
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
+  }
+
   const { error, voter } = buildVoterPayload(body);
   if (error) {
     return sendJson(res, 400, {
@@ -1488,6 +1504,13 @@ const handleRequestOtp = async (req, res, supabase, body) => {
 
 const handleCastVote = async (req, res, supabase, body) => {
   const isTrustedAgent = isTrustedVotingAgentRequest(req);
+  if (CYES_EMAIL_OTP_TEMPORARILY_DISABLED && !isTrustedAgent) {
+    return sendJson(res, 503, {
+      message: CYES_EMAIL_OTP_DISABLED_MESSAGE,
+      voteStatus: VOTE_STATUS_UNKNOWN,
+    });
+  }
+
   const { error, voter } = buildVoterPayload(body, {
     requireEmail: !isTrustedAgent,
   });
@@ -1976,6 +1999,14 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { ok: true });
   }
 
+  if (req.method === "POST" && CYES_VOTING_CLOSED) {
+    const preflightBody = parseBody(req);
+    const preflightAction = normalizeText(preflightBody.action);
+    if (["requestOtp", "castVote"].includes(preflightAction)) {
+      return sendVotingClosed(res);
+    }
+  }
+
   const supabase = createAdminClient();
   if (!supabase) {
     return sendJson(res, 500, {
@@ -2003,6 +2034,10 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       const body = parseBody(req);
       const action = normalizeText(body.action);
+
+      if (CYES_VOTING_CLOSED && ["requestOtp", "castVote"].includes(action)) {
+        return sendVotingClosed(res);
+      }
 
       if (action === "requestOtp") {
         return await handleRequestOtp(req, res, supabase, body);

@@ -134,7 +134,7 @@ const CYESNominationsPage = () => {
             },
             {
               label: "Awards date",
-              value: "16 July 2026",
+              value: "9-11 July 2026",
               accentClassName: "text-[#156D3B]",
             },
             {
@@ -259,7 +259,7 @@ const CYESNominationsPage = () => {
                       Awards ceremony
                     </p>
                     <p className="mt-1 font-sans text-sm font-semibold text-[#171411]">
-                      16 July 2026
+                      9-11 July 2026
                     </p>
                   </div>
                   <div className="rounded-[1.1rem] border border-black/8 bg-white/80 px-4 py-3">

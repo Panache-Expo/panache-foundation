@@ -91,7 +91,7 @@ const getHeaderConfig = (pathname: string): HeaderConfig => {
       primaryLinks: [
         { label: "Overview", to: "/cyes" },
         { label: "Awards", to: "/cyes/awards" },
-        { label: "Vote", to: "/cyes/vote" },
+        { label: "Voting Closed", to: "/cyes/vote" },
         { label: "Leaderboard", to: "/cyes/leaderboard" },
         { label: "Nominations", to: "/cyes/nominations" },
         { label: "Pitch Competition", to: "/cyes/pitch-competition" },

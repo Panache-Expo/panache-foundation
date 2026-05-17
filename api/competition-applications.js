@@ -15,6 +15,7 @@ const PARTICIPANTS_DASHBOARD_PATH =
 const REGISTRATION_EMAIL_ENDPOINT = "/api/send-registration-email";
 
 const ALLOWED_COMPETITION_SLUGS = new Set([
+  "cyes-summit-registration",
   "cyes-pitch-competition",
   "panache-360",
   "fashion-night",

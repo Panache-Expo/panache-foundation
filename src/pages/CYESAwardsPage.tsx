@@ -7,6 +7,7 @@ import {
 } from "@/components/cyes/CYESPageShell";
 import { PeopleSpreadShowcase, type SpreadShowcaseMember } from "@/components/PeopleSpreadShowcase";
 import { Button } from "@/components/ui/button";
+import { CYES_WHATSAPP_CHANNEL_URL } from "@/lib/registration-links";
 import cyesCDAwards from "@/assets/CYESCDAwards.jpeg";
 import cyesEvent from "@/assets/CYES.jpeg";
 import honDonald from "@/assets/HonDonald.jpeg";
@@ -18,7 +19,7 @@ import steve from "@/assets/stevenjang.png";
 import angwi from "@/assets/angwi.png";
 import nanalynn from "@/assets/nanalynn.png";
 import godlove from "@/assets/godlove.png";
-import { Award, Calendar, CheckCircle2, MapPin, Trophy, User, Users } from "lucide-react";
+import { Award, MessageCircle, Trophy, User, Users } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { Link } from "react-router-dom";
 
@@ -238,7 +239,7 @@ const CYESAwardsPage = () => {
               and community impact.
             </>
           }
-          description="The CYECD Awards recognise outstanding young entrepreneurs, community leaders, businesses, and institutions shaping meaningful change across Cameroon. Nominations are now closed, but the awards platform and live event remain open to the public."
+          description="The CYECD Awards recognise outstanding young entrepreneurs, community leaders, businesses, and institutions shaping meaningful change across Cameroon. Nominations and voting are now closed, but registration, results, and CYES announcements remain open to the public."
           actions={
             <>
               <Link to="/cyes/register">
@@ -246,12 +247,15 @@ const CYESAwardsPage = () => {
                   Register to Attend
                 </Button>
               </Link>
-              <Link
-                to="/cyes/vote"
-                className="inline-flex h-12 items-center justify-center rounded-full border border-black/10 bg-white/76 px-7 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white"
+              <a
+                href={CYES_WHATSAPP_CHANNEL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-[#25D366]/25 bg-white/76 px-7 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
               >
-                Vote Now
-              </Link>
+                <MessageCircle className="mr-2 h-4 w-4 text-[#25D366]" />
+                Join Channel
+              </a>
               <Link
                 to="/cyes/leaderboard"
                 className="inline-flex h-12 items-center justify-center rounded-full border border-[#156D3B]/20 bg-[#f3fbf6] px-7 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
@@ -261,7 +265,7 @@ const CYESAwardsPage = () => {
             </>
           }
           chips={[
-            { label: "Event Date", value: "16 July 2026", accentClassName: "text-[#156D3B]" },
+            { label: "Event Date", value: "9-11 July 2026", accentClassName: "text-[#156D3B]" },
             { label: "Venue", value: "Chariot Hotel, Buea", accentClassName: "text-[#1875D2]" },
             { label: "Awards", value: "25 total categories", accentClassName: "text-[#CC2129]" },
           ]}
@@ -416,13 +420,13 @@ const CYESAwardsPage = () => {
             Nominations Have Now Closed
           </h2>
           <p className="text-cyes-white/80 mb-8 text-lg">
-            The CYECD Awards nomination deadline has been reached. Public voting is now available for active categories and nominees.
+            The CYECD Awards nomination and voting windows have closed. Follow the announcements channel for finalist updates, event notices, and awards communication.
           </p>
-          <Link to="/cyes/vote">
+          <a href={CYES_WHATSAPP_CHANNEL_URL} target="_blank" rel="noopener noreferrer">
             <Button size="lg" className="bg-cyes-yellow text-foreground hover:bg-cyes-yellow/90 font-bold">
-              Open voting
+              Join CYES WhatsApp Channel
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
       </main>

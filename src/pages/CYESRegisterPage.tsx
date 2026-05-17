@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -10,6 +10,7 @@ import {
   cyesSurfaceClasses,
   cyesTextareaClasses,
 } from "@/components/cyes/CYESPageShell";
+import { CompetitionPaymentRedirect } from "@/components/registration/CompetitionPaymentRedirect";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -22,22 +23,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useSubmitCompetitionApplication } from "@/hooks/useSupabase";
 import { useToast } from "@/hooks/use-toast";
 import cyesEvent from "@/assets/CYES.jpeg";
 import speaker1 from "@/assets/speaker1.jpeg";
 import speaker2 from "@/assets/speaker2.jpeg";
 import speaker3 from "@/assets/speaker3.jpeg";
 import {
+  buildCompetitionApplicationCode,
+  competitionRegistrationLinks,
+  getCompetitionPaymentSettings,
+} from "@/lib/registration-links";
+import {
   Calendar,
   CheckCircle2,
   Lightbulb,
+  Loader2,
   MapPin,
+  MessageCircle,
   Mic,
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const TARGET_EMAIL = "info.cyescyecdawards@gmail.com";
+const registrationConfig = competitionRegistrationLinks.cyesSummit;
+const registrationSettings = getCompetitionPaymentSettings(registrationConfig);
 
 const topics = [
   "Entrepreneurship & Business Growth",
@@ -92,12 +102,28 @@ const registrationValueCards = [
 ];
 
 export const CYESRegisterPage = () => {
+  const formRef = useRef<HTMLFormElement>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [newsletterSubscription, setNewsletterSubscription] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState("");
+  const [submittedApplicationCode, setSubmittedApplicationCode] = useState("");
+  const [isFinalizingSubmission, setIsFinalizingSubmission] = useState(false);
   const { toast } = useToast();
+  const submitCompetitionApplication = useSubmitCompetitionApplication();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (!submittedApplicationCode) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      window.location.assign(registrationSettings.postSubmitHref);
+    }, registrationSettings.redirectDelayMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [submittedApplicationCode]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!agreedToTerms) {
@@ -117,34 +143,66 @@ export const CYESRegisterPage = () => {
     }
 
     const formData = new FormData(e.currentTarget);
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
-    const email = formData.get("email") as string;
-    const phone = formData.get("phone") as string;
-    const details = formData.get("details") as string;
-
-    const subject = encodeURIComponent(`CYES Summit Registration - ${selectedTopic}`);
-    const body = encodeURIComponent(
-      `CYES SUMMIT REGISTRATION\n\n` +
-        `Name: ${firstName} ${lastName}\n` +
-        `Email: ${email}\n` +
-        `WhatsApp: ${phone}\n` +
-        `Topic: ${selectedTopic}\n` +
-        `Additional Details: ${details || "None"}\n` +
-        `Newsletter: ${newsletterSubscription ? "Yes" : "No"}\n`,
+    const applicationCode = buildCompetitionApplicationCode(
+      registrationConfig.codePrefix,
     );
+    const firstName = ((formData.get("firstName") as string) || "").trim();
+    const lastName = ((formData.get("lastName") as string) || "").trim();
+    const email = ((formData.get("email") as string) || "").trim();
+    const phone = ((formData.get("phone") as string) || "").trim();
+    const details = ((formData.get("details") as string) || "").trim() || null;
 
-    window.location.href = `mailto:${TARGET_EMAIL}?subject=${subject}&body=${body}`;
-    toast({
-      title: "Registration prepared",
-      description:
-        "Your email client will open. Send the draft to complete your registration.",
-    });
+    try {
+      setIsFinalizingSubmission(true);
 
-    e.currentTarget.reset();
-    setAgreedToTerms(false);
-    setNewsletterSubscription(false);
-    setSelectedTopic("");
+      await submitCompetitionApplication.mutateAsync({
+        application_code: applicationCode,
+        competition_slug: registrationConfig.competitionSlug,
+        category: selectedTopic,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        phone,
+        country: "Cameroon",
+        motivation: details,
+        payment_status: registrationSettings.paymentStatus,
+        payment_platform: registrationSettings.paymentPlatform,
+        review_status: "submitted",
+        competitionTitle: registrationConfig.title,
+        postSubmitHref: registrationSettings.postSubmitHref,
+        notificationEmails: registrationSettings.notificationEmails,
+        form_payload: {
+          selected_topic: selectedTopic,
+          additional_details: details,
+          newsletter_subscription: newsletterSubscription,
+          agreed_to_terms: agreedToTerms,
+          event_dates: "2026-07-09 to 2026-07-11",
+          whatsapp_channel_url: registrationSettings.postSubmitHref,
+        },
+      });
+
+      formRef.current?.reset();
+      setAgreedToTerms(false);
+      setNewsletterSubscription(false);
+      setSelectedTopic("");
+      setSubmittedApplicationCode(applicationCode);
+
+      toast({
+        title: "Registration saved",
+        description: registrationSettings.successMessage,
+      });
+    } catch (error) {
+      toast({
+        title: "We could not save your registration",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please try again in a moment.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFinalizingSubmission(false);
+    }
   };
 
   return (
@@ -178,12 +236,21 @@ export const CYESRegisterPage = () => {
               >
                 Contact the team
               </Link>
+              <a
+                href={registrationSettings.postSubmitHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-[#25D366]/25 bg-[#f3fbf6] px-7 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
+              >
+                <MessageCircle className="mr-2 h-4 w-4 text-[#25D366]" />
+                Join announcements channel
+              </a>
             </>
           }
           chips={[
             {
               label: "Date",
-              value: "16 July 2026",
+              value: "9-11 July 2026",
               accentClassName: "text-[#156D3B]",
             },
             {
@@ -273,7 +340,7 @@ export const CYESRegisterPage = () => {
                   <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-[#156D3B]" />
                     <span className="font-sans text-sm text-[#171411]/76">
-                      16 July 2026
+                      9-11 July 2026
                     </span>
                   </div>
                 </div>
@@ -296,17 +363,45 @@ export const CYESRegisterPage = () => {
               </div>
             </div>
 
-            <div className={cyesSurfaceClasses + " px-6 py-7 md:px-8 md:py-8"}>
-              <div>
-                <p className="font-sans text-[0.92rem] font-semibold uppercase tracking-[0.08em] text-[#156D3B]">
-                  Registration form
-                </p>
-                <h2 className="mt-4 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-[#171411]">
-                  Confirm your details and join the room.
-                </h2>
-              </div>
+            {submittedApplicationCode ? (
+              <div className="grid gap-4">
+                <CompetitionPaymentRedirect
+                  applicationCode={submittedApplicationCode}
+                  paymentHref={registrationSettings.postSubmitHref}
+                  title={
+                    registrationConfig.successTitle ||
+                    "CYES Registration Received"
+                  }
+                  description={
+                    registrationConfig.successDescription ||
+                    "Your registration is now stored in the Panache registration system."
+                  }
+                  actionLabel={registrationSettings.ctaLabel}
+                  postSubmitCopy={registrationSettings.postSubmitCopy}
+                />
 
-              <form className="mt-8 space-y-7" onSubmit={handleSubmit}>
+                <a
+                  href={registrationSettings.postSubmitHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#25D366]/25 bg-[#f3fbf6] px-6 py-3 text-center font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4 text-[#25D366]" />
+                  Join the CYES announcements channel
+                </a>
+              </div>
+            ) : (
+              <div className={cyesSurfaceClasses + " px-6 py-7 md:px-8 md:py-8"}>
+                <div>
+                  <p className="font-sans text-[0.92rem] font-semibold uppercase tracking-[0.08em] text-[#156D3B]">
+                    Registration form
+                  </p>
+                  <h2 className="mt-4 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-[#171411]">
+                    Confirm your details and join the room.
+                  </h2>
+                </div>
+
+              <form ref={formRef} className="mt-8 space-y-7" onSubmit={handleSubmit}>
                 <div className="grid gap-6 md:grid-cols-2">
                   <div>
                     <Label
@@ -423,7 +518,8 @@ export const CYESRegisterPage = () => {
                       className="font-sans text-sm leading-relaxed text-[#171411]/72"
                     >
                       I agree to the terms and conditions and understand this
-                      registration is submitted through email confirmation.
+                      registration will be saved before I continue to the CYES
+                      WhatsApp channel.
                     </Label>
                   </div>
 
@@ -448,12 +544,21 @@ export const CYESRegisterPage = () => {
 
                 <Button
                   type="submit"
+                  disabled={isFinalizingSubmission}
                   className="h-12 w-full rounded-full bg-[#171411] font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
                 >
-                  Submit registration
+                  {isFinalizingSubmission ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving registration...
+                    </>
+                  ) : (
+                    "Submit registration"
+                  )}
                 </Button>
               </form>
-            </div>
+              </div>
+            )}
           </div>
         </section>
       </main>

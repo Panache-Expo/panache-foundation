@@ -7,6 +7,7 @@ import {
   Twitter,
 } from "lucide-react";
 import {
+  CYES_WHATSAPP_CHANNEL_URL,
   PANACHE_SUPPORT_WHATSAPP_HREF,
   PANACHE_SUPPORT_WHATSAPP_NUMBER,
 } from "@/lib/registration-links";
@@ -130,6 +131,17 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
             </Link>
 
             <div className="mt-5 space-y-3">
+              {isCyesVariant ? (
+                <a
+                  href={CYES_WHATSAPP_CHANNEL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#25D366]/25 bg-[#f3fbf6] px-5 py-3 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
+                >
+                  <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                  Join CYES WhatsApp Channel
+                </a>
+              ) : null}
               <a
                 href={PANACHE_SUPPORT_WHATSAPP_HREF}
                 target="_blank"

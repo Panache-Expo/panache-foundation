@@ -29,7 +29,7 @@ export const Hero = () => {
                 <p className="text-lg font-semibold md:text-xl">Panache Expo</p>
                 <div className="flex items-center gap-2 text-sm text-white/88 md:text-base">
                   <Calendar className="h-4 w-4" />
-                  <span>July 16th - 18th 2026</span>
+                  <span>9-11 July 2026</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-white/80 md:text-base">
                   <MapPin className="h-4 w-4" />
