@@ -8,6 +8,10 @@ export type CompetitionApplication = Tables['competition_applications']['Row'];
 export type CYESAwardCategoryRow = Tables['cyes_award_categories']['Row'];
 export type CYESAwardNomineeRow = Tables['cyes_award_nominees']['Row'];
 export type CYESAwardVote = Tables['cyes_award_votes']['Row'];
+export type PanacheDorAwardCategoryRow =
+  Tables['panache_dor_award_categories']['Row'];
+export type PanacheDorAwardNomineeRow =
+  Tables['panache_dor_award_nominees']['Row'];
 export type Profile = Tables['profiles']['Row'];
 export type CompetitionApplicationInsert = Tables['competition_applications']['Insert'];
 
@@ -56,6 +60,22 @@ export type CYESVoteCastPayload = Omit<
   'captchaToken' | 'captchaChallengeId' | 'captchaAnswer'
 > & {
   otp: string;
+};
+
+export type PanacheDorAwardNominee = PanacheDorAwardNomineeRow;
+
+export type PanacheDorAwardCategory = PanacheDorAwardCategoryRow & {
+  nominees: PanacheDorAwardNominee[];
+};
+
+export type PanacheDorVotingPayload = {
+  categories: PanacheDorAwardCategory[];
+  total_nominees: number;
+  counts_available: boolean;
+  ayati_sync_configured: boolean;
+  ayati_leaderboard_url?: string | null;
+  last_synced_at?: string | null;
+  admin?: boolean;
 };
 
 type CompetitionApplicationSubmitPayload =
@@ -215,6 +235,33 @@ export const cyesVotingService = {
     }
 
     return payload;
+  },
+};
+
+// Panache D'or Ayati Voting Directory Service
+const PANACHE_DOR_VOTING_API_URL =
+  import.meta.env.VITE_PANACHE_DOR_VOTING_API_URL ||
+  '/api/panache-dor-voting';
+
+const readPanacheDorVotingResponse = async (response: Response) => {
+  return (await response.json().catch(() => null)) as
+    | {
+        message?: string;
+        voting?: PanacheDorVotingPayload;
+      }
+    | null;
+};
+
+export const panacheDorVotingService = {
+  async getVoting() {
+    const response = await fetch(PANACHE_DOR_VOTING_API_URL);
+    const payload = await readPanacheDorVotingResponse(response);
+
+    if (!response.ok || !payload?.voting) {
+      throw new Error(payload?.message || "Could not load Panache D'or nominees.");
+    }
+
+    return payload.voting;
   },
 };
 

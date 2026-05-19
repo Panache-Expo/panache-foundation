@@ -13,8 +13,7 @@ import {
 } from "@/lib/registration-links";
 import { Link } from "react-router-dom";
 import panacheScriptLogo from "@/assets/PanacheHeroLogo.svg";
-import footerMuse from "@/assets/footer-muse-crown.png";
-import MissPanacheImage from "@/assets/misspanacheupdate.jpg";
+import footerMuse from "@/assets/misspanache-subject-mask.png";
 
 const quickLinks = [
   { label: "Foundation Home", to: "/" },
@@ -22,6 +21,7 @@ const quickLinks = [
   { label: "CYES", to: "/cyes" },
   { label: "Panache 360 Beauty", to: "/panache-expo/panache-360" },
   { label: "Panache D'or", to: "/panache-expo/panache-dor" },
+  { label: "D'or Nominees", to: "/panache-expo/panache-dor/vote" },
 ];
 
 const panacheSocials = [

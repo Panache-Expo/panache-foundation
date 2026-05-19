@@ -3,6 +3,9 @@ import type {
   CYESAwardCategory,
   CYESAwardNominee,
   CYESVotingPayload,
+  PanacheDorAwardCategory,
+  PanacheDorAwardNominee,
+  PanacheDorVotingPayload,
 } from "@/integrations/supabase/services";
 
 const DASHBOARD_ACCESS_KEY_STORAGE = "panache-dashboard-access-key";
@@ -10,6 +13,9 @@ const DASHBOARD_API_URL =
   import.meta.env.VITE_DASHBOARD_API_URL || "/api/dashboard-applications";
 const CYES_VOTING_API_URL =
   import.meta.env.VITE_CYES_VOTING_API_URL || "/api/cyes-voting";
+const PANACHE_DOR_VOTING_API_URL =
+  import.meta.env.VITE_PANACHE_DOR_VOTING_API_URL ||
+  "/api/panache-dor-voting";
 
 export interface CompetitionApplicationUpdatePayload {
   payment_status?: string;
@@ -43,6 +49,51 @@ export type CYESVotingNomineePhotoUploadPayload = {
   base64: string;
 };
 
+export type PanacheDorVotingCategoryPayload = {
+  slug?: string;
+  name?: string;
+  description?: string | null;
+  status?: string;
+  sort_order?: number;
+};
+
+export type PanacheDorVotingNomineePayload = {
+  category_id?: string;
+  slug?: string;
+  name?: string;
+  organization?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+  status?: string;
+  sort_order?: number;
+  ayati_vote_url?: string | null;
+  ayati_sync_id?: string | null;
+};
+
+export type PanacheDorVotingNomineePhotoUploadPayload = {
+  fileName: string;
+  contentType: string;
+  base64: string;
+};
+
+export type PanacheDorCsvImportSummary = {
+  imported: number;
+  failed: number;
+  errors?: Array<{
+    row: number;
+    message: string;
+  }>;
+};
+
+export type PanacheDorAyatiSyncSummary = {
+  configured: boolean;
+  synced: number;
+  skipped?: number;
+  source_rows?: number;
+  synced_at?: string;
+  message: string;
+};
+
 const readResponsePayload = async (response: Response) => {
   return (await response.json().catch(() => null)) as
     | {
@@ -50,11 +101,16 @@ const readResponsePayload = async (response: Response) => {
         applications?: CompetitionApplication[];
         application?: CompetitionApplication;
         voting?: CYESVotingPayload;
+        panacheDorVoting?: PanacheDorVotingPayload;
         category?: CYESAwardCategory;
+        panacheDorCategory?: PanacheDorAwardCategory;
         nominee?: CYESAwardNominee;
+        panacheDorNominee?: PanacheDorAwardNominee;
         photoUrl?: string;
         photo_url?: string;
         path?: string;
+        importSummary?: PanacheDorCsvImportSummary;
+        syncSummary?: PanacheDorAyatiSyncSummary;
       }
     | null;
 };
@@ -238,4 +294,152 @@ export const uploadCyesVotingNomineePhoto = async (
     photoUrl,
     path: payload?.path || "",
   };
+};
+
+export const fetchPanacheDorVotingDashboard = async (accessKey: string) => {
+  const response = await fetch(PANACHE_DOR_VOTING_API_URL, {
+    headers: {
+      "x-dashboard-key": accessKey,
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok || !payload?.voting) {
+    throw new Error(payload?.message || "Could not load Panache D'or voting.");
+  }
+
+  return payload.voting as unknown as PanacheDorVotingPayload;
+};
+
+const mutatePanacheDorVotingDashboard = async (
+  accessKey: string,
+  body: Record<string, unknown>
+) => {
+  const response = await fetch(PANACHE_DOR_VOTING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok || !payload?.voting) {
+    throw new Error(payload?.message || "Could not update Panache D'or voting.");
+  }
+
+  return {
+    voting: payload.voting as unknown as PanacheDorVotingPayload,
+    importSummary: payload.importSummary,
+    syncSummary: payload.syncSummary,
+  };
+};
+
+export const createPanacheDorVotingCategory = async (
+  accessKey: string,
+  category: PanacheDorVotingCategoryPayload
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "createCategory",
+    category,
+  });
+};
+
+export const updatePanacheDorVotingCategory = async (
+  accessKey: string,
+  id: string,
+  updates: PanacheDorVotingCategoryPayload
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "updateCategory",
+    id,
+    updates,
+  });
+};
+
+export const deletePanacheDorVotingCategory = async (
+  accessKey: string,
+  id: string
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "deleteCategory",
+    id,
+  });
+};
+
+export const createPanacheDorVotingNominee = async (
+  accessKey: string,
+  nominee: PanacheDorVotingNomineePayload
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "createNominee",
+    nominee,
+  });
+};
+
+export const updatePanacheDorVotingNominee = async (
+  accessKey: string,
+  id: string,
+  updates: PanacheDorVotingNomineePayload
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "updateNominee",
+    id,
+    updates,
+  });
+};
+
+export const deletePanacheDorVotingNominee = async (
+  accessKey: string,
+  id: string
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "deleteNominee",
+    id,
+  });
+};
+
+export const uploadPanacheDorVotingNomineePhoto = async (
+  accessKey: string,
+  upload: PanacheDorVotingNomineePhotoUploadPayload
+) => {
+  const response = await fetch(PANACHE_DOR_VOTING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify({
+      action: "uploadNomineePhoto",
+      ...upload,
+    }),
+  });
+  const payload = await readResponsePayload(response);
+  const photoUrl = payload?.photoUrl || payload?.photo_url || "";
+
+  if (!response.ok || !photoUrl) {
+    throw new Error(payload?.message || "Could not upload nominee photo.");
+  }
+
+  return {
+    photoUrl,
+    path: payload?.path || "",
+  };
+};
+
+export const importPanacheDorNomineesCsv = async (
+  accessKey: string,
+  csv: string
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "importNomineesCsv",
+    csv,
+  });
+};
+
+export const syncPanacheDorAyatiCounts = async (accessKey: string) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "syncAyatiCounts",
+  });
 };

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { contactService, profileService, authService, competitionApplicationService, cyesVotingService } from '@/integrations/supabase/services';
+import { contactService, profileService, authService, competitionApplicationService, cyesVotingService, panacheDorVotingService } from '@/integrations/supabase/services';
 
 // Query Keys (for cache management)
 export const queryKeys = {
@@ -16,6 +16,10 @@ export const queryKeys = {
     all: ['cyesVoting'] as const,
     public: ['cyesVoting', 'public'] as const,
     captcha: ['cyesVoting', 'captcha'] as const,
+  },
+  panacheDorVoting: {
+    all: ['panacheDorVoting'] as const,
+    public: ['panacheDorVoting', 'public'] as const,
   },
   profile: {
     all: ['profile'] as const,
@@ -92,6 +96,18 @@ export const useCastCyesVote = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.cyesVoting.all });
       }
     },
+  });
+};
+
+// Panache D'or Voting Directory Hooks
+export const usePanacheDorVoting = () => {
+  return useQuery({
+    queryKey: queryKeys.panacheDorVoting.public,
+    queryFn: panacheDorVotingService.getVoting,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
   });
 };
 

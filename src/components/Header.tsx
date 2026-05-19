@@ -70,6 +70,8 @@ const getHeaderConfig = (pathname: string): HeaderConfig => {
         { label: "Exhibition Stands", to: "/panache-expo/exhibition-stands" },
         { label: "Charity Night", to: "/panache-expo/charity-night" },
         { label: "Panache D'or", to: "/panache-expo/panache-dor" },
+        { label: "D'or Nominees", to: "/panache-expo/panache-dor/vote" },
+        { label: "D'or Leaderboard", to: "/panache-expo/panache-dor/leaderboard" },
         { label: "Nominations", to: "/panache-expo/nominations" },
         { label: "Workshops", to: "/panache-expo/workshops" },
         { label: "Contact", to: "/panache-expo/contact" },

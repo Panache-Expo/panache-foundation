@@ -23,6 +23,9 @@ import { WorkshopsPage } from "./pages/WorkshopsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import PanacheDorPage from "./pages/PanacheDorPage";
+import PanacheDorVotingPage from "./pages/PanacheDorVotingPage";
+import PanacheDorNomineePage from "./pages/PanacheDorNomineePage";
+import PanacheDorLeaderboardPage from "./pages/PanacheDorLeaderboardPage";
 import PanacheNominationsPage from "./pages/PanacheNominationsPage";
 import MissPanachePage from "./pages/MissPanachePage";
 import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
@@ -122,6 +125,9 @@ const App = () => (
               <Route path="/panache-expo/miss-panache" element={<MissPanachePage />} />
               <Route path="/panache-expo/miss-panache/register" element={<MissPanacheRegisterPage />} />
               <Route path="/panache-expo/panache-dor" element={<PanacheDorPage />} />
+              <Route path="/panache-expo/panache-dor/vote" element={<PanacheDorVotingPage />} />
+              <Route path="/panache-expo/panache-dor/nominees/:slug" element={<PanacheDorNomineePage />} />
+              <Route path="/panache-expo/panache-dor/leaderboard" element={<PanacheDorLeaderboardPage />} />
               <Route path="/panache-expo/workshops" element={<WorkshopsPage />} />
               <Route path="/panache-expo/contact" element={<ContactPage />} />
               <Route path="/panache-expo/register" element={<RegisterPage />} />

@@ -1,6 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { CYESVotingDashboard } from "@/components/admin/CYESVotingDashboard";
+import { PanacheDorVotingDashboard } from "@/components/admin/PanacheDorVotingDashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -479,59 +480,13 @@ const ParticipantsDashboardPage = () => {
         ) : (
           <div className="max-w-7xl mx-auto space-y-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-wrap gap-3">
-                <Card className="min-w-[180px] border-border/60 shadow-soft">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-3">
-                      <Users className="w-5 h-5 text-rose-gold" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Applicants</p>
-                        <p className="text-2xl font-semibold text-primary">
-                          {totalForCompetition}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="min-w-[180px] border-border/60 shadow-soft">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Paid</p>
-                        <p className="text-2xl font-semibold text-primary">
-                          {paidForCompetition}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="min-w-[180px] border-border/60 shadow-soft">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="w-5 h-5 text-amber-600" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Pending</p>
-                        <p className="text-2xl font-semibold text-primary">
-                          {pendingForCompetition}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="min-w-[180px] border-border/60 shadow-soft">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-3">
-                      <LayoutGrid className="w-5 h-5 text-primary" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Categories</p>
-                        <p className="text-2xl font-semibold text-primary">
-                          {Object.keys(categoryCounts).length}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-rose-gold">
+                  Dashboard sections
+                </p>
+                <h2 className="mt-2 font-display text-2xl text-primary">
+                  Applications, CYES voting, and Panache D&apos;or voting tools
+                </h2>
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -551,14 +506,90 @@ const ParticipantsDashboardPage = () => {
               </div>
             </div>
 
-            <CYESVotingDashboard accessKey={dashboardAccessKey} />
-
-            <Tabs
-              value={selectedCompetition}
-              onValueChange={setSelectedCompetition}
-              className="space-y-6"
-            >
+            <Tabs defaultValue="applications" className="space-y-6">
               <TabsList className="h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
+                <TabsTrigger
+                  value="applications"
+                  className="rounded-full border border-border/60 bg-card px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+                >
+                  Applications
+                </TabsTrigger>
+                <TabsTrigger
+                  value="cyes-voting"
+                  className="rounded-full border border-border/60 bg-card px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+                >
+                  CYES Voting
+                </TabsTrigger>
+                <TabsTrigger
+                  value="panache-dor-voting"
+                  className="rounded-full border border-border/60 bg-card px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+                >
+                  Panache D&apos;or Voting
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="applications" className="space-y-6">
+                <div className="flex flex-wrap gap-3">
+                  <Card className="min-w-[180px] border-border/60 shadow-soft">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-3">
+                        <Users className="w-5 h-5 text-rose-gold" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Applicants</p>
+                          <p className="text-2xl font-semibold text-primary">
+                            {totalForCompetition}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="min-w-[180px] border-border/60 shadow-soft">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Paid</p>
+                          <p className="text-2xl font-semibold text-primary">
+                            {paidForCompetition}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="min-w-[180px] border-border/60 shadow-soft">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="w-5 h-5 text-amber-600" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Pending</p>
+                          <p className="text-2xl font-semibold text-primary">
+                            {pendingForCompetition}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="min-w-[180px] border-border/60 shadow-soft">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-3">
+                        <LayoutGrid className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Categories</p>
+                          <p className="text-2xl font-semibold text-primary">
+                            {Object.keys(categoryCounts).length}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Tabs
+                  value={selectedCompetition}
+                  onValueChange={setSelectedCompetition}
+                  className="space-y-6"
+                >
+                  <TabsList className="h-auto flex-wrap justify-start gap-2 bg-transparent p-0">
                 {competitionTabs.map((competition) => (
                   <TabsTrigger
                     key={competition.slug}
@@ -568,9 +599,9 @@ const ParticipantsDashboardPage = () => {
                     {competition.shortTitle}
                   </TabsTrigger>
                 ))}
-              </TabsList>
+                  </TabsList>
 
-              {competitionTabs.map((competition) => (
+                  {competitionTabs.map((competition) => (
                 <TabsContent
                   key={competition.slug}
                   value={competition.slug}
@@ -775,7 +806,17 @@ const ParticipantsDashboardPage = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
-              ))}
+                  ))}
+                </Tabs>
+              </TabsContent>
+
+              <TabsContent value="cyes-voting" className="space-y-6">
+                <CYESVotingDashboard accessKey={dashboardAccessKey} />
+              </TabsContent>
+
+              <TabsContent value="panache-dor-voting" className="space-y-6">
+                <PanacheDorVotingDashboard accessKey={dashboardAccessKey} />
+              </TabsContent>
             </Tabs>
           </div>
         )}

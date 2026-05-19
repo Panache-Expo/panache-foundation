@@ -304,6 +304,101 @@ export type Database = {
         }
         Relationships: []
       }
+      panache_dor_award_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      panache_dor_award_nominees: {
+        Row: {
+          ayati_last_synced_at: string | null
+          ayati_sync_id: string | null
+          ayati_vote_count: number
+          ayati_vote_url: string | null
+          bio: string | null
+          category_id: string
+          created_at: string
+          id: string
+          name: string
+          organization: string | null
+          photo_url: string | null
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ayati_last_synced_at?: string | null
+          ayati_sync_id?: string | null
+          ayati_vote_count?: number
+          ayati_vote_url?: string | null
+          bio?: string | null
+          category_id: string
+          created_at?: string
+          id?: string
+          name: string
+          organization?: string | null
+          photo_url?: string | null
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ayati_last_synced_at?: string | null
+          ayati_sync_id?: string | null
+          ayati_vote_count?: number
+          ayati_vote_url?: string | null
+          bio?: string | null
+          category_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          organization?: string | null
+          photo_url?: string | null
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panache_dor_award_nominees_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "panache_dor_award_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

@@ -34,6 +34,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const PANACHE_EMAIL = "thepanacheexpo@gmail.com";
+const PANACHE_DOR_NOMINATIONS_CLOSED = true;
 
 const juryMembers = [
   {
@@ -258,42 +259,39 @@ const PanacheNominationsPage = () => {
             <span className="font-display text-[#f4e93f]">Nominations</span>
           </>
         }
-        description="Nominate the beauty, fashion, and creative professionals whose work has truly moved the industry forward. The form starts here, and the final submission is completed through your email client."
+        description="Public nominations for the Panache D'or Awards 2026 are now closed. Submitted entries continue through review as the awards programme moves into the next stage."
         image={PanacheAwards}
-        panelLabel="Nomination notes"
-        panelTitle="Good entries are specific."
-        panelDescription="The clearest nominations name one strong category, explain visible achievements from the last 24 months, and give enough detail for the jury to understand the nominee's impact."
+        panelLabel="Nominations closed"
+        panelTitle="The submission window has ended."
+        panelDescription="No new public nominations are being accepted through the website or email draft flow. Existing entries remain part of the review cycle."
         panelItems={[
-          { label: "Achievements window", value: "Last 24 months" },
+          { label: "Status", value: "Closed" },
+          { label: "Next stage", value: "Review + shortlist" },
           { label: "Review", value: "Panache jury committee" },
-          { label: "Submission route", value: "Prepared email draft" },
         ]}
       />
 
       <main className="px-6 pb-20 pt-10 md:pb-24">
         <section className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.84fr,1.16fr]">
           <ExpoSidebarCard
-            eyebrow="Before you nominate"
-            title="Help the jury read the work clearly."
-            description="Panache D'or is strongest when nominations feel intentional. Choose one category, explain why the nominee stands out, and keep the reason rooted in visible professional work."
+            eyebrow="Nominations closed"
+            title="No new Panache D'or nominations are being accepted."
+            description="The public nomination window has ended. Submitted entries can still move through internal review, shortlist confirmation, and the wider awards cycle."
             points={[
-              "Nominees should be actively practicing within beauty, fashion, or the wider creative industry.",
-              "Achievements should fall within the last 24 months unless the category states otherwise.",
-              "Nominees should be able to provide portfolio proof, public work, or strong documentation if requested.",
-              "Shortlisted nominees may be asked to confirm participation or submit more supporting material.",
+              "The website form no longer opens email nomination drafts.",
+              "Previously submitted nominations remain under Panache team review.",
+              "Shortlisted nominees may still be contacted for confirmation or supporting material.",
+              "For urgent award clarification, contact the Panache team directly.",
             ]}
             footer={
               <div className="space-y-3">
                 <div className="rounded-[1.25rem] border border-black/10 bg-white/74 px-4 py-4">
                   <p className="font-sans text-sm font-semibold text-[#171411]">
-                    Submission method
+                    Current status
                   </p>
                   <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                    This form prepares a structured email draft to{" "}
-                    <span className="font-semibold text-[#171411]">
-                      {PANACHE_EMAIL}
-                    </span>
-                    .
+                    Public nominations are closed for the Panache D&apos;or
+                    Awards 2026 cycle.
                   </p>
                 </div>
                 <Button
@@ -306,6 +304,13 @@ const PanacheNominationsPage = () => {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-12 w-full rounded-full border-black/12 bg-white/74 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                >
+                  <Link to="/panache-expo/contact">Contact the team</Link>
+                </Button>
               </div>
             }
           />
@@ -313,13 +318,88 @@ const PanacheNominationsPage = () => {
           <ExpoSurface>
             <div>
               <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-                Nomination form
+                Nomination status
               </p>
               <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.9rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
-                Nominate someone whose work deserves a proper spotlight.
+                The Panache D&apos;or nomination window is closed.
               </h2>
             </div>
 
+            {PANACHE_DOR_NOMINATIONS_CLOSED ? (
+              <div className="mt-8 space-y-5">
+                <div className="rounded-[1.45rem] border border-[#8241B6]/18 bg-[#f8f2e8] px-5 py-5">
+                  <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#8241B6]">
+                    Closed
+                  </p>
+                  <p className="mt-3 font-sans text-[1.1rem] font-semibold leading-relaxed tracking-[-0.03em] text-[#171411]">
+                    Public nominations for Panache D&apos;or Awards 2026 are no
+                    longer open.
+                  </p>
+                  <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
+                    The team will continue reviewing submitted names and may
+                    contact shortlisted nominees for confirmation, profile
+                    material, or awards communication.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  {[
+                    {
+                      label: "1",
+                      title: "Entries under review",
+                      description:
+                        "Existing nominations can still be checked by the Panache team.",
+                    },
+                    {
+                      label: "2",
+                      title: "Shortlist follow-up",
+                      description:
+                        "Nominees may be contacted if more information is needed.",
+                    },
+                    {
+                      label: "3",
+                      title: "Awards cycle continues",
+                      description:
+                        "Follow Panache D'or updates through the main awards pages.",
+                    },
+                  ].map((step) => (
+                    <div
+                      key={step.title}
+                      className="rounded-[1.3rem] border border-black/8 bg-white/74 px-4 py-4"
+                    >
+                      <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
+                        Step {step.label}
+                      </p>
+                      <h3 className="mt-3 font-sans text-base font-semibold leading-tight tracking-[-0.04em] text-[#171411]">
+                        {step.title}
+                      </h3>
+                      <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
+                        {step.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-3 border-t border-black/8 pt-5 sm:flex-row">
+                  <Button
+                    asChild
+                    className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                  >
+                    <Link to="/panache-expo/panache-dor">
+                      View Panache D&apos;or
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                  >
+                    <Link to="/panache-expo/contact">Contact the team</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
             <form className="mt-8 space-y-7" onSubmit={handleSubmit}>
               <div>
                 <Label
@@ -587,6 +667,7 @@ const PanacheNominationsPage = () => {
                 </Button>
               </div>
             </form>
+            )}
           </ExpoSurface>
         </section>
 

@@ -243,12 +243,12 @@ export const AwardsDropdown = () => {
       <div className="mx-auto mt-12 flex max-w-6xl justify-end px-6">
         <div className="max-w-md">
               <p className="font-sans text-lg font-medium leading-[1.35] text-[#171411] md:text-[1.55rem]">
-                Creativity for every stage. Join us and be part of our winners.
+                Creativity for every stage. Follow the Panache D&apos;or awards cycle.
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-4">
-                <Link to="/panache-expo/register">
+                <Link to="/panache-expo/nominations">
                   <Button className="h-12 rounded-full bg-black px-7 font-sans text-sm font-semibold text-white hover:bg-black/85">
-                Nominate for Awards
+                View Nominations Status
               </Button>
             </Link>
             {/* <Link

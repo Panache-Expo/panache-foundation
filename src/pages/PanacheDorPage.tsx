@@ -5,9 +5,13 @@ import {
   ExpoSurface,
 } from "@/components/registration/ExpoPageShell";
 import { Button } from "@/components/ui/button";
+import AwardMomentImage from "@/assets/Award1.jpeg";
 import PanacheAwards from "@/assets/PanacheAwards.jpeg";
-import MissPanacheImage from "@/assets/misspanacheupdate.jpg";
+import BusinessFeatureImage from "@/assets/businesscomp.jpeg";
+import MissPanacheImage from "@/assets/misspanache-subject-mask.png";
 import WinnersListImage from "@/assets/PanacheDorWinners.jpeg";
+import MediaTourImage from "@/assets/panache-award-night/panache-award-night-2025-01.jpg";
+import VideoAdvertImage from "@/assets/panache-award-night/panache-award-night-2025-04.jpg";
 import { Award, ArrowRight, Crown, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -33,20 +37,51 @@ const recognitionCards = [
 ];
 
 const peoplesChoiceHighlights = [
-  "Free business website",
-  "Professional video advert",
-  "Media tours",
-  "Feature on our official website",
-  "Official Panache D'or ambassador status",
-  "DJI Pocket 3 vlogging camera",
+  {
+    title: "Free business website",
+    image: BusinessFeatureImage,
+    alt: "Panache business summit and brand visibility moment",
+    imageClassName: "object-[center_42%]",
+  },
+  {
+    title: "Professional video advert",
+    image: VideoAdvertImage,
+    alt: "Panache award presentation moment captured for promotion",
+    imageClassName: "object-[center_36%]",
+  },
+  {
+    title: "Media tours",
+    image: MediaTourImage,
+    alt: "Panache red carpet media backdrop",
+    imageClassName: "object-[center_45%]",
+  },
+  {
+    title: "Feature on our official website",
+    image: WinnersListImage,
+    alt: "Panache D'or winners archive collage",
+    imageClassName: "object-[center_30%]",
+  },
+  {
+    title: "Official Panache D'or ambassador status",
+    image: MissPanacheImage,
+    alt: "Miss Panache D'or titleholder portrait",
+    imageClassName: "object-contain object-bottom",
+  },
+  {
+    title: "DJI Pocket 3 vlogging camera",
+    image: AwardMomentImage,
+    alt: "Panache stage recognition moment for creator visibility",
+    imageClassName: "object-[center_38%]",
+  },
 ];
 
 const juryEvaluationItems = [
-  "Community mobilisation",
-  "Consistent campaigning",
-  "Audience turnout",
-  "Supporter engagement",
-  "Vote momentum",
+  "Professionalism",
+  "Impact",
+  "Creativity",
+  "Consistency",
+  "Achievements",
+  "Industry/community contribution",
 ];
 
 const PanacheDorPage = () => {
@@ -71,7 +106,7 @@ const PanacheDorPage = () => {
         panelItems={[
           { label: "Flagship crown", value: "Miss Panache D'or" },
           { label: "Focus", value: "Beauty, fashion, craft" },
-          { label: "Use this page for", value: "Winners + archive" },
+          { label: "Voting", value: "Ayati-powered links" },
         ]}
       />
 
@@ -105,11 +140,11 @@ const PanacheDorPage = () => {
               Miss Panache D&apos;or 2025
             </h2>
 
-            <div className="mt-7 overflow-hidden rounded-[1.8rem] border border-black/8">
+            <div className="relative mt-7 h-[28rem] overflow-hidden rounded-[1.8rem] border border-black/8 bg-[radial-gradient(circle_at_50%_32%,rgba(244,233,63,0.2),transparent_32%),linear-gradient(180deg,#f8f2e8_0%,#f4f3ef_100%)]">
               <img
                 src={MissPanacheImage}
                 alt="Miss Panache D'or 2025"
-                className="h-full w-full object-cover"
+                className="absolute bottom-0 left-1/2 h-[29rem] w-auto max-w-none -translate-x-1/2 object-contain drop-shadow-[0_18px_34px_rgba(17,16,14,0.18)]"
               />
             </div>
 
@@ -159,7 +194,8 @@ const PanacheDorPage = () => {
                   Next action
                 </p>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                  Explore nominations or contact the team if you want award clarification.
+                  Browse the nominee directory and use each nominee&apos;s Ayati link
+                  to vote officially.
                 </p>
               </div>
             </div>
@@ -171,53 +207,67 @@ const PanacheDorPage = () => {
             <div className="grid gap-8 lg:grid-cols-[0.78fr,1.22fr] lg:items-start">
               <div>
                 <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-                  Voting & selection criteria
+                  About Panache D&apos;or Awards
                 </p>
                 <h2 className="mt-3 font-sans text-[clamp(2rem,3vw,2.85rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
-                  The Panache People&apos;s Choice Award is decided entirely by public online support.
+                  A recognition platform for excellence, creativity, and industry impact.
                 </h2>
                 <p className="mt-4 font-sans text-[1rem] leading-relaxed text-[#171411]/68">
-                  The Panache People&apos;s Choice Award recognises the Panache D&apos;or nominee who mobilises the highest number of online votes during the voting period.
+                  The Panache D&apos;or Awards is a prestigious recognition
+                  platform under Panache Expo created to celebrate outstanding
+                  individuals, brands, creatives, entrepreneurs, and
+                  professionals making remarkable impact within the beauty,
+                  fashion, media, lifestyle, and creative industries.
+                </p>
+                <p className="mt-3 font-sans text-[1rem] leading-relaxed text-[#171411]/68">
+                  The awards recognise excellence, innovation, leadership,
+                  consistency, and community influence while creating visibility
+                  and opportunity for talented individuals and businesses across
+                  Africa and beyond.
                 </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-[1.45rem] border border-black/8 bg-[#f8f2e8] px-5 py-5">
                   <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
-                    People&apos;s Choice online votes
+                    Online public paid votes
                   </p>
                   <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
-                    100%
+                    70%
                   </p>
                   <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
-                    The Panache People&apos;s Choice Award goes to the Panache D&apos;or nominee with the highest number of online votes.
+                    Public votes make up 70% of the final winner selection
+                    score for Panache D&apos;or award categories.
                   </p>
                 </div>
 
                 <div className="rounded-[1.45rem] border border-black/8 bg-[#fcfbf8] px-5 py-5">
                   <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#8241B6]">
-                    Most voted nominee wins
+                    Jury committee decision
                   </p>
                   <p className="mt-4 font-sans text-4xl font-semibold tracking-[-0.08em] text-[#171411]">
-                    Wins
+                    30%
                   </p>
                   <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/68">
-                    The Panache People&apos;s Choice Award goes to the nominee with the highest number of online votes during the voting period.
+                    The jury committee contributes 30% through professional
+                    review and category-based evaluation.
                   </p>
                 </div>
 
                 <div className="rounded-[1.45rem] border border-black/8 bg-white px-5 py-5 md:col-span-2">
                   <p className="font-sans text-sm font-semibold text-[#171411]">
-                    No vote limit
+                    Online vote cost
                   </p>
                   <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                    There is no limit to the number of votes a nominee can receive. Supporters can vote as many times as possible to increase their nominee&apos;s chances of winning.
+                    Each online vote costs 100 CFA. Supporters can vote
+                    multiple times throughout the voting period to increase
+                    their nominee&apos;s public vote score.
                   </p>
                 </div>
 
                 <div className="rounded-[1.45rem] border border-black/8 bg-white px-5 py-5 md:col-span-2">
                   <p className="font-sans text-sm font-semibold text-[#171411]">
-                    Public mobilisation
+                    Jury evaluation areas
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {juryEvaluationItems.map((item) => (
@@ -230,7 +280,9 @@ const PanacheDorPage = () => {
                     ))}
                   </div>
                   <p className="mt-4 font-sans text-sm leading-relaxed text-[#171411]/66">
-                    This special recognition is 100% based on online votes and rewards nominees who mobilise strong public support throughout the voting period.
+                    Jury review considers professionalism, impact, creativity,
+                    consistency, achievements, and contribution to the nominee&apos;s
+                    industry or community.
                   </p>
                 </div>
               </div>
@@ -262,19 +314,23 @@ const PanacheDorPage = () => {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {peoplesChoiceHighlights.map((item, index) => (
+              {peoplesChoiceHighlights.map((item) => (
                 <div
-                  key={item}
-                  className={[
-                    "rounded-[1.35rem] border border-black/8 px-4 py-4",
-                    index === 0 || index === 6
-                      ? "bg-[#f8f2e8]"
-                      : "bg-[#fcfbf8]",
-                  ].join(" ")}
+                  key={item.title}
+                  className="group relative min-h-[13rem] overflow-hidden rounded-[1.35rem] border border-black/8 bg-[#171411] shadow-[0_18px_42px_rgba(17,16,14,0.08)]"
                 >
-                  <p className="font-sans text-sm font-semibold leading-relaxed text-[#171411]">
-                    {item}
-                  </p>
+                  <img
+                    src={item.image}
+                    alt={item.alt}
+                    loading="lazy"
+                    className={`absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ${item.imageClassName}`}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#171411]/82 via-[#171411]/18 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4">
+                    <p className="max-w-[16rem] font-sans text-base font-semibold leading-tight tracking-[-0.04em] text-white">
+                      {item.title}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -289,15 +345,16 @@ const PanacheDorPage = () => {
                   Keep following the awards story
                 </p>
                 <h2 className="mt-3 font-sans text-[clamp(2rem,3.2vw,2.9rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
-                  Looking for the next recognition cycle?
+                  Ready to support a Panache D&apos;or nominee?
                 </h2>
               </div>
 
               <div className="lg:ml-auto lg:max-w-[38rem]">
                 <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/68">
-                  Use the nominations route to submit outstanding work, or contact
-                  the team if you need clarification about categories, eligibility,
-                  or how the Panache D&apos;or platform is structured.
+                  Public nominations are closed for this Panache D&apos;or cycle.
+                  The nominee directory now sends each supporter to the correct
+                  Ayati vote/payment link, while official counts remain hidden
+                  unless Panache connects an official Ayati data source.
                 </p>
 
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -305,8 +362,8 @@ const PanacheDorPage = () => {
                     asChild
                     className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
                   >
-                    <Link to="/panache-expo/nominations">
-                      Open nominations
+                    <Link to="/panache-expo/panache-dor/vote">
+                      View nominees
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -316,7 +373,9 @@ const PanacheDorPage = () => {
                     variant="outline"
                     className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                   >
-                    <Link to="/panache-expo/contact">Contact the team</Link>
+                    <Link to="/panache-expo/panache-dor/leaderboard">
+                      Leaderboard
+                    </Link>
                   </Button>
                 </div>
               </div>
