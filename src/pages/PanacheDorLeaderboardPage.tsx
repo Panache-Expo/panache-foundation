@@ -24,17 +24,23 @@ type RankedNominee = PanacheDorAwardNominee & {
   category: PanacheDorAwardCategory;
 };
 
+const getVoteUrl = (nominee: RankedNominee) =>
+  nominee.vote_url || nominee.ayati_vote_url;
+
+const getVoteCount = (nominee: RankedNominee) =>
+  nominee.vote_count ?? nominee.ayati_vote_count;
+
 const rankNominees = (categories: PanacheDorAwardCategory[]) =>
   categories
     .flatMap((category) =>
       category.nominees.map((nominee) => ({
         ...nominee,
         category,
-      }))
+    }))
     )
     .sort((left, right) => {
-      if (right.ayati_vote_count !== left.ayati_vote_count) {
-        return right.ayati_vote_count - left.ayati_vote_count;
+      if (getVoteCount(right) !== getVoteCount(left)) {
+        return getVoteCount(right) - getVoteCount(left);
       }
       return left.name.localeCompare(right.name);
     });
@@ -43,10 +49,12 @@ const NomineeLeaderboardRow = ({
   nominee,
   rank,
   showCounts,
+  voteProviderName,
 }: {
   nominee: RankedNominee;
   rank: number;
   showCounts: boolean;
+  voteProviderName: string;
 }) => (
   <article className="grid gap-4 rounded-[1.35rem] border border-black/8 bg-white/78 p-4 md:grid-cols-[auto_74px_1fr_auto] md:items-center">
     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#171411] font-sans text-sm font-semibold text-white">
@@ -84,21 +92,21 @@ const NomineeLeaderboardRow = ({
     <div className="flex flex-wrap items-center gap-2 md:justify-end">
       {showCounts ? (
         <Badge className="rounded-full bg-[#f8f2e8] px-4 py-2 text-[#171411] hover:bg-[#f8f2e8]">
-          {nominee.ayati_vote_count.toLocaleString()} votes
+          {getVoteCount(nominee).toLocaleString()} votes
         </Badge>
       ) : null}
-      {nominee.ayati_vote_url ? (
+      {getVoteUrl(nominee) ? (
         <Button
           asChild
           size="sm"
           className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
         >
           <a
-            href={nominee.ayati_vote_url}
+            href={getVoteUrl(nominee) || undefined}
             target="_blank"
             rel="noopener noreferrer"
           >
-            Vote
+            Vote on {voteProviderName}
             <ExternalLink className="ml-2 h-3.5 w-3.5" />
           </a>
         </Button>
@@ -112,6 +120,10 @@ const PanacheDorLeaderboardPage = () => {
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const rankedNominees = useMemo(() => rankNominees(categories), [categories]);
   const showCounts = Boolean(voting?.counts_available);
+  const voteProviderName = voting?.vote_provider_name || "CliqVotes";
+  const voteProviderUrl =
+    voting?.vote_provider_leaderboard_url ||
+    voting?.ayati_leaderboard_url;
 
   return (
     <div className="min-h-screen bg-[#f4f3ef]">
@@ -124,13 +136,13 @@ const PanacheDorLeaderboardPage = () => {
               Panache D&apos;or leaderboard
             </p>
             <h1 className="mt-4 font-sans text-[clamp(3.2rem,7vw,6rem)] font-semibold leading-[0.86] tracking-[-0.08em] text-[#171411]">
-              Official Ayati
+              Official {voteProviderName}
               <span className="block font-display text-[#8241B6]">Vote Counts</span>
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
-              This page shows vote counts only when Panache has an official Ayati
+              This page shows vote counts only when Panache has an official {voteProviderName}
               sync source connected. Until then, the nominee directory remains
-              public and every vote button sends supporters to Ayati.
+              public and every vote button sends supporters to {voteProviderName}.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -140,18 +152,18 @@ const PanacheDorLeaderboardPage = () => {
               >
                 <Link to="/panache-expo/panache-dor/vote">View nominees</Link>
               </Button>
-              {voting?.ayati_leaderboard_url ? (
+              {voteProviderUrl ? (
                 <Button
                   asChild
                   variant="outline"
                   className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                 >
                   <a
-                    href={voting.ayati_leaderboard_url}
+                    href={voteProviderUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Official Ayati source
+                    Official {voteProviderName} source
                     <ExternalLink className="ml-2 h-4 w-4" />
                   </a>
                 </Button>
@@ -173,7 +185,7 @@ const PanacheDorLeaderboardPage = () => {
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
                 {showCounts
                   ? `Last sync: ${voting?.last_synced_at || "available"}`
-                  : "Counts will appear only after official Ayati sync is configured."}
+                  : `Counts will appear only after official ${voteProviderName} sync is configured.`}
               </p>
             </div>
           </div>
@@ -192,8 +204,8 @@ const PanacheDorLeaderboardPage = () => {
                     The leaderboard is intentionally hidden for now.
                   </h2>
                   <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-[#171411]/66">
-                    Ayati is the source of truth for paid votes. Until Panache has
-                    an official Ayati API or leaderboard data source connected, we
+                    {voteProviderName} is the source of truth for paid votes. Until Panache has
+                    an official {voteProviderName} API or leaderboard data source connected, we
                     will not display estimated counts or track button clicks as votes.
                   </p>
                 </div>
@@ -202,7 +214,7 @@ const PanacheDorLeaderboardPage = () => {
                   className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
                 >
                   <Link to="/panache-expo/panache-dor/vote">
-                    Vote through Ayati
+                    Vote through {voteProviderName}
                   </Link>
                 </Button>
               </div>
@@ -240,6 +252,7 @@ const PanacheDorLeaderboardPage = () => {
                   nominee={nominee}
                   rank={index + 1}
                   showCounts={showCounts}
+                  voteProviderName={voteProviderName}
                 />
               ))}
             </div>

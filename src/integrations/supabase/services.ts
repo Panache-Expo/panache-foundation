@@ -62,7 +62,12 @@ export type CYESVoteCastPayload = Omit<
   otp: string;
 };
 
-export type PanacheDorAwardNominee = PanacheDorAwardNomineeRow;
+export type PanacheDorAwardNominee = PanacheDorAwardNomineeRow & {
+  vote_url?: string | null;
+  vote_count?: number;
+  vote_provider_sync_id?: string | null;
+  vote_last_synced_at?: string | null;
+};
 
 export type PanacheDorAwardCategory = PanacheDorAwardCategoryRow & {
   nominees: PanacheDorAwardNominee[];
@@ -72,6 +77,10 @@ export type PanacheDorVotingPayload = {
   categories: PanacheDorAwardCategory[];
   total_nominees: number;
   counts_available: boolean;
+  vote_provider?: string;
+  vote_provider_name?: string;
+  vote_provider_sync_configured?: boolean;
+  vote_provider_leaderboard_url?: string | null;
   ayati_sync_configured: boolean;
   ayati_leaderboard_url?: string | null;
   last_synced_at?: string | null;
@@ -238,7 +247,7 @@ export const cyesVotingService = {
   },
 };
 
-// Panache D'or Ayati Voting Directory Service
+// Panache D'or voting directory service
 const PANACHE_DOR_VOTING_API_URL =
   import.meta.env.VITE_PANACHE_DOR_VOTING_API_URL ||
   '/api/panache-dor-voting';

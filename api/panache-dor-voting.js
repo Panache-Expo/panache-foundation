@@ -12,14 +12,18 @@ const PANACHE_DOR_PHOTO_MAX_BYTES = Number.parseInt(
   process.env.PANACHE_DOR_NOMINEE_PHOTO_MAX_BYTES || String(3 * 1024 * 1024),
   10
 );
-const PANACHE_DOR_AYATI_API_URL =
-  process.env.PANACHE_DOR_AYATI_API_URL || "";
-const PANACHE_DOR_AYATI_API_KEY =
-  process.env.PANACHE_DOR_AYATI_API_KEY || "";
-const PANACHE_DOR_AYATI_EVENT_ID =
-  process.env.PANACHE_DOR_AYATI_EVENT_ID || "";
-const PANACHE_DOR_AYATI_LEADERBOARD_URL =
-  process.env.PANACHE_DOR_AYATI_LEADERBOARD_URL || "";
+const PANACHE_DOR_VOTE_PROVIDER =
+  process.env.PANACHE_DOR_VOTE_PROVIDER || "cliqvotes";
+const PANACHE_DOR_CLIQVOTES_BASE_URL = (
+  process.env.PANACHE_DOR_CLIQVOTES_BASE_URL || "https://cliqvotes.com"
+).replace(/\/+$/, "");
+const PANACHE_DOR_CLIQVOTES_EVENT_SLUG =
+  process.env.PANACHE_DOR_CLIQVOTES_EVENT_SLUG || "panache-dor-awards";
+const VOTE_PROVIDER_NAME =
+  PANACHE_DOR_VOTE_PROVIDER === "cliqvotes" ? "CliqVotes" : "Vote provider";
+const CLIQVOTES_EVENT_URL = `${PANACHE_DOR_CLIQVOTES_BASE_URL}/${PANACHE_DOR_CLIQVOTES_EVENT_SLUG}`;
+const CLIQVOTES_CATEGORIES_URL = `${PANACHE_DOR_CLIQVOTES_BASE_URL}/api/events/${PANACHE_DOR_CLIQVOTES_EVENT_SLUG}/categories`;
+const CLIQVOTES_ARTISTS_URL = `${PANACHE_DOR_CLIQVOTES_BASE_URL}/api/artists`;
 
 const CATEGORY_COLUMNS =
   "id, slug, name, description, status, sort_order, created_at, updated_at";
@@ -34,8 +38,10 @@ const allowedPhotoTypes = new Set([
   "image/gif",
 ]);
 
-const ayatiSyncConfigured = Boolean(
-  PANACHE_DOR_AYATI_API_URL || PANACHE_DOR_AYATI_LEADERBOARD_URL
+const voteProviderSyncConfigured = Boolean(
+  PANACHE_DOR_VOTE_PROVIDER === "cliqvotes" &&
+    PANACHE_DOR_CLIQVOTES_BASE_URL &&
+    PANACHE_DOR_CLIQVOTES_EVENT_SLUG
 );
 
 const sendJson = (res, statusCode, payload) => {
@@ -108,6 +114,51 @@ const slugify = (value) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 90) || crypto.randomUUID();
 
+const normalizeLookup = (value) =>
+  String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[’'`´]/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "");
+
+const normalizeCategoryLookup = (value) =>
+  normalizeLookup(value)
+    .replace(/entreprenuer/g, "entrepreneur")
+    .replace(/^wigandinstallation/, "hairandwiginstallation");
+
+const normalizeNomineeLookup = (value) => {
+  const key = normalizeLookup(value);
+  if (key.startsWith("contento")) {
+    return "contento";
+  }
+  return key;
+};
+
+const buildCliqVotesVoteUrl = (categoryId, artistId) => {
+  if (!categoryId || !artistId) {
+    return null;
+  }
+
+  const url = new URL(
+    `${CLIQVOTES_EVENT_URL}/category/${encodeURIComponent(categoryId)}`
+  );
+  url.searchParams.set("artist", artistId);
+  return url.toString();
+};
+
+const toAbsoluteCliqVotesUrl = (value) => {
+  const url = normalizeText(value);
+  if (!url) {
+    return null;
+  }
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return `${PANACHE_DOR_CLIQVOTES_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const isDashboardRequest = (req) => {
   const key =
     req.headers["x-dashboard-key"] ||
@@ -157,7 +208,7 @@ const sanitizeNominee = (nominee = {}, fallback = {}) => {
   const categoryId = normalizeText(nominee.category_id ?? fallback.category_id);
   const status = normalizeStatus(nominee.status ?? fallback.status);
   const ayatiVoteUrl = normalizeUrl(
-    nominee.ayati_vote_url ?? fallback.ayati_vote_url
+    nominee.vote_url ?? nominee.ayati_vote_url ?? fallback.ayati_vote_url
   );
 
   if (!name) {
@@ -178,7 +229,9 @@ const sanitizeNominee = (nominee = {}, fallback = {}) => {
     sort_order: normalizeInteger(nominee.sort_order ?? fallback.sort_order),
     ayati_vote_url: ayatiVoteUrl,
     ayati_sync_id: normalizeText(
-      nominee.ayati_sync_id ?? fallback.ayati_sync_id
+      nominee.vote_provider_sync_id ??
+        nominee.ayati_sync_id ??
+        fallback.ayati_sync_id
     ),
   };
 };
@@ -188,7 +241,7 @@ const withUpdatedAt = (payload) => ({
   updated_at: new Date().toISOString(),
 });
 
-const collectAyatiLastSyncedAt = (nominees) => {
+const collectVoteProviderLastSyncedAt = (nominees) => {
   const timestamps = nominees
     .map((nominee) => nominee.ayati_last_synced_at)
     .filter(Boolean)
@@ -197,16 +250,24 @@ const collectAyatiLastSyncedAt = (nominees) => {
   return timestamps[timestamps.length - 1] || null;
 };
 
+const decorateNominee = (nominee) => ({
+  ...nominee,
+  vote_url: nominee.ayati_vote_url,
+  vote_count: nominee.ayati_vote_count,
+  vote_provider_sync_id: nominee.ayati_sync_id,
+  vote_last_synced_at: nominee.ayati_last_synced_at,
+});
+
 const buildVotingPayload = (categories, nominees, includeDrafts = false) => {
   const nomineesByCategory = nominees.reduce((accumulator, nominee) => {
     if (!accumulator[nominee.category_id]) {
       accumulator[nominee.category_id] = [];
     }
-    accumulator[nominee.category_id].push(nominee);
+    accumulator[nominee.category_id].push(decorateNominee(nominee));
     return accumulator;
   }, {});
-  const lastSyncedAt = collectAyatiLastSyncedAt(nominees);
-  const countsAvailable = Boolean(ayatiSyncConfigured && lastSyncedAt);
+  const lastSyncedAt = collectVoteProviderLastSyncedAt(nominees);
+  const countsAvailable = Boolean(voteProviderSyncConfigured && lastSyncedAt);
 
   return {
     categories: categories.map((category) => ({
@@ -215,8 +276,12 @@ const buildVotingPayload = (categories, nominees, includeDrafts = false) => {
     })),
     total_nominees: nominees.length,
     counts_available: countsAvailable,
-    ayati_sync_configured: ayatiSyncConfigured,
-    ayati_leaderboard_url: PANACHE_DOR_AYATI_LEADERBOARD_URL || null,
+    vote_provider: PANACHE_DOR_VOTE_PROVIDER,
+    vote_provider_name: VOTE_PROVIDER_NAME,
+    vote_provider_sync_configured: voteProviderSyncConfigured,
+    vote_provider_leaderboard_url: CLIQVOTES_EVENT_URL,
+    ayati_sync_configured: voteProviderSyncConfigured,
+    ayati_leaderboard_url: CLIQVOTES_EVENT_URL,
     last_synced_at: lastSyncedAt,
     admin: includeDrafts,
   };
@@ -439,7 +504,13 @@ const importCsv = async (supabase, csvText) => {
         throw new Error("Nominee name is required.");
       }
 
-      const ayatiVoteUrl = normalizeUrl(row.ayati_vote_url || row.ayati_link);
+      const ayatiVoteUrl = normalizeUrl(
+        row.vote_url ||
+          row.vote_link ||
+          row.cliqvotes_vote_url ||
+          row.ayati_vote_url ||
+          row.ayati_link
+      );
       const status = normalizeStatus(row.status, "active");
 
       const payload = {
@@ -452,7 +523,13 @@ const importCsv = async (supabase, csvText) => {
         status,
         sort_order: normalizeInteger(row.sort_order),
         ayati_vote_url: ayatiVoteUrl,
-        ayati_sync_id: normalizeText(row.ayati_sync_id || row.ayati_id),
+        ayati_sync_id: normalizeText(
+          row.vote_provider_sync_id ||
+            row.cliqvotes_artist_id ||
+            row.cliqvotes_id ||
+            row.ayati_sync_id ||
+            row.ayati_id
+        ),
         updated_at: new Date().toISOString(),
       };
 
@@ -480,137 +557,249 @@ const importCsv = async (supabase, csvText) => {
   };
 };
 
-const extractAyatiRows = (payload) => {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-  if (!payload || typeof payload !== "object") {
-    return [];
-  }
-
-  const candidates = [
-    payload.data,
-    payload.items,
-    payload.nominees,
-    payload.leaderboard,
-    payload.results,
-    payload.votes,
-  ];
-
-  for (const candidate of candidates) {
-    if (Array.isArray(candidate)) {
-      return candidate;
-    }
-  }
-
-  return [];
-};
-
-const extractAyatiId = (row) =>
-  normalizeText(
-    row.ayati_sync_id ||
-      row.sync_id ||
-      row.nominee_id ||
-      row.nomineeId ||
-      row.id ||
-      row.slug
-  );
-
-const extractAyatiCount = (row) => {
-  const value =
-    row.vote_count ??
-    row.votes ??
-    row.total_votes ??
-    row.paid_votes ??
-    row.count;
-  const parsed = Number.parseInt(String(value ?? ""), 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-};
-
-const fetchAyatiLeaderboard = async () => {
-  const url = PANACHE_DOR_AYATI_API_URL || PANACHE_DOR_AYATI_LEADERBOARD_URL;
-  if (!url) {
-    throw new Error("Ayati count sync is not configured.");
-  }
-
-  const requestUrl = new URL(url);
-  if (PANACHE_DOR_AYATI_EVENT_ID && !requestUrl.searchParams.has("event_id")) {
-    requestUrl.searchParams.set("event_id", PANACHE_DOR_AYATI_EVENT_ID);
-  }
-
-  const headers = {
-    Accept: "application/json",
-  };
-  if (PANACHE_DOR_AYATI_API_KEY) {
-    headers.Authorization = `Bearer ${PANACHE_DOR_AYATI_API_KEY}`;
-  }
-
-  const response = await fetch(requestUrl, { headers });
+const fetchJson = async (url) => {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
   const text = await response.text();
   let payload = null;
 
   try {
     payload = JSON.parse(text);
   } catch {
-    throw new Error("Ayati leaderboard did not return JSON data.");
+    throw new Error(`${VOTE_PROVIDER_NAME} did not return JSON data.`);
   }
 
   if (!response.ok) {
     throw new Error(
       payload?.message ||
-        `Ayati sync failed (${response.status} ${response.statusText}).`
+        `${VOTE_PROVIDER_NAME} sync failed (${response.status} ${response.statusText}).`
     );
   }
 
-  return extractAyatiRows(payload);
+  return payload;
 };
 
-const syncAyatiCounts = async (supabase) => {
-  if (!ayatiSyncConfigured) {
+const fetchCliqVotesPayload = async () => {
+  const categories = await fetchJson(CLIQVOTES_CATEGORIES_URL);
+  const artists = [];
+  let offset = 0;
+  const limit = 100;
+  let total = Number.POSITIVE_INFINITY;
+
+  while (artists.length < total) {
+    const url = new URL(CLIQVOTES_ARTISTS_URL);
+    url.searchParams.set("eventSlug", PANACHE_DOR_CLIQVOTES_EVENT_SLUG);
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("offset", String(offset));
+
+    const payload = await fetchJson(url.toString());
+    const rows = Array.isArray(payload) ? payload : payload.artists || [];
+    total = Number.isFinite(Number(payload.total))
+      ? Number(payload.total)
+      : Number.POSITIVE_INFINITY;
+    artists.push(...rows);
+
+    if (!payload.hasMore || rows.length === 0) {
+      break;
+    }
+    offset += rows.length;
+  }
+
+  return {
+    categories: Array.isArray(categories) ? categories : [],
+    artists,
+  };
+};
+
+const findMatchingNominee = (nominees, categoryId, cliqName) => {
+  const targetKey = normalizeNomineeLookup(cliqName);
+  const categoryMatches = nominees.filter(
+    (nominee) => nominee.category_id === categoryId
+  );
+  const exact = categoryMatches.find(
+    (nominee) => normalizeNomineeLookup(nominee.name) === targetKey
+  );
+  if (exact) {
+    return exact;
+  }
+
+  return categoryMatches.find((nominee) => {
+    const localKey = normalizeNomineeLookup(nominee.name);
+    return (
+      localKey &&
+      targetKey &&
+      (localKey.startsWith(targetKey) ||
+        targetKey.startsWith(localKey) ||
+        localKey.includes(targetKey) ||
+        targetKey.includes(localKey))
+    );
+  });
+};
+
+const buildUniqueNomineeSlug = (name, category) =>
+  `${slugify(name)}-${slugify(category.name || category.slug)}`.slice(0, 90);
+
+const syncCliqVotesCounts = async (supabase) => {
+  if (!voteProviderSyncConfigured) {
     return {
       configured: false,
+      provider: PANACHE_DOR_VOTE_PROVIDER,
       synced: 0,
       skipped: 0,
       message:
-        "Ayati count sync is not configured. Add PANACHE_DOR_AYATI_API_URL or PANACHE_DOR_AYATI_LEADERBOARD_URL first.",
+        "CliqVotes sync is not configured. Add PANACHE_DOR_CLIQVOTES_BASE_URL and PANACHE_DOR_CLIQVOTES_EVENT_SLUG first.",
     };
   }
 
-  const rows = await fetchAyatiLeaderboard();
-  const updates = rows
-    .map((row) => ({
-      ayati_sync_id: extractAyatiId(row),
-      ayati_vote_count: extractAyatiCount(row),
-    }))
-    .filter((row) => row.ayati_sync_id && row.ayati_vote_count !== null);
-  const syncedAt = new Date().toISOString();
-  let synced = 0;
+  const [source, existingCategoriesResult, existingNomineesResult] =
+    await Promise.all([
+      fetchCliqVotesPayload(),
+      supabase
+        .from("panache_dor_award_categories")
+        .select(CATEGORY_COLUMNS)
+        .order("sort_order", { ascending: true }),
+      supabase.from("panache_dor_award_nominees").select(NOMINEE_COLUMNS),
+    ]);
 
-  for (const update of updates) {
-    const { data, error } = await supabase
-      .from("panache_dor_award_nominees")
-      .update({
-        ayati_vote_count: update.ayati_vote_count,
+  if (existingCategoriesResult.error) {
+    throw existingCategoriesResult.error;
+  }
+  if (existingNomineesResult.error) {
+    throw existingNomineesResult.error;
+  }
+
+  const localCategories = existingCategoriesResult.data || [];
+  const localNominees = [...(existingNomineesResult.data || [])];
+  const categoriesByKey = new Map(
+    localCategories.map((category) => [
+      normalizeCategoryLookup(category.name),
+      category,
+    ])
+  );
+  const cliqCategoriesById = new Map(
+    source.categories.map((category) => [category.id, category])
+  );
+  const syncedAt = new Date().toISOString();
+  const matchedLocalIds = new Set();
+  let synced = 0;
+  let created = 0;
+  let skipped = 0;
+
+  for (const artist of source.artists) {
+    const artistCategories = Array.isArray(artist.categories)
+      ? artist.categories
+      : [];
+
+    for (const artistCategory of artistCategories) {
+      const cliqCategory =
+        cliqCategoriesById.get(artistCategory.id) || artistCategory;
+      const category = categoriesByKey.get(
+        normalizeCategoryLookup(cliqCategory.name || artistCategory.name)
+      );
+
+      if (!category) {
+        skipped += 1;
+        continue;
+      }
+
+      const voteUrl = buildCliqVotesVoteUrl(cliqCategory.id, artist.id);
+      const voteCount = normalizeInteger(artist.totalVotes, 0);
+      const photoUrl = toAbsoluteCliqVotesUrl(artist.photoUrl);
+      const existing = findMatchingNominee(localNominees, category.id, artist.name);
+      const payload = {
+        category_id: category.id,
+        name: normalizeText(artist.name),
+        organization: null,
+        bio: normalizeText(artist.bio),
+        photo_url: existing?.photo_url || photoUrl,
+        status: "active",
+        sort_order: normalizeInteger(existing?.sort_order, 0),
+        ayati_vote_url: voteUrl,
+        ayati_sync_id: normalizeText(artist.id),
+        ayati_vote_count: voteCount,
         ayati_last_synced_at: syncedAt,
         updated_at: syncedAt,
-      })
-      .eq("ayati_sync_id", update.ayati_sync_id)
-      .select("id");
+      };
 
-    if (error) {
-      throw error;
+      if (existing) {
+        const { error } = await supabase
+          .from("panache_dor_award_nominees")
+          .update(payload)
+          .eq("id", existing.id);
+
+        if (error) {
+          throw error;
+        }
+
+        Object.assign(existing, payload);
+        matchedLocalIds.add(existing.id);
+        synced += 1;
+      } else {
+        const { data, error } = await supabase
+          .from("panache_dor_award_nominees")
+          .insert({
+            ...payload,
+            slug: buildUniqueNomineeSlug(artist.name, category),
+            created_at: syncedAt,
+          })
+          .select(NOMINEE_COLUMNS)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          localNominees.push(data);
+          matchedLocalIds.add(data.id);
+        }
+        created += 1;
+        synced += 1;
+      }
     }
+  }
 
-    synced += data?.length || 0;
+  const unmatchedArchiveKeys = new Set(["braidwithpetra"]);
+  let archived = 0;
+  for (const nominee of localNominees) {
+    if (
+      !matchedLocalIds.has(nominee.id) &&
+      unmatchedArchiveKeys.has(normalizeNomineeLookup(nominee.name)) &&
+      nominee.status !== "archived"
+    ) {
+      const { error } = await supabase
+        .from("panache_dor_award_nominees")
+        .update({
+          status: "archived",
+          updated_at: syncedAt,
+        })
+        .eq("id", nominee.id);
+
+      if (error) {
+        throw error;
+      }
+      archived += 1;
+    }
   }
 
   return {
     configured: true,
+    provider: PANACHE_DOR_VOTE_PROVIDER,
     synced,
-    skipped: Math.max(0, rows.length - updates.length),
-    source_rows: rows.length,
+    created,
+    archived,
+    skipped,
+    source_rows: source.artists.length,
+    source_nominee_category_rows: source.artists.reduce(
+      (count, artist) =>
+        count + (Array.isArray(artist.categories) ? artist.categories.length : 0),
+      0
+    ),
     synced_at: syncedAt,
-    message: `${synced} nominee count${synced === 1 ? "" : "s"} synced from Ayati.`,
+    message: `${synced} nominee-category row${synced === 1 ? "" : "s"} synced from ${VOTE_PROVIDER_NAME}.`,
   };
 };
 
@@ -787,8 +976,8 @@ const handlePost = async (req, res, supabase) => {
     return;
   }
 
-  if (action === "syncAyatiCounts") {
-    const syncSummary = await syncAyatiCounts(supabase);
+  if (action === "syncAyatiCounts" || action === "syncCliqVotesCounts") {
+    const syncSummary = await syncCliqVotesCounts(supabase);
     const voting = await fetchVotingPayload(supabase, true);
     sendJson(res, 200, { syncSummary, voting });
     return;

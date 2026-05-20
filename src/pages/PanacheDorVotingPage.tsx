@@ -45,10 +45,17 @@ const matchesSearch = (nominee: NomineeWithCategory, query: string) => {
   return haystack.includes(query.trim().toLowerCase());
 };
 
+const getVoteUrl = (nominee: NomineeWithCategory) =>
+  nominee.vote_url || nominee.ayati_vote_url;
+
+const getVoteCount = (nominee: NomineeWithCategory) =>
+  nominee.vote_count ?? nominee.ayati_vote_count;
+
 const PanacheDorVotingPage = () => {
   const { data: voting, isLoading, error, refetch } = usePanacheDorVoting();
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const voteProviderName = voting?.vote_provider_name || "CliqVotes";
 
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const nominees = useMemo(() => flattenNominees(categories), [categories]);
@@ -76,7 +83,7 @@ const PanacheDorVotingPage = () => {
         <section className="mx-auto grid max-w-7xl gap-10 px-6 md:px-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-center">
           <div>
             <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-              Ayati-powered voting
+              CliqVotes-powered voting
             </p>
             <h1 className="mt-4 font-sans text-[clamp(3.2rem,7vw,6rem)] font-semibold leading-[0.86] tracking-[-0.08em] text-[#171411]">
               Panache D&apos;or
@@ -84,7 +91,7 @@ const PanacheDorVotingPage = () => {
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
               Browse the official nominee directory. Each vote button opens the
-              nominee&apos;s Ayati payment link so Ayati remains the source of truth
+              nominee&apos;s CliqVotes payment link so CliqVotes remains the source of truth
               for paid votes.
             </p>
 
@@ -120,8 +127,8 @@ const PanacheDorVotingPage = () => {
                 Official nominee directory
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
-                Vote payments happen on Ayati. This site only organizes nominees
-                and links voters to the right page.
+                Vote payments happen on CliqVotes. This site only organizes nominees
+                and links voters to the right CliqVotes page.
               </p>
             </div>
           </div>
@@ -136,7 +143,7 @@ const PanacheDorVotingPage = () => {
                 </p>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/62">
                   Search by name, brand, or category. Vote totals stay hidden
-                  unless official Ayati sync is connected.
+                  unless official CliqVotes sync is connected.
                 </p>
               </div>
               <div className="grid gap-3 md:grid-cols-[1fr_auto]">
@@ -257,7 +264,7 @@ const PanacheDorVotingPage = () => {
                     ) : null}
                     {voting?.counts_available ? (
                       <p className="mt-4 font-sans text-sm font-semibold text-[#171411]">
-                        {nominee.ayati_vote_count.toLocaleString()} official votes
+                        {getVoteCount(nominee).toLocaleString()} official votes
                       </p>
                     ) : null}
                     <div className="mt-5 flex flex-wrap gap-2">
@@ -270,17 +277,17 @@ const PanacheDorVotingPage = () => {
                           View profile
                         </Link>
                       </Button>
-                      {nominee.ayati_vote_url ? (
+                      {getVoteUrl(nominee) ? (
                         <Button
                           asChild
                           className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
                         >
                           <a
-                            href={nominee.ayati_vote_url}
+                            href={getVoteUrl(nominee) || undefined}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            Vote on Ayati
+                            Vote on {voteProviderName}
                             <ExternalLink className="ml-2 h-4 w-4" />
                           </a>
                         </Button>

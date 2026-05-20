@@ -15,9 +15,16 @@ type NomineeWithCategory = PanacheDorAwardNominee & {
   category: PanacheDorAwardCategory;
 };
 
+const getVoteUrl = (nominee: NomineeWithCategory) =>
+  nominee.vote_url || nominee.ayati_vote_url;
+
+const getVoteCount = (nominee: NomineeWithCategory) =>
+  nominee.vote_count ?? nominee.ayati_vote_count;
+
 const PanacheDorNomineePage = () => {
   const { slug } = useParams();
   const { data: voting, isLoading, error } = usePanacheDorVoting();
+  const voteProviderName = voting?.vote_provider_name || "CliqVotes";
 
   const nominees = useMemo(
     () =>
@@ -105,7 +112,7 @@ const PanacheDorNomineePage = () => {
                   ) : (
                     <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/68">
                       This nominee is listed for Panache D&apos;or voting. Use the
-                      Ayati link to support them officially.
+                      CliqVotes link to support them officially.
                     </p>
                   )}
 
@@ -115,7 +122,7 @@ const PanacheDorNomineePage = () => {
                         Vote source
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
-                        Ayati payment link
+                        {voteProviderName} payment link
                       </p>
                     </div>
                     <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
@@ -124,24 +131,24 @@ const PanacheDorNomineePage = () => {
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
                         {voting?.counts_available
-                          ? `${nominee.ayati_vote_count.toLocaleString()} official votes`
-                          : "Hidden until official Ayati sync is connected"}
+                          ? `${getVoteCount(nominee).toLocaleString()} official votes`
+                          : "Hidden until official CliqVotes sync is connected"}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                    {nominee.ayati_vote_url ? (
+                    {getVoteUrl(nominee) ? (
                       <Button
                         asChild
                         className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
                       >
                         <a
-                          href={nominee.ayati_vote_url}
+                          href={getVoteUrl(nominee) || undefined}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          Vote on Ayati
+                          Vote on {voteProviderName}
                           <ExternalLink className="ml-2 h-4 w-4" />
                         </a>
                       </Button>

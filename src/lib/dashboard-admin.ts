@@ -85,11 +85,15 @@ export type PanacheDorCsvImportSummary = {
   }>;
 };
 
-export type PanacheDorAyatiSyncSummary = {
+export type PanacheDorVoteProviderSyncSummary = {
   configured: boolean;
+  provider?: string;
   synced: number;
+  created?: number;
+  archived?: number;
   skipped?: number;
   source_rows?: number;
+  source_nominee_category_rows?: number;
   synced_at?: string;
   message: string;
 };
@@ -110,7 +114,7 @@ const readResponsePayload = async (response: Response) => {
         photo_url?: string;
         path?: string;
         importSummary?: PanacheDorCsvImportSummary;
-        syncSummary?: PanacheDorAyatiSyncSummary;
+        syncSummary?: PanacheDorVoteProviderSyncSummary;
       }
     | null;
 };
@@ -438,8 +442,10 @@ export const importPanacheDorNomineesCsv = async (
   });
 };
 
-export const syncPanacheDorAyatiCounts = async (accessKey: string) => {
+export const syncPanacheDorCliqVotesCounts = async (accessKey: string) => {
   return mutatePanacheDorVotingDashboard(accessKey, {
-    action: "syncAyatiCounts",
+    action: "syncCliqVotesCounts",
   });
 };
+
+export const syncPanacheDorAyatiCounts = syncPanacheDorCliqVotesCounts;

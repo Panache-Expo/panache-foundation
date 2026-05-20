@@ -27,7 +27,7 @@ import {
   createPanacheDorVotingNominee,
   fetchPanacheDorVotingDashboard,
   importPanacheDorNomineesCsv,
-  syncPanacheDorAyatiCounts,
+  syncPanacheDorCliqVotesCounts,
   updatePanacheDorVotingCategory,
   updatePanacheDorVotingNominee,
   uploadPanacheDorVotingNomineePhoto,
@@ -86,8 +86,8 @@ const nomineePhotoTypes = new Set([
 ]);
 
 const csvTemplate =
-  "category,name,organization,bio,photo_url,ayati_vote_url,ayati_sync_id,status,sort_order\n" +
-  "Makeup Artist of the Year,Example Nominee,Example Studio,Short bio,https://example.com/photo.jpg,https://ayati.me/example,example-id,active,10";
+  "category,name,organization,bio,photo_url,vote_url,vote_provider_sync_id,status,sort_order\n" +
+  "Makeup Artist of the Year,Example Nominee,Example Studio,Short bio,https://example.com/photo.jpg,https://cliqvotes.com/panache-dor-awards/category/category-id?artist=artist-id,artist-id,active,10";
 
 const emptyCategoryDraft = (): CategoryDraft => ({
   slug: "",
@@ -184,9 +184,10 @@ export const PanacheDorVotingDashboard = ({
   const [isSavingNominee, setIsSavingNominee] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isImportingCsv, setIsImportingCsv] = useState(false);
-  const [isSyncingAyati, setIsSyncingAyati] = useState(false);
+  const [isSyncingCliqVotes, setIsSyncingCliqVotes] = useState(false);
   const [countsAvailable, setCountsAvailable] = useState(false);
-  const [ayatiSyncConfigured, setAyatiSyncConfigured] = useState(false);
+  const [voteProviderSyncConfigured, setVoteProviderSyncConfigured] =
+    useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
   const selectedCategory = categories.find(
@@ -209,7 +210,9 @@ export const PanacheDorVotingDashboard = ({
     const linkedNominees = categories.reduce(
       (sum, category) =>
         sum +
-        category.nominees.filter((nominee) => Boolean(nominee.ayati_vote_url))
+        category.nominees.filter((nominee) =>
+          Boolean(nominee.vote_url || nominee.ayati_vote_url)
+        )
           .length,
       0
     );
@@ -232,7 +235,9 @@ export const PanacheDorVotingDashboard = ({
       const voting = await fetchPanacheDorVotingDashboard(accessKey);
       setCategories(voting.categories);
       setCountsAvailable(voting.counts_available);
-      setAyatiSyncConfigured(voting.ayati_sync_configured);
+      setVoteProviderSyncConfigured(
+        Boolean(voting.vote_provider_sync_configured ?? voting.ayati_sync_configured)
+      );
       setLastSyncedAt(voting.last_synced_at || null);
       setSelectedCategoryId((currentCategoryId) => {
         const nextCategory =
@@ -285,8 +290,21 @@ export const PanacheDorVotingDashboard = ({
     setNomineeDraft(nomineeToDraft(selectedNominee));
   }, [selectedNominee, selectedCategoryId]);
 
-  const refreshFromVoting = (voting: { categories: PanacheDorAwardCategory[] }) => {
+  const refreshFromVoting = (voting: {
+    categories: PanacheDorAwardCategory[];
+    counts_available?: boolean;
+    vote_provider_sync_configured?: boolean;
+    ayati_sync_configured?: boolean;
+    last_synced_at?: string | null;
+  }) => {
     setCategories(voting.categories);
+    if (typeof voting.counts_available === "boolean") {
+      setCountsAvailable(voting.counts_available);
+    }
+    setVoteProviderSyncConfigured(
+      Boolean(voting.vote_provider_sync_configured ?? voting.ayati_sync_configured)
+    );
+    setLastSyncedAt(voting.last_synced_at || null);
   };
 
   const handleCreateCategory = async () => {
@@ -531,30 +549,32 @@ export const PanacheDorVotingDashboard = ({
     }
   };
 
-  const handleSyncAyati = async () => {
-    setIsSyncingAyati(true);
+  const handleSyncCliqVotes = async () => {
+    setIsSyncingCliqVotes(true);
     try {
-      const result = await syncPanacheDorAyatiCounts(accessKey);
+      const result = await syncPanacheDorCliqVotesCounts(accessKey);
       refreshFromVoting(result.voting);
       if (result.syncSummary?.synced_at) {
         setLastSyncedAt(result.syncSummary.synced_at);
         setCountsAvailable(true);
       }
       toast({
-        title: result.syncSummary?.configured ? "Ayati sync complete" : "Ayati sync not configured",
+        title: result.syncSummary?.configured
+          ? "CliqVotes sync complete"
+          : "CliqVotes sync not configured",
         description:
           result.syncSummary?.message ||
-          "No Ayati count source is configured yet.",
+          "No CliqVotes count source is configured yet.",
         variant: result.syncSummary?.configured ? "default" : "destructive",
       });
     } catch (error) {
       toast({
-        title: "Could not sync Ayati counts",
+        title: "Could not sync CliqVotes counts",
         description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsSyncingAyati(false);
+      setIsSyncingCliqVotes(false);
     }
   };
 
@@ -566,23 +586,23 @@ export const PanacheDorVotingDashboard = ({
             Panache D&apos;or Voting
           </CardTitle>
           <CardDescription>
-            Manage nominee pages and Ayati voting links. Counts are official only
-            after an Ayati sync source is configured.
+            Manage nominee pages and CliqVotes voting links. Counts are official only
+            after CliqVotes sync completes.
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
-            onClick={() => void handleSyncAyati()}
-            disabled={isSyncingAyati}
+            onClick={() => void handleSyncCliqVotes()}
+            disabled={isSyncingCliqVotes}
           >
-            {isSyncingAyati ? (
+            {isSyncingCliqVotes ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <BarChart3 className="mr-2 h-4 w-4" />
             )}
-            Sync Ayati counts
+            Sync CliqVotes counts
           </Button>
           <Button
             type="button"
@@ -616,7 +636,7 @@ export const PanacheDorVotingDashboard = ({
             </p>
           </div>
           <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
-            <p className="text-sm text-muted-foreground">Ayati links</p>
+            <p className="text-sm text-muted-foreground">CliqVotes links</p>
             <p className="mt-2 text-2xl font-semibold text-primary">
               {totals.linkedNominees}
             </p>
@@ -630,9 +650,9 @@ export const PanacheDorVotingDashboard = ({
               <p className="text-sm text-muted-foreground">
                 {countsAvailable
                   ? `Counts are available. Last sync: ${lastSyncedAt || "unknown"}`
-                  : ayatiSyncConfigured
-                  ? "Ayati source is configured, but no counts have synced yet."
-                  : "Ayati sync is not configured, so public vote counts stay hidden."}
+                  : voteProviderSyncConfigured
+                  ? "CliqVotes source is configured, but no counts have synced yet."
+                  : "CliqVotes sync is not configured, so public vote counts stay hidden."}
               </p>
             </div>
             <Badge variant={countsAvailable ? "default" : "outline"}>
@@ -803,7 +823,7 @@ export const PanacheDorVotingDashboard = ({
               </div>
               <p className="text-sm text-muted-foreground">
                 Use columns like category, name, organization, bio, photo_url,
-                ayati_vote_url is optional, so you can publish nominees first
+                vote_url is optional, so you can publish nominees first
                 and attach vote links later.
               </p>
               <div className="mt-4 space-y-3">
@@ -854,7 +874,7 @@ export const PanacheDorVotingDashboard = ({
               <div className="mb-5">
                 <h3 className="font-display text-xl text-primary">Nominees</h3>
                 <p className="text-sm text-muted-foreground">
-                  Ayati links are optional while you prepare the directory. Public
+                  CliqVotes links are optional while you prepare the directory. Public
                   pages show “vote link coming soon” until a link is added.
                 </p>
               </div>
@@ -897,14 +917,14 @@ export const PanacheDorVotingDashboard = ({
                             <Badge variant={statusBadgeVariant(nominee.status)}>
                               {nominee.status}
                             </Badge>
-                            {nominee.ayati_vote_url ? (
-                              <Badge variant="outline">Ayati linked</Badge>
+                            {nominee.vote_url || nominee.ayati_vote_url ? (
+                              <Badge variant="outline">CliqVotes linked</Badge>
                             ) : (
                               <Badge variant="secondary">Link pending</Badge>
                             )}
                             {countsAvailable ? (
                               <span className="text-sm text-muted-foreground">
-                                {nominee.ayati_vote_count} votes
+                                {nominee.vote_count ?? nominee.ayati_vote_count} votes
                               </span>
                             ) : null}
                           </div>
@@ -1028,7 +1048,7 @@ export const PanacheDorVotingDashboard = ({
                     </div>
                   </div>
                   <Input
-                    placeholder="Ayati vote/payment link"
+                    placeholder="CliqVotes vote/payment link"
                     value={nomineeDraft.ayati_vote_url}
                     onChange={(event) =>
                       setNomineeDraft((current) => ({
@@ -1038,7 +1058,7 @@ export const PanacheDorVotingDashboard = ({
                     }
                   />
                   <Input
-                    placeholder="Ayati sync id, optional"
+                    placeholder="CliqVotes artist id, optional"
                     value={nomineeDraft.ayati_sync_id}
                     onChange={(event) =>
                       setNomineeDraft((current) => ({
@@ -1101,14 +1121,18 @@ export const PanacheDorVotingDashboard = ({
                     >
                       Archive
                     </Button>
-                    {selectedNominee.ayati_vote_url ? (
+                    {selectedNominee.vote_url || selectedNominee.ayati_vote_url ? (
                       <Button asChild type="button" variant="outline">
                         <a
-                          href={selectedNominee.ayati_vote_url}
+                          href={
+                            selectedNominee.vote_url ||
+                            selectedNominee.ayati_vote_url ||
+                            undefined
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          Open Ayati
+                          Open CliqVotes
                           <ExternalLink className="ml-2 h-4 w-4" />
                         </a>
                       </Button>
@@ -1201,7 +1225,7 @@ export const PanacheDorVotingDashboard = ({
                   }}
                 />
                 <Input
-                  placeholder="Ayati vote/payment link"
+                  placeholder="CliqVotes vote/payment link"
                   value={newNomineeDraft.ayati_vote_url}
                   onChange={(event) =>
                     setNewNomineeDraft((current) => ({
@@ -1211,7 +1235,7 @@ export const PanacheDorVotingDashboard = ({
                   }
                 />
                 <Input
-                  placeholder="Ayati sync id, optional"
+                  placeholder="CliqVotes artist id, optional"
                   value={newNomineeDraft.ayati_sync_id}
                   onChange={(event) =>
                     setNewNomineeDraft((current) => ({

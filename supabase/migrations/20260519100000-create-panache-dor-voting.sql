@@ -88,24 +88,22 @@ USING (bucket_id = 'panache-dor-nominee-photos');
 
 WITH seeded_categories(slug, name, sort_order) AS (
   VALUES
-    ('barber-of-the-year', 'Barber of the Year', 10),
-    ('hair-and-wig-specialist-of-the-year', 'Hair and Wig Specialist of the Year', 20),
-    ('braider-of-the-year', 'Braider of the Year', 30),
-    ('makeup-artist-of-the-year', 'Makeup Artist of the Year (Including SFX)', 40),
-    ('nail-artist-of-the-year', 'Nail Artist of the Year', 50),
-    ('lash-artist-of-the-year', 'Lash Artist of the Year', 60),
-    ('fashion-designer-of-the-year', 'Fashion Designer of the Year', 70),
-    ('emerging-fashion-designer-of-the-year', 'Emerging Fashion Designer of the Year', 80),
-    ('male-model-of-the-year', 'Male Model of the Year', 90),
-    ('female-model-of-the-year', 'Female Model of the Year', 100),
-    ('emerging-model-of-the-year', 'Emerging Model of the Year', 110),
-    ('fashion-stylist-of-the-year', 'Fashion Stylist of the Year', 120),
-    ('beauty-educator-of-the-year', 'Beauty Educator of the Year', 130),
-    ('content-creator-of-the-year', 'Content Creator of the Year', 140),
-    ('beauty-brand-of-the-year', 'Beauty Brand of the Year', 150),
-    ('creative-entrepreneur-of-the-year', 'Creative Entrepreneur of the Year', 160),
-    ('emerging-creative-talent-of-the-year', 'Emerging Creative Talent of the Year', 170),
-    ('creative-photographer-of-the-year', 'Creative Photographer of the Year', 180)
+    ('fashion-designer-of-the-year', 'Fashion Designer of the Year', 10),
+    ('emerging-fashion-designer-of-the-year', 'Emerging Fashion Designer of the Year', 20),
+    ('creative-photographer-of-the-year', 'Creative Photographer of the Year', 30),
+    ('content-creator-of-the-year', 'Content Creator of the Year', 40),
+    ('makeup-artist-of-the-year', 'Makeup Artist of the Year', 50),
+    ('lash-artist-of-the-year', 'Lash and Brow Artist of the Year', 60),
+    ('hair-and-wig-specialist-of-the-year', 'Hair and Wig Installation Specialist of the Year', 70),
+    ('braider-of-the-year', 'Braider of the Year', 80),
+    ('nail-artist-of-the-year', 'Nail Artist of the Year', 90),
+    ('barber-of-the-year', 'Barber of the Year', 100),
+    ('creative-entrepreneur-of-the-year', 'Creative Entrepreneur of the Year', 110),
+    ('emerging-creative-talent-of-the-year', 'Emerging Creative Entrepreneur of the Year', 120),
+    ('beauty-brand-of-the-year', 'Beauty Brand of the Year', 130),
+    ('beauty-educator-of-the-year', 'Beauty Trainer of the Year', 140),
+    ('model-of-the-year', 'Model of the Year', 150),
+    ('fashion-stylist-of-the-year', 'Fashion Stylist of the Year', 160)
 )
 INSERT INTO public.panache_dor_award_categories (slug, name, sort_order, status)
 SELECT slug, name, sort_order, 'active'
@@ -114,4 +112,22 @@ ON CONFLICT (slug) DO UPDATE
 SET
   name = EXCLUDED.name,
   sort_order = EXCLUDED.sort_order,
+  status = EXCLUDED.status,
   updated_at = now();
+
+UPDATE public.panache_dor_award_categories
+SET status = 'archived', updated_at = now()
+WHERE slug IN (
+  'male-model-of-the-year',
+  'female-model-of-the-year',
+  'emerging-model-of-the-year'
+);
+
+UPDATE public.panache_dor_award_categories
+SET status = 'draft', updated_at = now()
+WHERE slug = 'fashion-stylist-of-the-year'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.panache_dor_award_nominees n
+    WHERE n.category_id = panache_dor_award_categories.id
+  );

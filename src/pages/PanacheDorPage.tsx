@@ -106,7 +106,7 @@ const PanacheDorPage = () => {
         panelItems={[
           { label: "Flagship crown", value: "Miss Panache D'or" },
           { label: "Focus", value: "Beauty, fashion, craft" },
-          { label: "Voting", value: "Ayati-powered links" },
+          { label: "Voting", value: "CliqVotes-powered links" },
         ]}
       />
 
@@ -194,7 +194,7 @@ const PanacheDorPage = () => {
                   Next action
                 </p>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                  Browse the nominee directory and use each nominee&apos;s Ayati link
+                  Browse the nominee directory and use each nominee&apos;s CliqVotes link
                   to vote officially.
                 </p>
               </div>
@@ -353,8 +353,8 @@ const PanacheDorPage = () => {
                 <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/68">
                   Public nominations are closed for this Panache D&apos;or cycle.
                   The nominee directory now sends each supporter to the correct
-                  Ayati vote/payment link, while official counts remain hidden
-                  unless Panache connects an official Ayati data source.
+                  CliqVotes vote/payment link, while official counts remain hidden
+                  unless Panache connects an official CliqVotes data source.
                 </p>
 
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
