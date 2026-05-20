@@ -23,6 +23,10 @@ type RankedNominee = PanacheDorAwardNominee & {
   category: PanacheDorAwardCategory;
 };
 
+type RankedCategory = PanacheDorAwardCategory & {
+  rankedNominees: RankedNominee[];
+};
+
 const getVoteCount = (nominee: RankedNominee) =>
   nominee.vote_count ?? nominee.ayati_vote_count;
 
@@ -34,6 +38,21 @@ const rankNominees = (categories: PanacheDorAwardCategory[]) =>
         category,
     }))
     )
+    .sort((left, right) => {
+      if (getVoteCount(right) !== getVoteCount(left)) {
+        return getVoteCount(right) - getVoteCount(left);
+      }
+      return left.name.localeCompare(right.name);
+    });
+
+const rankNomineesInCategory = (
+  category: PanacheDorAwardCategory
+): RankedNominee[] =>
+  category.nominees
+    .map((nominee) => ({
+      ...nominee,
+      category,
+    }))
     .sort((left, right) => {
       if (getVoteCount(right) !== getVoteCount(left)) {
         return getVoteCount(right) - getVoteCount(left);
@@ -106,6 +125,16 @@ const PanacheDorLeaderboardPage = () => {
   const { data: voting, isLoading, error, refetch } = usePanacheDorVoting();
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const rankedNominees = useMemo(() => rankNominees(categories), [categories]);
+  const rankedCategories = useMemo<RankedCategory[]>(
+    () =>
+      categories
+        .map((category) => ({
+          ...category,
+          rankedNominees: rankNomineesInCategory(category),
+        }))
+        .filter((category) => category.rankedNominees.length > 0),
+    [categories]
+  );
   const showCounts = Boolean(voting?.counts_available);
 
   return (
@@ -211,16 +240,61 @@ const PanacheDorLeaderboardPage = () => {
               </Button>
             </div>
           ) : rankedNominees.length ? (
-            <div className="mt-8 space-y-3">
-              {rankedNominees.map((nominee, index) => (
-                <NomineeLeaderboardRow
-                  key={nominee.id}
-                  nominee={nominee}
-                  rank={index + 1}
-                  showCounts={showCounts}
-                />
-              ))}
-            </div>
+            <>
+              <div className="mt-8 space-y-3">
+                {rankedNominees.map((nominee, index) => (
+                  <NomineeLeaderboardRow
+                    key={nominee.id}
+                    nominee={nominee}
+                    rank={index + 1}
+                    showCounts={showCounts}
+                  />
+                ))}
+              </div>
+
+              <div className="mt-12">
+                <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                  Rankings by category
+                </p>
+                <h2 className="mt-3 font-sans text-[clamp(2.1rem,4vw,3.4rem)] font-semibold leading-[0.94] tracking-[-0.07em] text-[#171411]">
+                  Category leaderboards
+                </h2>
+                <div className="mt-6 space-y-6">
+                  {rankedCategories.map((category) => (
+                    <section
+                      key={category.id}
+                      className="rounded-[1.8rem] border border-black/8 bg-[#f8f2e8] p-4 md:p-5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h3 className="font-sans text-2xl font-semibold tracking-[-0.05em] text-[#171411]">
+                            {category.name}
+                          </h3>
+                          <p className="mt-1 font-sans text-sm text-[#171411]/58">
+                            Ranks restart inside this category.
+                          </p>
+                        </div>
+                        {showCounts ? (
+                          <Badge className="rounded-full bg-white px-4 py-2 text-[#171411] hover:bg-white">
+                            {(category.vote_count || 0).toLocaleString()} votes
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        {category.rankedNominees.map((nominee, index) => (
+                          <NomineeLeaderboardRow
+                            key={`${category.id}-${nominee.id}`}
+                            nominee={nominee}
+                            rank={index + 1}
+                            showCounts={showCounts}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </div>
+            </>
           ) : (
             <div className="mt-8 rounded-[2rem] border border-dashed border-black/12 bg-white px-6 py-10 text-center">
               <Trophy className="mx-auto h-10 w-10 text-[#171411]/32" />

@@ -983,6 +983,8 @@ const initializeCampayVote = async (req, supabase, body) => {
     description,
     externalReference: txRef,
     redirectUrl,
+    paymentOptions: CAMPAY_PAYMENT_OPTIONS,
+    payment_options: CAMPAY_PAYMENT_OPTIONS,
   };
 
   const { data: pendingPayment, error: insertError } = await supabase

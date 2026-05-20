@@ -32,6 +32,8 @@ type PaymentWidgetOptions = {
   currency: string;
   externalReference: string;
   redirectUrl: string;
+  paymentOptions?: string;
+  payment_options?: string;
 };
 
 declare global {
@@ -266,6 +268,8 @@ export const PanacheDorVoteForm = ({
         currency: result.payment.widget.currency,
         externalReference: result.payment.widget.externalReference,
         redirectUrl: result.payment.widget.redirectUrl,
+        paymentOptions: result.payment.widget.paymentOptions,
+        payment_options: result.payment.widget.payment_options,
       });
 
       requestAnimationFrame(() => {

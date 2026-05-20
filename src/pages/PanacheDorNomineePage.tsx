@@ -19,6 +19,16 @@ type NomineeWithCategory = PanacheDorAwardNominee & {
 const getVoteCount = (nominee: NomineeWithCategory) =>
   nominee.vote_count ?? nominee.ayati_vote_count;
 
+const compareNomineesByRank = (
+  left: NomineeWithCategory,
+  right: NomineeWithCategory
+) => {
+  if (getVoteCount(right) !== getVoteCount(left)) {
+    return getVoteCount(right) - getVoteCount(left);
+  }
+  return left.name.localeCompare(right.name);
+};
+
 const PanacheDorNomineePage = () => {
   const { slug } = useParams();
   const { data: voting, isLoading, error } = usePanacheDorVoting();
@@ -34,14 +44,29 @@ const PanacheDorNomineePage = () => {
     [voting?.categories]
   );
 
+  const rankedNominees = useMemo(
+    () => [...nominees].sort(compareNomineesByRank),
+    [nominees]
+  );
   const nominee = nominees.find((entry) => entry.slug === slug);
-  const relatedNominees = nominees
-    .filter(
-      (entry) =>
-        nominee &&
-        entry.category_id === nominee.category_id &&
-        entry.id !== nominee.id
-    )
+  const rankedCategoryNominees = useMemo(
+    () =>
+      nominee
+        ? nominees
+            .filter((entry) => entry.category_id === nominee.category_id)
+            .sort(compareNomineesByRank)
+        : [],
+    [nominee, nominees]
+  );
+  const nomineeOverallRank = nominee
+    ? rankedNominees.findIndex((entry) => entry.id === nominee.id) + 1
+    : 0;
+  const nomineeCategoryRank = nominee
+    ? rankedCategoryNominees.findIndex((entry) => entry.id === nominee.id) + 1
+    : 0;
+  const showCounts = Boolean(voting?.counts_available);
+  const relatedNominees = rankedCategoryNominees
+    .filter((entry) => nominee && entry.id !== nominee.id)
     .slice(0, 3);
 
   return (
@@ -116,6 +141,26 @@ const PanacheDorNomineePage = () => {
                   <div className="mt-7 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
                       <p className="font-sans text-sm font-semibold text-[#171411]">
+                        Overall rank
+                      </p>
+                      <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
+                        {showCounts && nomineeOverallRank
+                          ? `#${nomineeOverallRank} of ${rankedNominees.length}`
+                          : "Rank appears after verified votes are available."}
+                      </p>
+                    </div>
+                    <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
+                      <p className="font-sans text-sm font-semibold text-[#171411]">
+                        Category rank
+                      </p>
+                      <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
+                        {showCounts && nomineeCategoryRank
+                          ? `#${nomineeCategoryRank} in ${nominee.category.name}`
+                          : "Category rank appears after verified votes are available."}
+                      </p>
+                    </div>
+                    <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
+                      <p className="font-sans text-sm font-semibold text-[#171411]">
                         Vote source
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
@@ -127,7 +172,9 @@ const PanacheDorNomineePage = () => {
                         Vote count
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
-                        {getVoteCount(nominee).toLocaleString()} verified votes
+                        {showCounts
+                          ? `${getVoteCount(nominee).toLocaleString()} verified votes`
+                          : "Verified votes are not public yet."}
                       </p>
                     </div>
                   </div>
@@ -161,22 +208,41 @@ const PanacheDorNomineePage = () => {
                     More in {nominee.category.name}
                   </h2>
                   <div className="mt-5 grid gap-4 md:grid-cols-3">
-                    {relatedNominees.map((entry: NomineeWithCategory) => (
+                    {relatedNominees.map((entry: NomineeWithCategory) => {
+                      const categoryRank =
+                        rankedCategoryNominees.findIndex(
+                          (rankedEntry) => rankedEntry.id === entry.id
+                        ) + 1;
+
+                      return (
                       <Link
                         key={entry.id}
                         to={`/panache-expo/panache-dor/nominees/${entry.slug}`}
                         className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] p-4 transition-colors hover:bg-white"
                       >
-                        <p className="font-sans text-base font-semibold text-[#171411]">
-                          {entry.name}
-                        </p>
+                        <div className="flex items-start gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#171411] font-sans text-xs font-semibold text-white">
+                            #{categoryRank}
+                          </span>
+                          <div>
+                            <p className="font-sans text-base font-semibold text-[#171411]">
+                              {entry.name}
+                            </p>
+                            {showCounts ? (
+                              <p className="mt-1 font-sans text-sm text-[#171411]/60">
+                                {getVoteCount(entry).toLocaleString()} verified votes
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
                         {entry.organization ? (
                           <p className="mt-1 font-sans text-sm text-[#171411]/60">
                             {entry.organization}
                           </p>
                         ) : null}
                       </Link>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               ) : null}

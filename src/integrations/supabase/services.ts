@@ -176,6 +176,8 @@ export type PanacheDorVoteInitializeResponse = {
       description: string;
       externalReference: string;
       redirectUrl: string;
+      paymentOptions?: string;
+      payment_options?: string;
     };
   };
 };
