@@ -48,6 +48,9 @@ declare global {
 const PAYMENT_WIDGET_APP_ID =
   import.meta.env.VITE_PANACHE_DOR_CAMPAY_APP_ID || "";
 const PAYMENT_WIDGET_SCRIPT_ID = "panache-dor-secure-payment-widget";
+const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029Vb8Cg42ATRSgvXAcXE3L";
+const WHATSAPP_CHANNEL_TEXT =
+  "Follow the Panache D'Or Fan official Channel channel on WhatsApp";
 
 const extractPaymentReference = (data?: PaymentWidgetCallback) =>
   String(
@@ -283,101 +286,163 @@ export const PanacheDorVoteForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-[1.6rem] border border-black/8 bg-[#f8f2e8] p-5"
+      className="overflow-hidden rounded-[2rem] border border-black/8 bg-white shadow-[0_24px_64px_rgba(17,16,14,0.10)]"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="font-sans text-sm font-semibold text-[#171411]">
-            Vote for {nominee.name}
+      <div className="relative bg-[#171411] px-5 py-6 text-white md:px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(244,233,63,0.24),transparent_28%),radial-gradient(circle_at_88%_18%,rgba(130,65,182,0.42),transparent_34%)]" />
+        <div className="relative">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Badge className="rounded-full bg-[#f4e93f] px-3 py-1 text-[#171411] hover:bg-[#f4e93f]">
+              Secure verified payment
+            </Badge>
+            <Badge className="rounded-full border border-white/18 bg-white/10 px-3 py-1 text-white hover:bg-white/10">
+              {amountPerVote.toLocaleString()} {currency} / vote
+            </Badge>
+          </div>
+
+          <div className="mt-5">
+            <p className="font-sans text-sm text-white/62">Vote for</p>
+            <h3 className="mt-1 font-sans text-[1.75rem] font-semibold leading-[0.95] tracking-[-0.06em] text-white">
+              {nominee.name}
+            </h3>
+            <p className="mt-2 font-sans text-sm font-medium text-[#f4e93f]">
+              {category.name}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-5 bg-[#f8f2e8] p-5 md:p-6">
+        <div className="rounded-[1.35rem] border border-black/8 bg-white/82 px-4 py-4">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#8241B6]/10 text-[#8241B6]">
+              <CreditCard className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="font-sans text-sm font-semibold text-[#171411]">
+                Your votes are counted only after successful payment verification.
+              </p>
+              <p className="mt-1 font-sans text-xs leading-relaxed text-[#171411]/56">
+                Choose your vote quantity, open the secure payment widget, then wait for confirmation before leaving the page.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4">
+          <div>
+            <Label
+              htmlFor={`panacheDorVotes-${nominee.id}`}
+              className="font-sans text-sm font-semibold text-[#171411]"
+            >
+              Number of votes
+            </Label>
+            <Input
+              id={`panacheDorVotes-${nominee.id}`}
+              type="number"
+              min={1}
+              step={1}
+              value={voteCount}
+              onChange={(event) => setVoteCount(event.target.value)}
+              className="mt-2 h-13 rounded-[1.1rem] border-black/10 bg-white px-4 font-sans text-base font-semibold text-[#171411] shadow-sm"
+            />
+          </div>
+          <div>
+            <Label
+              htmlFor={`panacheDorEmail-${nominee.id}`}
+              className="font-sans text-sm font-semibold text-[#171411]"
+            >
+              Email for receipt, optional
+            </Label>
+            <Input
+              id={`panacheDorEmail-${nominee.id}`}
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-2 h-13 rounded-[1.1rem] border-black/10 bg-white px-4 font-sans text-base text-[#171411] shadow-sm"
+              placeholder="you@example.com"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-3 rounded-[1.45rem] border border-black/8 bg-white p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div>
+            <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-[#8241B6]">
+              Total due
+            </p>
+            <p className="mt-1 font-sans text-3xl font-semibold tracking-[-0.08em] text-[#171411]">
+              {totalAmount.toLocaleString()} {currency}
+            </p>
+          </div>
+          <Button
+            type="submit"
+            disabled={isBusy || !paymentsConfigured}
+            className="h-13 rounded-full bg-[linear-gradient(135deg,#171411,#8241B6)] px-7 font-sans text-sm font-semibold text-white shadow-[0_14px_28px_rgba(23,20,17,0.20)] hover:opacity-95 disabled:opacity-50"
+          >
+            {isBusy ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <CreditCard className="mr-2 h-4 w-4" />
+            )}
+            {isVerifyingPayment
+              ? "Verifying..."
+              : isPreparingPayment
+                ? "Opening..."
+                : "Pay securely"}
+          </Button>
+        </div>
+
+        <button
+          id={payButtonId}
+          type="button"
+          className="hidden"
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+
+        {configurationMessage ? (
+          <p className="rounded-[1.2rem] border border-black/8 bg-white px-4 py-3 font-sans text-sm text-[#171411]/68">
+            {configurationMessage}
           </p>
-          <p className="mt-1 font-sans text-sm text-[#171411]/62">
-            {category.name}
+        ) : null}
+        {notice ? (
+          <p className="rounded-[1.2rem] border border-[#8241B6]/14 bg-white px-4 py-3 font-sans text-sm text-[#171411]/68">
+            {notice}
           </p>
-        </div>
-        <Badge className="rounded-full bg-white text-[#171411] hover:bg-white">
-          {amountPerVote.toLocaleString()} {currency} / vote
-        </Badge>
+        ) : null}
+        {verifiedMessage ? (
+          <div className="space-y-3 rounded-[1.55rem] border border-emerald-200 bg-emerald-50 p-4 font-sans text-sm text-emerald-800">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="font-semibold text-emerald-900">Votes confirmed</p>
+                <p className="mt-1 leading-relaxed">{verifiedMessage}</p>
+              </div>
+            </div>
+
+            <div className="rounded-[1.2rem] border border-emerald-200/80 bg-white px-4 py-4 text-[#171411]">
+              <p className="font-sans text-sm font-semibold leading-relaxed">
+                {WHATSAPP_CHANNEL_TEXT}
+              </p>
+              <a
+                href={WHATSAPP_CHANNEL_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex h-11 items-center justify-center rounded-full bg-[#171411] px-5 font-sans text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                Join WhatsApp Channel
+              </a>
+            </div>
+          </div>
+        ) : null}
+        {error ? (
+          <p className="rounded-[1.2rem] border border-destructive/15 bg-destructive/10 px-4 py-3 font-sans text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
       </div>
-
-      <div className="mt-5 grid gap-4">
-        <div>
-          <Label htmlFor={`panacheDorVotes-${nominee.id}`}>Number of votes</Label>
-          <Input
-            id={`panacheDorVotes-${nominee.id}`}
-            type="number"
-            min={1}
-            step={1}
-            value={voteCount}
-            onChange={(event) => setVoteCount(event.target.value)}
-            className="mt-2 h-12 rounded-full border-black/10 bg-white"
-          />
-        </div>
-        <div>
-          <Label htmlFor={`panacheDorEmail-${nominee.id}`}>
-            Email for receipt, optional
-          </Label>
-          <Input
-            id={`panacheDorEmail-${nominee.id}`}
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-2 h-12 rounded-full border-black/10 bg-white"
-            placeholder="you@example.com"
-          />
-        </div>
-      </div>
-
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-sans text-sm font-semibold text-[#171411]">
-          Total: {totalAmount.toLocaleString()} {currency}
-        </p>
-        <Button
-          type="submit"
-          disabled={isBusy || !paymentsConfigured}
-          className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
-        >
-          {isBusy ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <CreditCard className="mr-2 h-4 w-4" />
-          )}
-          {isVerifyingPayment
-            ? "Verifying..."
-            : isPreparingPayment
-              ? "Opening..."
-              : "Pay securely"}
-        </Button>
-      </div>
-
-      <button
-        id={payButtonId}
-        type="button"
-        className="hidden"
-        tabIndex={-1}
-        aria-hidden="true"
-      />
-
-      {configurationMessage ? (
-        <p className="mt-4 rounded-2xl bg-white px-4 py-3 font-sans text-sm text-[#171411]/68">
-          {configurationMessage}
-        </p>
-      ) : null}
-      {notice ? (
-        <p className="mt-4 rounded-2xl bg-white px-4 py-3 font-sans text-sm text-[#171411]/68">
-          {notice}
-        </p>
-      ) : null}
-      {verifiedMessage ? (
-        <p className="mt-4 flex items-start gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-sans text-sm text-emerald-700">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          {verifiedMessage}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="mt-4 rounded-2xl bg-destructive/10 px-4 py-3 font-sans text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
     </form>
   );
 };
