@@ -8,6 +8,9 @@ import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
+const PANACHE_DOR_WHATSAPP_CHANNEL_URL =
+  "https://whatsapp.com/channel/0029Vb8Cg42ATRSgvXAcXE3L";
+
 const PanacheDorPaymentVerifyPage = () => {
   const [searchParams] = useSearchParams();
   const [result, setResult] = useState<PanacheDorVoteVerifyResponse | null>(null);
@@ -122,6 +125,30 @@ const PanacheDorPaymentVerifyPage = () => {
                     </p>
                     <p>Reference: {result.receipt.reference || result.receipt.tx_ref}</p>
                   </div>
+                </div>
+              ) : null}
+
+              {isSuccess ? (
+                <div className="mx-auto mt-5 max-w-md rounded-[1.4rem] border border-[#8241B6]/16 bg-white p-5">
+                  <p className="font-sans text-sm font-semibold text-[#171411]">
+                    Stay close to Panache D&apos;or updates
+                  </p>
+                  <p className="mt-2 font-sans text-sm text-[#171411]/64">
+                    Join the official WhatsApp channel for award updates,
+                    announcements, and next steps.
+                  </p>
+                  <Button
+                    asChild
+                    className="mt-4 h-11 rounded-full bg-[#171411] px-6 text-white hover:bg-[#171411]/92"
+                  >
+                    <a
+                      href={PANACHE_DOR_WHATSAPP_CHANNEL_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Join WhatsApp Channel
+                    </a>
+                  </Button>
                 </div>
               ) : null}
             </>
