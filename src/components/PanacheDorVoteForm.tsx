@@ -48,6 +48,9 @@ declare global {
 const PAYMENT_WIDGET_APP_ID =
   import.meta.env.VITE_PANACHE_DOR_CAMPAY_APP_ID || "";
 const PAYMENT_WIDGET_SCRIPT_ID = "panache-dor-secure-payment-widget";
+const WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029Vb8Cg42ATRSgvXAcXE3L";
+const WHATSAPP_CHANNEL_TEXT =
+  "Follow the Panache D'Or Fan official Channel channel on WhatsApp";
 
 const extractPaymentReference = (data?: PaymentWidgetCallback) =>
   String(
@@ -368,10 +371,23 @@ export const PanacheDorVoteForm = ({
         </p>
       ) : null}
       {verifiedMessage ? (
-        <p className="mt-4 flex items-start gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-sans text-sm text-emerald-700">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          {verifiedMessage}
-        </p>
+        <>
+          <p className="mt-4 flex items-start gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-sans text-sm text-emerald-700">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            {verifiedMessage}
+          </p>
+          <div className="mt-3 rounded-2xl bg-white px-4 py-3 font-sans text-sm text-[#171411]/72">
+            <p>{WHATSAPP_CHANNEL_TEXT}</p>
+            <a
+              href={WHATSAPP_CHANNEL_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex h-10 items-center justify-center rounded-full bg-[#171411] px-5 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+            >
+              Join WhatsApp Channel
+            </a>
+          </div>
+        </>
       ) : null}
       {error ? (
         <p className="mt-4 rounded-2xl bg-destructive/10 px-4 py-3 font-sans text-sm text-destructive">
