@@ -81,3 +81,5 @@ LEFT JOIN public.panache_dor_nominee_vote_counts vc
   ON vc.nominee_id = n.id
 WHERE n.status = 'active'
   AND c.status = 'active';
+
+  
