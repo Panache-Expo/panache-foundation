@@ -28,6 +28,7 @@ import {
   createPanacheDorVotingNominee,
   fetchPanacheDorVotingDashboard,
   importPanacheDorNomineesCsv,
+  reconcilePanacheDorCampayHistory,
   updatePanacheDorVotingCategory,
   updatePanacheDorVotingNominee,
   uploadPanacheDorVotingNomineePhoto,
@@ -88,6 +89,8 @@ const nomineePhotoTypes = new Set([
 const csvTemplate =
   "category,name,organization,bio,photo_url,status,sort_order\n" +
   "Makeup Artist of the Year,Example Nominee,Example Studio,Short bio,https://example.com/photo.jpg,active,10";
+
+const todayInputValue = () => new Date().toISOString().slice(0, 10);
 
 const emptyCategoryDraft = (): CategoryDraft => ({
   slug: "",
@@ -185,6 +188,9 @@ export const PanacheDorVotingDashboard = ({
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [isVerifyingPayments, setIsVerifyingPayments] = useState(false);
+  const [isReconcilingPayments, setIsReconcilingPayments] = useState(false);
+  const [reconcileStartDate, setReconcileStartDate] = useState("2026-05-19");
+  const [reconcileEndDate, setReconcileEndDate] = useState(todayInputValue);
   const [countsAvailable, setCountsAvailable] = useState(false);
   const [voteProviderSyncConfigured, setVoteProviderSyncConfigured] =
     useState(false);
@@ -608,6 +614,46 @@ export const PanacheDorVotingDashboard = ({
     }
   };
 
+  const handleReconcilePayments = async (dryRun: boolean) => {
+    if (!reconcileStartDate || !reconcileEndDate) {
+      toast({
+        title: "Date range required",
+        description: "Choose a start and end date before reconciling.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsReconcilingPayments(true);
+    try {
+      const result = await reconcilePanacheDorCampayHistory(accessKey, {
+        startDate: reconcileStartDate,
+        endDate: reconcileEndDate,
+        dryRun,
+      });
+      refreshFromVoting(result.voting);
+      const summary = result.reconcileSummary;
+      toast({
+        title: dryRun ? "Reconciliation dry run complete" : "Payment history reconciled",
+        description: summary
+          ? `${summary.matched} matched, ${
+              dryRun ? summary.recoverable : summary.recovered
+            } recoverable/completed, ${
+              dryRun ? summary.votes_recoverable : summary.votes_recovered
+            } vote(s) ${dryRun ? "recoverable" : "recovered"}.`
+          : "Payment history was checked.",
+      });
+    } catch (error) {
+      toast({
+        title: "Could not reconcile payment history",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReconcilingPayments(false);
+    }
+  };
+
   return (
     <Card className="border-border/60 shadow-soft">
       <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -688,6 +734,69 @@ export const PanacheDorVotingDashboard = ({
             <Badge variant={countsAvailable ? "default" : "outline"}>
               {voteProviderSyncConfigured ? "CamPay ready" : "CamPay missing"}
             </Badge>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border/60 bg-background p-4">
+          <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <p className="font-semibold text-primary">
+                Reconcile payment history
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Match successful payment history back to pending vote attempts
+                when a redirect or callback did not finish.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
+              <div>
+                <Label htmlFor="panacheDorReconcileStart">Start date</Label>
+                <Input
+                  id="panacheDorReconcileStart"
+                  type="date"
+                  value={reconcileStartDate}
+                  onChange={(event) => setReconcileStartDate(event.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="panacheDorReconcileEnd">End date</Label>
+                <Input
+                  id="panacheDorReconcileEnd"
+                  type="date"
+                  value={reconcileEndDate}
+                  onChange={(event) => setReconcileEndDate(event.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleReconcilePayments(true)}
+                disabled={isReconcilingPayments}
+                className="md:self-end"
+              >
+                {isReconcilingPayments ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                )}
+                Dry run
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleReconcilePayments(false)}
+                disabled={isReconcilingPayments}
+                className="md:self-end"
+              >
+                {isReconcilingPayments ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                )}
+                Apply
+              </Button>
+            </div>
           </div>
         </div>
 

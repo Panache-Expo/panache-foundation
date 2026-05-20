@@ -165,20 +165,14 @@ export type PanacheDorVoteInitializeResponse = {
   payment: {
     id: string;
     tx_ref: string;
+    reference?: string | null;
+    payment_link: string;
+    redirect_url?: string;
     amount_xaf: number;
     currency: string;
     vote_count: number;
     nominee_name: string;
     category_name: string;
-    widget: {
-      amount: number;
-      currency: string;
-      description: string;
-      externalReference: string;
-      redirectUrl: string;
-      paymentOptions?: string;
-      payment_options?: string;
-    };
   };
 };
 

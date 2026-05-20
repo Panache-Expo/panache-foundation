@@ -327,6 +327,84 @@ const campayRequest = async (endpoint, options = {}, retry = true) => {
   return payload;
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const campayRequestWithRetry = async (endpoint, options = {}, attempts = 3) => {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await campayRequest(endpoint, options);
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) {
+        await sleep(350 * attempt);
+      }
+    }
+  }
+  throw lastError;
+};
+
+const normalizeDate = (value, fallback) => {
+  const raw = normalizeText(value);
+  if (!raw) {
+    return fallback;
+  }
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    throw createHttpError("Use dates in YYYY-MM-DD format.");
+  }
+  return raw;
+};
+
+const addDays = (date, days) => {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return parsed.toISOString().slice(0, 10);
+};
+
+const getDateRange = (startDate, endDate) => {
+  const dates = [];
+  let current = startDate;
+  while (current <= endDate) {
+    dates.push(current);
+    if (dates.length > 14) {
+      throw createHttpError("Reconcile at most 14 days at a time.");
+    }
+    current = addDays(current, 1);
+  }
+  return dates;
+};
+
+const extractCampayHistoryRows = (payload) => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+  if (Array.isArray(payload?.results)) {
+    return payload.results;
+  }
+  if (Array.isArray(payload?.transactions)) {
+    return payload.transactions;
+  }
+  return [];
+};
+
+const fetchCampayHistoryRows = async (date) => {
+  const payload = await campayRequestWithRetry("/api/history/", {
+    method: "POST",
+    body: JSON.stringify({
+      start_date: date,
+      end_date: date,
+    }),
+  });
+  return extractCampayHistoryRows(payload);
+};
+
+const fetchCampayTransaction = async (reference) =>
+  campayRequestWithRetry(`/api/transaction/${encodeURIComponent(reference)}/`);
+
 const sanitizeCategory = (category = {}) => {
   const name = normalizeText(category.name);
   if (!name) {
@@ -977,15 +1055,37 @@ const initializeCampayVote = async (req, supabase, body) => {
   const description = `${voteCount} Panache D'or vote${
     voteCount === 1 ? "" : "s"
   } for ${nominee.name}`;
-  const widgetConfig = {
-    amount,
+  const paymentLinkRequest = {
+    amount: String(amount),
     currency: CURRENCY,
     description,
-    externalReference: txRef,
-    redirectUrl,
-    paymentOptions: CAMPAY_PAYMENT_OPTIONS,
     payment_options: CAMPAY_PAYMENT_OPTIONS,
+    external_reference: txRef,
+    redirect_url: redirectUrl,
+    failure_redirect_url: redirectUrl,
+    ...(voterEmail ? { email: voterEmail } : {}),
   };
+
+  const campayPayment = await campayRequest("/api/get_payment_link/", {
+    method: "POST",
+    body: JSON.stringify(paymentLinkRequest),
+  });
+  const paymentLink = normalizeUrl(
+    campayPayment.link || campayPayment.payment_link || campayPayment.url
+  );
+  const campayReference = normalizeText(
+    campayPayment.reference ||
+      campayPayment.transId ||
+      campayPayment.transaction_id ||
+      campayPayment.transactionId
+  );
+
+  if (!paymentLink || !campayReference) {
+    throw createHttpError(
+      "Secure payment could not return a payment link. Please try again.",
+      502
+    );
+  }
 
   const { data: pendingPayment, error: insertError } = await supabase
     .from("panache_dor_vote_payments")
@@ -993,6 +1093,8 @@ const initializeCampayVote = async (req, supabase, body) => {
       nominee_id: nominee.id,
       category_id: category.id,
       tx_ref: txRef,
+      campay_reference: campayReference,
+      payment_link: paymentLink,
       provider: PAYMENT_PROVIDER,
       status: "pending",
       voter_email: voterEmail,
@@ -1010,7 +1112,8 @@ const initializeCampayVote = async (req, supabase, body) => {
           amount,
           currency: CURRENCY,
         },
-        widget_config: widgetConfig,
+        payment_link_request: paymentLinkRequest,
+        payment_link_response: campayPayment,
       },
     })
     .select(PAYMENT_COLUMNS)
@@ -1039,7 +1142,9 @@ const initializeCampayVote = async (req, supabase, body) => {
       vote_count: pendingPayment.vote_count,
       nominee_name: nominee.name,
       category_name: category.name,
-      widget: widgetConfig,
+      reference: pendingPayment.campay_reference,
+      payment_link: pendingPayment.payment_link,
+      redirect_url: redirectUrl,
     },
   };
 };
@@ -1279,6 +1384,205 @@ const verifyPendingCampayVotes = async (supabase, limit = 25) => {
   };
 };
 
+const reconcileCampayHistory = async (supabase, body = {}) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const startDate = normalizeDate(
+    body.startDate || body.start_date,
+    addDays(today, -1)
+  );
+  const endDate = normalizeDate(body.endDate || body.end_date, today);
+  if (startDate > endDate) {
+    throw createHttpError("Start date must be before end date.");
+  }
+
+  const dryRun = body.dryRun !== false && body.dry_run !== false;
+  const dates = getDateRange(startDate, endDate);
+  const historyRows = (
+    await Promise.all(dates.map((date) => fetchCampayHistoryRows(date)))
+  ).flat();
+  const uniqueHistoryRows = [
+    ...new Map(
+      historyRows
+        .filter((row) => normalizeText(row.reference_uuid || row.reference))
+        .map((row) => [normalizeText(row.reference_uuid || row.reference), row])
+    ).values(),
+  ];
+
+  const { data: payments = [], error: paymentError } = await supabase
+    .from("panache_dor_vote_payments")
+    .select(
+      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+    )
+    .eq("status", "pending")
+    .gte("created_at", `${startDate}T00:00:00+01:00`)
+    .lt("created_at", `${addDays(endDate, 1)}T00:00:00+01:00`)
+    .order("created_at", { ascending: true })
+    .limit(3000);
+
+  if (paymentError) {
+    throw paymentError;
+  }
+
+  const pendingByTxRef = new Map(payments.map((payment) => [payment.tx_ref, payment]));
+  const matchedTxRefs = new Set();
+  const results = [];
+  let recovered = 0;
+  let recoverable = 0;
+  let failed = 0;
+  let skipped = 0;
+  let errors = 0;
+  let votesRecoverable = 0;
+  let amountRecoverableXaf = 0;
+  let votesRecovered = 0;
+  let amountRecoveredXaf = 0;
+
+  for (const historyRow of uniqueHistoryRows) {
+    const historyReference = normalizeText(
+      historyRow.reference_uuid || historyRow.reference
+    );
+    if (!historyReference) {
+      continue;
+    }
+
+    try {
+      const transaction = await fetchCampayTransaction(historyReference);
+      const externalReference = normalizeText(
+        transaction.external_reference || transaction.externalReference
+      );
+      const payment = externalReference
+        ? pendingByTxRef.get(externalReference)
+        : null;
+
+      if (!payment) {
+        continue;
+      }
+
+      matchedTxRefs.add(payment.tx_ref);
+      const providerStatus = String(transaction.status || "").toUpperCase();
+      const paidAmount = Number(transaction.amount);
+      const sameCurrency =
+        String(transaction.currency || payment.currency).toUpperCase() ===
+        payment.currency;
+      const enoughPaid = paidAmount >= Number(payment.amount_xaf);
+      const successful = completedProviderStatuses.has(providerStatus);
+      const existingReference = normalizeText(payment.campay_reference);
+      const referenceMatches =
+        !existingReference || existingReference === historyReference;
+      const baseResult = {
+        tx_ref: payment.tx_ref,
+        reference: historyReference,
+        status: providerStatus || null,
+        nominee: payment.nominee?.name || payment.nominee_id,
+        category: payment.category?.name || payment.category_id,
+        vote_count: payment.vote_count,
+        amount_xaf: payment.amount_xaf,
+      };
+
+      if (!successful) {
+        failed += 1;
+        results.push({
+          ...baseResult,
+          result: "not-counted",
+          reason: `Provider status is ${providerStatus || "unknown"}.`,
+        });
+        continue;
+      }
+
+      if (!sameCurrency || !enoughPaid || !referenceMatches) {
+        skipped += 1;
+        results.push({
+          ...baseResult,
+          result: "skipped",
+          reason: "Transaction did not match expected amount, currency, or reference.",
+        });
+        continue;
+      }
+
+      recoverable += 1;
+      votesRecoverable += normalizeInteger(payment.vote_count, 0);
+      amountRecoverableXaf += normalizeInteger(payment.amount_xaf, 0);
+      if (dryRun) {
+        results.push({
+          ...baseResult,
+          result: "recoverable",
+          reason: "Dry run only.",
+        });
+        continue;
+      }
+
+      let paymentForVerification = payment;
+      if (!existingReference) {
+        const now = new Date().toISOString();
+        const { data: updatedPayment, error: updateError } = await supabase
+          .from("panache_dor_vote_payments")
+          .update({
+            campay_reference: historyReference,
+            provider_payload: {
+              ...(payment.provider_payload || {}),
+              history_reconciliation: {
+                reference: historyReference,
+                code: transaction.code || historyRow.code || null,
+                reconciled_at: now,
+              },
+            },
+            updated_at: now,
+          })
+          .eq("id", payment.id)
+          .select(
+            `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+          )
+          .single();
+
+        if (updateError) {
+          throw updateError;
+        }
+        paymentForVerification = updatedPayment;
+      }
+
+      const verification = await verifyPaymentRow(supabase, paymentForVerification);
+      if (verification.status === "success") {
+        recovered += 1;
+        votesRecovered += normalizeInteger(payment.vote_count, 0);
+        amountRecoveredXaf += normalizeInteger(payment.amount_xaf, 0);
+      }
+      results.push({
+        ...baseResult,
+        result: verification.status,
+        reason: verification.message,
+      });
+    } catch (error) {
+      errors += 1;
+      results.push({
+        reference: normalizeText(historyRow.reference_uuid || historyRow.reference),
+        result: "error",
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  const noMatch = payments.length - matchedTxRefs.size;
+
+  return {
+    start_date: startDate,
+    end_date: endDate,
+    dry_run: dryRun,
+    pending_checked: payments.length,
+    history_rows_checked: uniqueHistoryRows.length,
+    matched: matchedTxRefs.size,
+    recoverable,
+    recovered,
+    failed,
+    skipped,
+    no_match: noMatch,
+    errors,
+    votes_recoverable: votesRecoverable,
+    amount_recoverable_xaf: amountRecoverableXaf,
+    votes_recovered: votesRecovered,
+    amount_recovered_xaf: amountRecoveredXaf,
+    results: results.slice(0, 200),
+  };
+};
+
 const handleGet = async (req, res, supabase) => {
   const includeDrafts = isDashboardRequest(req);
   const voting = await fetchVotingPayload(supabase, includeDrafts);
@@ -1312,6 +1616,13 @@ const handlePost = async (req, res, supabase) => {
     const verifySummary = await verifyPendingCampayVotes(supabase, body.limit);
     const voting = await fetchVotingPayload(supabase, true);
     sendJson(res, 200, { verifySummary, voting });
+    return;
+  }
+
+  if (action === "reconcileCampayHistory") {
+    const reconcileSummary = await reconcileCampayHistory(supabase, body);
+    const voting = await fetchVotingPayload(supabase, true);
+    sendJson(res, 200, { reconcileSummary, voting });
     return;
   }
 

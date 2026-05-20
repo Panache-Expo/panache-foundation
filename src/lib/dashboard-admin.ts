@@ -122,6 +122,24 @@ const readResponsePayload = async (response: Response) => {
     failed: number;
     errors: number;
   };
+  reconcileSummary?: {
+    start_date: string;
+    end_date: string;
+    dry_run: boolean;
+    pending_checked: number;
+    history_rows_checked: number;
+    matched: number;
+    recoverable: number;
+    recovered: number;
+    failed: number;
+    skipped: number;
+    no_match: number;
+    errors: number;
+    votes_recoverable: number;
+    amount_recoverable_xaf: number;
+    votes_recovered: number;
+    amount_recovered_xaf: number;
+  };
       }
     | null;
 };
@@ -345,6 +363,7 @@ const mutatePanacheDorVotingDashboard = async (
     importSummary: payload.importSummary,
     syncSummary: payload.syncSummary,
     verifySummary: payload.verifySummary,
+    reconcileSummary: payload.reconcileSummary,
   };
 };
 
@@ -453,6 +472,18 @@ export const importPanacheDorNomineesCsv = async (
 export const verifyPendingPanacheDorCampayVotes = async (accessKey: string) => {
   return mutatePanacheDorVotingDashboard(accessKey, {
     action: "verifyPendingCampayVotes",
+  });
+};
+
+export const reconcilePanacheDorCampayHistory = async (
+  accessKey: string,
+  data: { startDate: string; endDate: string; dryRun: boolean }
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "reconcileCampayHistory",
+    startDate: data.startDate,
+    endDate: data.endDate,
+    dryRun: data.dryRun,
   });
 };
 

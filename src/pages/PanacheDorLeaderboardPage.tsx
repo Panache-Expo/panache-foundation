@@ -176,12 +176,12 @@ const PanacheDorLeaderboardPage = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#171411]/84 via-[#171411]/20 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6">
               <Badge className="rounded-full bg-white text-[#171411] hover:bg-white">
-                {showCounts ? "Official counts synced" : "Counts hidden"}
+                {showCounts ? "Verified rankings synced" : "Rankings preparing"}
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
                 {showCounts
-                  ? `${(voting?.total_votes || 0).toLocaleString()} verified votes recorded.`
-                  : "Counts appear once completed verified payments are recorded."}
+                  ? "Official rankings update from completed verified payments."
+                  : "Rankings appear once completed verified payments are recorded."}
               </p>
             </div>
           </div>
