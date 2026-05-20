@@ -11,7 +11,6 @@ import { usePanacheDorVoting } from "@/hooks/useSupabase";
 import PanacheAwards from "@/assets/PanacheAwards.jpeg";
 import {
   Award,
-  ExternalLink,
   Loader2,
   RefreshCw,
   Search,
@@ -45,9 +44,6 @@ const matchesSearch = (nominee: NomineeWithCategory, query: string) => {
   return haystack.includes(query.trim().toLowerCase());
 };
 
-const getVoteUrl = (nominee: NomineeWithCategory) =>
-  nominee.vote_url || nominee.ayati_vote_url;
-
 const getVoteCount = (nominee: NomineeWithCategory) =>
   nominee.vote_count ?? nominee.ayati_vote_count;
 
@@ -55,7 +51,6 @@ const PanacheDorVotingPage = () => {
   const { data: voting, isLoading, error, refetch } = usePanacheDorVoting();
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const voteProviderName = voting?.vote_provider_name || "CliqVotes";
 
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const nominees = useMemo(() => flattenNominees(categories), [categories]);
@@ -83,16 +78,16 @@ const PanacheDorVotingPage = () => {
         <section className="mx-auto grid max-w-7xl gap-10 px-6 md:px-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-center">
           <div>
             <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-              CliqVotes-powered voting
+              CamPay-powered voting
             </p>
             <h1 className="mt-4 font-sans text-[clamp(3.2rem,7vw,6rem)] font-semibold leading-[0.86] tracking-[-0.08em] text-[#171411]">
               Panache D&apos;or
               <span className="block font-display text-[#8241B6]">Nominees</span>
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
-              Browse the official nominee directory. Each vote button opens the
-              nominee&apos;s CliqVotes payment link so CliqVotes remains the source of truth
-              for paid votes.
+              Browse the official nominee directory. Each nominee profile now
+              has a Panache-owned CamPay checkout, and only verified payments
+              count on the leaderboard.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -127,8 +122,8 @@ const PanacheDorVotingPage = () => {
                 Official nominee directory
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
-                Vote payments happen on CliqVotes. This site only organizes nominees
-                and links voters to the right CliqVotes page.
+                Vote payments happen through CamPay and are verified by Panache
+                before they appear in the totals.
               </p>
             </div>
           </div>
@@ -143,7 +138,7 @@ const PanacheDorVotingPage = () => {
                 </p>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/62">
                   Search by name, brand, or category. Vote totals stay hidden
-                  unless official CliqVotes sync is connected.
+                  from estimates; only completed CamPay payments are counted.
                 </p>
               </div>
               <div className="grid gap-3 md:grid-cols-[1fr_auto]">
@@ -262,11 +257,9 @@ const PanacheDorVotingPage = () => {
                         {nominee.bio}
                       </p>
                     ) : null}
-                    {voting?.counts_available ? (
-                      <p className="mt-4 font-sans text-sm font-semibold text-[#171411]">
-                        {getVoteCount(nominee).toLocaleString()} official votes
-                      </p>
-                    ) : null}
+                    <p className="mt-4 font-sans text-sm font-semibold text-[#171411]">
+                      {getVoteCount(nominee).toLocaleString()} verified votes
+                    </p>
                     <div className="mt-5 flex flex-wrap gap-2">
                       <Button
                         asChild
@@ -277,25 +270,14 @@ const PanacheDorVotingPage = () => {
                           View profile
                         </Link>
                       </Button>
-                      {getVoteUrl(nominee) ? (
-                        <Button
-                          asChild
-                          className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
-                        >
-                          <a
-                            href={getVoteUrl(nominee) || undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Vote on {voteProviderName}
-                            <ExternalLink className="ml-2 h-4 w-4" />
-                          </a>
-                        </Button>
-                      ) : (
-                        <Badge variant="secondary" className="rounded-full px-4 py-2">
-                          Vote link coming soon
-                        </Badge>
-                      )}
+                      <Button
+                        asChild
+                        className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
+                      >
+                        <Link to={`/panache-expo/panache-dor/nominees/${nominee.slug}`}>
+                          Vote with CamPay
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </article>

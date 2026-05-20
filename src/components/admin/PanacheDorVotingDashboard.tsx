@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type {
   PanacheDorAwardCategory,
   PanacheDorAwardNominee,
+  PanacheDorVotePayment,
 } from "@/integrations/supabase/services";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -27,14 +28,13 @@ import {
   createPanacheDorVotingNominee,
   fetchPanacheDorVotingDashboard,
   importPanacheDorNomineesCsv,
-  syncPanacheDorCliqVotesCounts,
   updatePanacheDorVotingCategory,
   updatePanacheDorVotingNominee,
   uploadPanacheDorVotingNomineePhoto,
+  verifyPendingPanacheDorCampayVotes,
 } from "@/lib/dashboard-admin";
 import {
   BarChart3,
-  ExternalLink,
   FileSpreadsheet,
   ImagePlus,
   Loader2,
@@ -86,8 +86,8 @@ const nomineePhotoTypes = new Set([
 ]);
 
 const csvTemplate =
-  "category,name,organization,bio,photo_url,vote_url,vote_provider_sync_id,status,sort_order\n" +
-  "Makeup Artist of the Year,Example Nominee,Example Studio,Short bio,https://example.com/photo.jpg,https://cliqvotes.com/panache-dor-awards/category/category-id?artist=artist-id,artist-id,active,10";
+  "category,name,organization,bio,photo_url,status,sort_order\n" +
+  "Makeup Artist of the Year,Example Nominee,Example Studio,Short bio,https://example.com/photo.jpg,active,10";
 
 const emptyCategoryDraft = (): CategoryDraft => ({
   slug: "",
@@ -184,11 +184,20 @@ export const PanacheDorVotingDashboard = ({
   const [isSavingNominee, setIsSavingNominee] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isImportingCsv, setIsImportingCsv] = useState(false);
-  const [isSyncingCliqVotes, setIsSyncingCliqVotes] = useState(false);
+  const [isVerifyingPayments, setIsVerifyingPayments] = useState(false);
   const [countsAvailable, setCountsAvailable] = useState(false);
   const [voteProviderSyncConfigured, setVoteProviderSyncConfigured] =
     useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const [payments, setPayments] = useState<PanacheDorVotePayment[]>([]);
+  const [paymentSummary, setPaymentSummary] = useState({
+    pending: 0,
+    completed: 0,
+    failed: 0,
+    cancelled: 0,
+    total_votes: 0,
+    total_amount_xaf: 0,
+  });
 
   const selectedCategory = categories.find(
     (category) => category.id === selectedCategoryId
@@ -207,13 +216,14 @@ export const PanacheDorVotingDashboard = ({
         sum + category.nominees.filter((nominee) => nominee.status === "active").length,
       0
     );
-    const linkedNominees = categories.reduce(
+    const totalVotes = categories.reduce(
       (sum, category) =>
         sum +
-        category.nominees.filter((nominee) =>
-          Boolean(nominee.vote_url || nominee.ayati_vote_url)
-        )
-          .length,
+        category.nominees.reduce(
+          (nomineeSum, nominee) =>
+            nomineeSum + Number(nominee.vote_count ?? nominee.ayati_vote_count ?? 0),
+          0
+        ),
       0
     );
 
@@ -221,7 +231,7 @@ export const PanacheDorVotingDashboard = ({
       categories: categories.length,
       nomineeCount,
       activeNominees,
-      linkedNominees,
+      totalVotes,
     };
   }, [categories]);
 
@@ -236,9 +246,20 @@ export const PanacheDorVotingDashboard = ({
       setCategories(voting.categories);
       setCountsAvailable(voting.counts_available);
       setVoteProviderSyncConfigured(
-        Boolean(voting.vote_provider_sync_configured ?? voting.ayati_sync_configured)
+        Boolean(voting.payment?.payments_configured)
       );
       setLastSyncedAt(voting.last_synced_at || null);
+      setPaymentSummary(
+        voting.payment_summary || {
+          pending: 0,
+          completed: 0,
+          failed: 0,
+          cancelled: 0,
+          total_votes: 0,
+          total_amount_xaf: 0,
+        }
+      );
+      setPayments(voting.payments || []);
       setSelectedCategoryId((currentCategoryId) => {
         const nextCategory =
           voting.categories.find((category) => category.id === currentCategoryId) ||
@@ -296,15 +317,31 @@ export const PanacheDorVotingDashboard = ({
     vote_provider_sync_configured?: boolean;
     ayati_sync_configured?: boolean;
     last_synced_at?: string | null;
+    payment?: { payments_configured?: boolean };
+    payment_summary?: {
+      pending: number;
+      completed: number;
+      failed: number;
+      cancelled: number;
+      total_votes: number;
+      total_amount_xaf: number;
+    };
+    payments?: PanacheDorVotePayment[];
   }) => {
     setCategories(voting.categories);
     if (typeof voting.counts_available === "boolean") {
       setCountsAvailable(voting.counts_available);
     }
     setVoteProviderSyncConfigured(
-      Boolean(voting.vote_provider_sync_configured ?? voting.ayati_sync_configured)
+      Boolean(voting.payment?.payments_configured)
     );
     setLastSyncedAt(voting.last_synced_at || null);
+    if (voting.payment_summary) {
+      setPaymentSummary(voting.payment_summary);
+    }
+    if (voting.payments) {
+      setPayments(voting.payments);
+    }
   };
 
   const handleCreateCategory = async () => {
@@ -398,8 +435,8 @@ export const PanacheDorVotingDashboard = ({
         photo_url: newNomineeDraft.photo_url.trim() || null,
         status: newNomineeDraft.status,
         sort_order: toSortOrder(newNomineeDraft.sort_order),
-        ayati_vote_url: newNomineeDraft.ayati_vote_url.trim() || null,
-        ayati_sync_id: newNomineeDraft.ayati_sync_id.trim() || null,
+        ayati_vote_url: null,
+        ayati_sync_id: null,
       });
       refreshFromVoting(result.voting);
       setNewNomineeDraft(emptyNomineeDraft(newNomineeDraft.category_id));
@@ -549,32 +586,25 @@ export const PanacheDorVotingDashboard = ({
     }
   };
 
-  const handleSyncCliqVotes = async () => {
-    setIsSyncingCliqVotes(true);
+  const handleVerifyPendingPayments = async () => {
+    setIsVerifyingPayments(true);
     try {
-      const result = await syncPanacheDorCliqVotesCounts(accessKey);
+      const result = await verifyPendingPanacheDorCampayVotes(accessKey);
       refreshFromVoting(result.voting);
-      if (result.syncSummary?.synced_at) {
-        setLastSyncedAt(result.syncSummary.synced_at);
-        setCountsAvailable(true);
-      }
       toast({
-        title: result.syncSummary?.configured
-          ? "CliqVotes sync complete"
-          : "CliqVotes sync not configured",
-        description:
-          result.syncSummary?.message ||
-          "No CliqVotes count source is configured yet.",
-        variant: result.syncSummary?.configured ? "default" : "destructive",
+        title: "Pending payments checked",
+        description: `${result.verifySummary?.checked || 0} pending payment(s) checked. ${
+          result.verifySummary?.completed || 0
+        } completed.`,
       });
     } catch (error) {
       toast({
-        title: "Could not sync CliqVotes counts",
+        title: "Could not verify pending payments",
         description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsSyncingCliqVotes(false);
+      setIsVerifyingPayments(false);
     }
   };
 
@@ -586,23 +616,23 @@ export const PanacheDorVotingDashboard = ({
             Panache D&apos;or Voting
           </CardTitle>
           <CardDescription>
-            Manage nominee pages and CliqVotes voting links. Counts are official only
-            after CliqVotes sync completes.
+            Manage nominee pages and verified CamPay votes. Counts come only
+            from completed payment transactions.
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
-            onClick={() => void handleSyncCliqVotes()}
-            disabled={isSyncingCliqVotes}
+            onClick={() => void handleVerifyPendingPayments()}
+            disabled={isVerifyingPayments}
           >
-            {isSyncingCliqVotes ? (
+            {isVerifyingPayments ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <BarChart3 className="mr-2 h-4 w-4" />
             )}
-            Sync CliqVotes counts
+            Verify pending payments
           </Button>
           <Button
             type="button"
@@ -636,9 +666,9 @@ export const PanacheDorVotingDashboard = ({
             </p>
           </div>
           <div className="rounded-2xl border border-border/60 bg-muted/20 p-4">
-            <p className="text-sm text-muted-foreground">CliqVotes links</p>
+            <p className="text-sm text-muted-foreground">Verified votes</p>
             <p className="mt-2 text-2xl font-semibold text-primary">
-              {totals.linkedNominees}
+              {totals.totalVotes}
             </p>
           </div>
         </div>
@@ -649,15 +679,88 @@ export const PanacheDorVotingDashboard = ({
               <p className="font-semibold text-primary">Official count status</p>
               <p className="text-sm text-muted-foreground">
                 {countsAvailable
-                  ? `Counts are available. Last sync: ${lastSyncedAt || "unknown"}`
+                  ? `${paymentSummary.completed} completed payment(s), ${paymentSummary.pending} pending. Revenue: ${paymentSummary.total_amount_xaf.toLocaleString()} XAF.`
                   : voteProviderSyncConfigured
-                  ? "CliqVotes source is configured, but no counts have synced yet."
-                  : "CliqVotes sync is not configured, so public vote counts stay hidden."}
+                  ? "CamPay is configured. Public counts update after payments verify."
+                  : "CamPay credentials are missing, so public paid voting is disabled."}
               </p>
             </div>
             <Badge variant={countsAvailable ? "default" : "outline"}>
-              {countsAvailable ? "Counts visible" : "Counts hidden"}
+              {voteProviderSyncConfigured ? "CamPay ready" : "CamPay missing"}
             </Badge>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border/60 bg-background p-4">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-semibold text-primary">Recent CamPay payments</p>
+              <p className="text-sm text-muted-foreground">
+                Completed payments are counted automatically. Pending payments can
+                be retried with the verify button above.
+              </p>
+            </div>
+            <Badge variant="outline">{payments.length} recent</Badge>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="text-muted-foreground">
+                <tr className="border-b border-border/60">
+                  <th className="py-3 pr-4 font-medium">Status</th>
+                  <th className="py-3 pr-4 font-medium">Nominee</th>
+                  <th className="py-3 pr-4 font-medium">Votes</th>
+                  <th className="py-3 pr-4 font-medium">Amount</th>
+                  <th className="py-3 pr-4 font-medium">Receipt</th>
+                  <th className="py-3 pr-4 font-medium">Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.length ? (
+                  payments.slice(0, 12).map((payment) => (
+                    <tr key={payment.id} className="border-b border-border/40">
+                      <td className="py-3 pr-4">
+                        <Badge
+                          variant={
+                            payment.status === "completed"
+                              ? "default"
+                              : payment.status === "failed"
+                              ? "destructive"
+                              : "outline"
+                          }
+                        >
+                          {payment.status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <p className="font-medium text-primary">
+                          {payment.nominee?.name || payment.nominee_id}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {payment.category?.name || payment.category_id}
+                        </p>
+                      </td>
+                      <td className="py-3 pr-4">{payment.vote_count}</td>
+                      <td className="py-3 pr-4">
+                        {payment.amount_xaf.toLocaleString()} {payment.currency}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {payment.voter_email || "No email"}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {new Date(payment.created_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="py-5 text-muted-foreground" colSpan={6}>
+                      No CamPay payment attempts yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -823,8 +926,8 @@ export const PanacheDorVotingDashboard = ({
               </div>
               <p className="text-sm text-muted-foreground">
                 Use columns like category, name, organization, bio, photo_url,
-                vote_url is optional, so you can publish nominees first
-                and attach vote links later.
+                status, and sort_order. Vote links are no longer needed because
+                payments are handled by Panache through CamPay.
               </p>
               <div className="mt-4 space-y-3">
                 <Input
@@ -874,8 +977,8 @@ export const PanacheDorVotingDashboard = ({
               <div className="mb-5">
                 <h3 className="font-display text-xl text-primary">Nominees</h3>
                 <p className="text-sm text-muted-foreground">
-                  CliqVotes links are optional while you prepare the directory. Public
-                  pages show “vote link coming soon” until a link is added.
+                  Publish active nominees for the public vote flow. Supporters
+                  pay through CamPay from each nominee profile.
                 </p>
               </div>
 
@@ -917,16 +1020,9 @@ export const PanacheDorVotingDashboard = ({
                             <Badge variant={statusBadgeVariant(nominee.status)}>
                               {nominee.status}
                             </Badge>
-                            {nominee.vote_url || nominee.ayati_vote_url ? (
-                              <Badge variant="outline">CliqVotes linked</Badge>
-                            ) : (
-                              <Badge variant="secondary">Link pending</Badge>
-                            )}
-                            {countsAvailable ? (
-                              <span className="text-sm text-muted-foreground">
-                                {nominee.vote_count ?? nominee.ayati_vote_count} votes
-                              </span>
-                            ) : null}
+                            <span className="text-sm text-muted-foreground">
+                              {nominee.vote_count ?? nominee.ayati_vote_count ?? 0} votes
+                            </span>
                           </div>
                         </div>
                       </button>
@@ -1047,26 +1143,6 @@ export const PanacheDorVotingDashboard = ({
                       />
                     </div>
                   </div>
-                  <Input
-                    placeholder="CliqVotes vote/payment link"
-                    value={nomineeDraft.ayati_vote_url}
-                    onChange={(event) =>
-                      setNomineeDraft((current) => ({
-                        ...current,
-                        ayati_vote_url: event.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    placeholder="CliqVotes artist id, optional"
-                    value={nomineeDraft.ayati_sync_id}
-                    onChange={(event) =>
-                      setNomineeDraft((current) => ({
-                        ...current,
-                        ayati_sync_id: event.target.value,
-                      }))
-                    }
-                  />
                   <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
                     <Select
                       value={nomineeDraft.status}
@@ -1121,22 +1197,6 @@ export const PanacheDorVotingDashboard = ({
                     >
                       Archive
                     </Button>
-                    {selectedNominee.vote_url || selectedNominee.ayati_vote_url ? (
-                      <Button asChild type="button" variant="outline">
-                        <a
-                          href={
-                            selectedNominee.vote_url ||
-                            selectedNominee.ayati_vote_url ||
-                            undefined
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Open CliqVotes
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </a>
-                      </Button>
-                    ) : null}
                   </div>
                 </div>
               </div>
@@ -1223,26 +1283,6 @@ export const PanacheDorVotingDashboard = ({
                     void handleUploadNomineePhoto(event.target.files?.[0], "new");
                     event.target.value = "";
                   }}
-                />
-                <Input
-                  placeholder="CliqVotes vote/payment link"
-                  value={newNomineeDraft.ayati_vote_url}
-                  onChange={(event) =>
-                    setNewNomineeDraft((current) => ({
-                      ...current,
-                      ayati_vote_url: event.target.value,
-                    }))
-                  }
-                />
-                <Input
-                  placeholder="CliqVotes artist id, optional"
-                  value={newNomineeDraft.ayati_sync_id}
-                  onChange={(event) =>
-                    setNewNomineeDraft((current) => ({
-                      ...current,
-                      ayati_sync_id: event.target.value,
-                    }))
-                  }
                 />
                 <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
                   <Select

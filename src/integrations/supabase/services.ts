@@ -70,12 +70,60 @@ export type PanacheDorAwardNominee = PanacheDorAwardNomineeRow & {
 };
 
 export type PanacheDorAwardCategory = PanacheDorAwardCategoryRow & {
+  vote_count?: number;
   nominees: PanacheDorAwardNominee[];
+};
+
+export type PanacheDorPaymentSettings = {
+  provider: string;
+  provider_name: string;
+  payments_configured: boolean;
+  vote_price_xaf: number;
+  processing_fee_per_vote_xaf: number;
+  amount_per_vote_xaf: number;
+  currency: string;
+};
+
+export type PanacheDorVotePayment = {
+  id: string;
+  nominee_id: string;
+  category_id: string;
+  tx_ref: string;
+  campay_reference?: string | null;
+  payment_link?: string | null;
+  provider: string;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled' | string;
+  voter_email?: string | null;
+  voter_whatsapp?: string | null;
+  vote_count: number;
+  vote_price_xaf: number;
+  processing_fee_per_vote_xaf: number;
+  amount_xaf: number;
+  currency: string;
+  provider_status?: string | null;
+  verified_at?: string | null;
+  failure_reason?: string | null;
+  receipt_email_sent_at?: string | null;
+  receipt_email_error?: string | null;
+  created_at: string;
+  updated_at: string;
+  nominee?: Pick<PanacheDorAwardNomineeRow, 'name' | 'slug'> | null;
+  category?: Pick<PanacheDorAwardCategoryRow, 'name' | 'slug'> | null;
+};
+
+export type PanacheDorPaymentSummary = {
+  pending: number;
+  completed: number;
+  failed: number;
+  cancelled: number;
+  total_votes: number;
+  total_amount_xaf: number;
 };
 
 export type PanacheDorVotingPayload = {
   categories: PanacheDorAwardCategory[];
   total_nominees: number;
+  total_votes?: number;
   counts_available: boolean;
   vote_provider?: string;
   vote_provider_name?: string;
@@ -84,7 +132,56 @@ export type PanacheDorVotingPayload = {
   ayati_sync_configured: boolean;
   ayati_leaderboard_url?: string | null;
   last_synced_at?: string | null;
+  payment?: PanacheDorPaymentSettings;
+  payments?: PanacheDorVotePayment[];
+  payment_summary?: PanacheDorPaymentSummary;
   admin?: boolean;
+};
+
+export type PanacheDorVoteInitializePayload = {
+  nomineeId: string;
+  voterEmail?: string;
+  voterWhatsapp?: string;
+  voteCount: number;
+};
+
+export type PanacheDorVoteReceipt = {
+  id: string;
+  tx_ref: string;
+  reference?: string | null;
+  nominee_id: string;
+  nominee_name: string;
+  category_id: string;
+  category_name: string;
+  voter_email?: string | null;
+  voter_whatsapp?: string | null;
+  vote_count: number;
+  amount_xaf: number;
+  currency: string;
+  status: string;
+  verified_at?: string | null;
+};
+
+export type PanacheDorVoteInitializeResponse = {
+  payment: {
+    id: string;
+    tx_ref: string;
+    reference: string;
+    payment_link: string;
+    link: string;
+    amount_xaf: number;
+    currency: string;
+    vote_count: number;
+    nominee_name: string;
+    category_name: string;
+  };
+};
+
+export type PanacheDorVoteVerifyResponse = {
+  status: 'success' | 'pending' | 'failed' | 'already-counted' | string;
+  message?: string;
+  receipt?: PanacheDorVoteReceipt;
+  voting?: PanacheDorVotingPayload;
 };
 
 type CompetitionApplicationSubmitPayload =
@@ -257,6 +354,9 @@ const readPanacheDorVotingResponse = async (response: Response) => {
     | {
         message?: string;
         voting?: PanacheDorVotingPayload;
+        payment?: PanacheDorVoteInitializeResponse['payment'];
+        status?: string;
+        receipt?: PanacheDorVoteReceipt;
       }
     | null;
 };
@@ -271,6 +371,50 @@ export const panacheDorVotingService = {
     }
 
     return payload.voting;
+  },
+
+  async initializeCampayVote(data: PanacheDorVoteInitializePayload) {
+    const response = await fetch(PANACHE_DOR_VOTING_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'initializeCampayVote',
+        nomineeId: data.nomineeId,
+        voterEmail: data.voterEmail,
+        voterWhatsapp: data.voterWhatsapp,
+        voteCount: data.voteCount,
+      }),
+    });
+    const payload = await readPanacheDorVotingResponse(response);
+
+    if (!response.ok || !payload?.payment) {
+      throw new Error(payload?.message || "Could not start the CamPay payment.");
+    }
+
+    return payload as PanacheDorVoteInitializeResponse;
+  },
+
+  async verifyCampayVote(data: { txRef?: string; reference?: string }) {
+    const response = await fetch(PANACHE_DOR_VOTING_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'verifyCampayVote',
+        tx_ref: data.txRef,
+        reference: data.reference,
+      }),
+    });
+    const payload = await readPanacheDorVotingResponse(response);
+
+    if (!response.ok || !payload?.status) {
+      throw new Error(payload?.message || "Could not verify the CamPay payment.");
+    }
+
+    return payload as PanacheDorVoteVerifyResponse;
   },
 };
 

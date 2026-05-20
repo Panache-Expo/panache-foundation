@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import nodemailer from "nodemailer";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL =
@@ -12,23 +13,70 @@ const PANACHE_DOR_PHOTO_MAX_BYTES = Number.parseInt(
   process.env.PANACHE_DOR_NOMINEE_PHOTO_MAX_BYTES || String(3 * 1024 * 1024),
   10
 );
-const PANACHE_DOR_VOTE_PROVIDER =
-  process.env.PANACHE_DOR_VOTE_PROVIDER || "cliqvotes";
-const PANACHE_DOR_CLIQVOTES_BASE_URL = (
-  process.env.PANACHE_DOR_CLIQVOTES_BASE_URL || "https://cliqvotes.com"
+
+const PAYMENT_PROVIDER = process.env.PANACHE_DOR_PAYMENT_PROVIDER || "campay";
+const VOTE_PROVIDER_NAME = "Panache CamPay";
+const CAMPAY_BASE_URL = (
+  process.env.PANACHE_DOR_CAMPAY_BASE_URL ||
+  process.env.CAMPAY_BASE_URL ||
+  "https://www.campay.net"
 ).replace(/\/+$/, "");
-const PANACHE_DOR_CLIQVOTES_EVENT_SLUG =
-  process.env.PANACHE_DOR_CLIQVOTES_EVENT_SLUG || "panache-dor-awards";
-const VOTE_PROVIDER_NAME =
-  PANACHE_DOR_VOTE_PROVIDER === "cliqvotes" ? "CliqVotes" : "Vote provider";
-const CLIQVOTES_EVENT_URL = `${PANACHE_DOR_CLIQVOTES_BASE_URL}/${PANACHE_DOR_CLIQVOTES_EVENT_SLUG}`;
-const CLIQVOTES_CATEGORIES_URL = `${PANACHE_DOR_CLIQVOTES_BASE_URL}/api/events/${PANACHE_DOR_CLIQVOTES_EVENT_SLUG}/categories`;
-const CLIQVOTES_ARTISTS_URL = `${PANACHE_DOR_CLIQVOTES_BASE_URL}/api/artists`;
+const CAMPAY_APP_USERNAME =
+  process.env.PANACHE_DOR_CAMPAY_APP_USERNAME ||
+  process.env.CAMPAY_APP_USERNAME ||
+  process.env.CAMPAY_USERNAME ||
+  "";
+const CAMPAY_APP_PASSWORD =
+  process.env.PANACHE_DOR_CAMPAY_APP_PASSWORD ||
+  process.env.CAMPAY_APP_PASSWORD ||
+  process.env.CAMPAY_PASSWORD ||
+  "";
+const CAMPAY_PAYMENT_OPTIONS =
+  process.env.PANACHE_DOR_CAMPAY_PAYMENT_OPTIONS ||
+  process.env.CAMPAY_PAYMENT_OPTIONS ||
+  "MOMO,CARD";
+const CAMPAY_TOKEN_TTL_MS = Number.parseInt(
+  process.env.PANACHE_DOR_CAMPAY_TOKEN_TTL_MS ||
+    process.env.CAMPAY_TOKEN_TTL_MS ||
+    String(45 * 60 * 1000),
+  10
+);
+const VOTE_PRICE_XAF = Number.parseInt(
+  process.env.PANACHE_DOR_VOTE_PRICE_XAF || "100",
+  10
+);
+const PROCESSING_FEE_PER_VOTE_XAF = Number.parseInt(
+  "0",
+  10
+);
+const CURRENCY = (
+  process.env.PANACHE_DOR_CURRENCY ||
+  process.env.CURRENCY ||
+  "XAF"
+).toUpperCase();
+const PANACHE_DOR_BASE_URL = (
+  process.env.PANACHE_DOR_BASE_URL ||
+  process.env.PANACHE_FRONTEND_BASE_URL ||
+  ""
+).replace(/\/+$/, "");
+const paymentsConfigured = Boolean(
+  PAYMENT_PROVIDER === "campay" && CAMPAY_APP_USERNAME && CAMPAY_APP_PASSWORD
+);
+
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_SECURE =
+  String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false";
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
 
 const CATEGORY_COLUMNS =
   "id, slug, name, description, status, sort_order, created_at, updated_at";
 const NOMINEE_COLUMNS =
   "id, category_id, slug, name, organization, bio, photo_url, status, sort_order, ayati_vote_url, ayati_sync_id, ayati_vote_count, ayati_last_synced_at, created_at, updated_at";
+const PAYMENT_COLUMNS =
+  "id, nominee_id, category_id, tx_ref, campay_reference, payment_link, provider, status, voter_email, voter_whatsapp, vote_count, vote_price_xaf, processing_fee_per_vote_xaf, amount_xaf, currency, provider_status, provider_payload, verified_at, failure_reason, receipt_email_sent_at, receipt_email_error, created_at, updated_at";
 
 const allowedStatuses = new Set(["active", "draft", "archived"]);
 const allowedPhotoTypes = new Set([
@@ -37,17 +85,24 @@ const allowedPhotoTypes = new Set([
   "image/webp",
   "image/gif",
 ]);
+const completedProviderStatuses = new Set(["SUCCESSFUL", "SUCCESS"]);
+const failedProviderStatuses = new Set(["FAILED", "CANCELLED", "CANCELED"]);
 
-const voteProviderSyncConfigured = Boolean(
-  PANACHE_DOR_VOTE_PROVIDER === "cliqvotes" &&
-    PANACHE_DOR_CLIQVOTES_BASE_URL &&
-    PANACHE_DOR_CLIQVOTES_EVENT_SLUG
-);
+let campayTokenCache = {
+  token: "",
+  expiresAt: 0,
+};
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.end(JSON.stringify(payload));
+};
+
+const createHttpError = (message, statusCode = 400) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
 };
 
 const parseBody = (req) => {
@@ -67,7 +122,7 @@ const parseBody = (req) => {
 const setPublicCacheHeaders = (res) => {
   res.setHeader(
     "Cache-Control",
-    "public, s-maxage=30, stale-while-revalidate=120"
+    "public, s-maxage=20, stale-while-revalidate=60"
   );
 };
 
@@ -77,6 +132,25 @@ const normalizeText = (value) => {
   }
   const normalized = String(value).trim();
   return normalized || null;
+};
+
+const normalizeEmail = (value) => {
+  const email = String(value || "").trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+};
+
+const normalizePhone = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) {
+    return null;
+  }
+  if (digits.startsWith("237")) {
+    return digits;
+  }
+  if (digits.length === 9) {
+    return `237${digits}`;
+  }
+  return digits;
 };
 
 const normalizeStatus = (value, fallback = "active") => {
@@ -114,49 +188,47 @@ const slugify = (value) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 90) || crypto.randomUUID();
 
-const normalizeLookup = (value) =>
-  String(value || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[’'`´]/g, "")
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "");
+const moneyAmount = (amount) => Math.round(Number(amount));
 
-const normalizeCategoryLookup = (value) =>
-  normalizeLookup(value)
-    .replace(/entreprenuer/g, "entrepreneur")
-    .replace(/^wigandinstallation/, "hairandwiginstallation");
-
-const normalizeNomineeLookup = (value) => {
-  const key = normalizeLookup(value);
-  if (key.startsWith("contento")) {
-    return "contento";
+const resolveBaseUrl = (req) => {
+  if (PANACHE_DOR_BASE_URL) {
+    return PANACHE_DOR_BASE_URL;
   }
-  return key;
+
+  const host = normalizeText(req.headers.host);
+  if (!host) {
+    return "https://panache-foundation.org";
+  }
+  const protocol =
+    normalizeText(req.headers["x-forwarded-proto"]).includes("https")
+      ? "https"
+      : "http";
+  return `${protocol}://${host}`.replace(/\/+$/, "");
 };
 
-const buildCliqVotesVoteUrl = (categoryId, artistId) => {
-  if (!categoryId || !artistId) {
-    return null;
-  }
-
-  const url = new URL(
-    `${CLIQVOTES_EVENT_URL}/category/${encodeURIComponent(categoryId)}`
-  );
-  url.searchParams.set("artist", artistId);
-  return url.toString();
+const splitReceiptName = (email) => {
+  const localPart = String(email || "panache voter").split("@")[0];
+  const parts = localPart
+    .replace(/[._-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  return {
+    firstName: parts[0] || "Panache",
+    lastName: parts.slice(1).join(" ") || "Voter",
+  };
 };
 
-const toAbsoluteCliqVotesUrl = (value) => {
-  const url = normalizeText(value);
-  if (!url) {
-    return null;
+const readJsonResponse = async (response) => {
+  const text = await response.text();
+  if (!text) {
+    return {};
   }
-  if (/^https?:\/\//i.test(url)) {
-    return url;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
   }
-  return `${PANACHE_DOR_CLIQVOTES_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
 const isDashboardRequest = (req) => {
@@ -188,6 +260,73 @@ const assertAdmin = (req) => {
   }
 };
 
+const getCampayToken = async () => {
+  if (!paymentsConfigured) {
+    const error = new Error("CamPay payment credentials are not configured.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  if (campayTokenCache.token && campayTokenCache.expiresAt > Date.now()) {
+    return campayTokenCache.token;
+  }
+
+  const response = await fetch(`${CAMPAY_BASE_URL}/api/token/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username: CAMPAY_APP_USERNAME,
+      password: CAMPAY_APP_PASSWORD,
+    }),
+  });
+  const payload = await readJsonResponse(response);
+
+  if (!response.ok || !payload.token) {
+    const error = new Error(
+      payload?.message || "CamPay authentication failed."
+    );
+    error.statusCode = response.status || 502;
+    error.details = payload;
+    throw error;
+  }
+
+  campayTokenCache = {
+    token: payload.token,
+    expiresAt: Date.now() + CAMPAY_TOKEN_TTL_MS,
+  };
+  return payload.token;
+};
+
+const campayRequest = async (endpoint, options = {}, retry = true) => {
+  const token = await getCampayToken();
+  const response = await fetch(`${CAMPAY_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(options.headers || {}),
+    },
+  });
+  const payload = await readJsonResponse(response);
+
+  if (response.status === 401 && retry) {
+    campayTokenCache = { token: "", expiresAt: 0 };
+    return campayRequest(endpoint, options, false);
+  }
+
+  if (!response.ok) {
+    const error = new Error(payload?.message || "CamPay request failed.");
+    error.statusCode = response.status || 502;
+    error.details = payload;
+    throw error;
+  }
+
+  return payload;
+};
+
 const sanitizeCategory = (category = {}) => {
   const name = normalizeText(category.name);
   if (!name) {
@@ -207,9 +346,6 @@ const sanitizeNominee = (nominee = {}, fallback = {}) => {
   const name = normalizeText(nominee.name ?? fallback.name);
   const categoryId = normalizeText(nominee.category_id ?? fallback.category_id);
   const status = normalizeStatus(nominee.status ?? fallback.status);
-  const ayatiVoteUrl = normalizeUrl(
-    nominee.vote_url ?? nominee.ayati_vote_url ?? fallback.ayati_vote_url
-  );
 
   if (!name) {
     throw new Error("Nominee name is required.");
@@ -227,7 +363,9 @@ const sanitizeNominee = (nominee = {}, fallback = {}) => {
     photo_url: normalizeText(nominee.photo_url ?? fallback.photo_url),
     status,
     sort_order: normalizeInteger(nominee.sort_order ?? fallback.sort_order),
-    ayati_vote_url: ayatiVoteUrl,
+    ayati_vote_url: normalizeUrl(
+      nominee.vote_url ?? nominee.ayati_vote_url ?? fallback.ayati_vote_url
+    ),
     ayati_sync_id: normalizeText(
       nominee.vote_provider_sync_id ??
         nominee.ayati_sync_id ??
@@ -241,24 +379,35 @@ const withUpdatedAt = (payload) => ({
   updated_at: new Date().toISOString(),
 });
 
-const collectVoteProviderLastSyncedAt = (nominees) => {
-  const timestamps = nominees
-    .map((nominee) => nominee.ayati_last_synced_at)
-    .filter(Boolean)
-    .sort();
-
-  return timestamps[timestamps.length - 1] || null;
-};
-
 const decorateNominee = (nominee) => ({
   ...nominee,
-  vote_url: nominee.ayati_vote_url,
-  vote_count: nominee.ayati_vote_count,
-  vote_provider_sync_id: nominee.ayati_sync_id,
-  vote_last_synced_at: nominee.ayati_last_synced_at,
+  ayati_vote_url: null,
+  ayati_sync_id: null,
+  ayati_vote_count: normalizeInteger(nominee.local_vote_count, 0),
+  ayati_last_synced_at: null,
+  vote_url: null,
+  vote_count: normalizeInteger(nominee.local_vote_count, 0),
+  vote_provider_sync_id: null,
+  vote_last_synced_at: null,
 });
 
-const buildVotingPayload = (categories, nominees, includeDrafts = false) => {
+const paymentSettings = () => ({
+  provider: PAYMENT_PROVIDER,
+  provider_name: VOTE_PROVIDER_NAME,
+  payments_configured: paymentsConfigured,
+  vote_price_xaf: VOTE_PRICE_XAF,
+  processing_fee_per_vote_xaf: PROCESSING_FEE_PER_VOTE_XAF,
+  amount_per_vote_xaf: VOTE_PRICE_XAF + PROCESSING_FEE_PER_VOTE_XAF,
+  currency: CURRENCY,
+});
+
+const buildVotingPayload = (
+  categories,
+  nominees,
+  includeDrafts = false,
+  payments = [],
+  paymentSummary = null
+) => {
   const nomineesByCategory = nominees.reduce((accumulator, nominee) => {
     if (!accumulator[nominee.category_id]) {
       accumulator[nominee.category_id] = [];
@@ -266,25 +415,117 @@ const buildVotingPayload = (categories, nominees, includeDrafts = false) => {
     accumulator[nominee.category_id].push(decorateNominee(nominee));
     return accumulator;
   }, {});
-  const lastSyncedAt = collectVoteProviderLastSyncedAt(nominees);
-  const countsAvailable = Boolean(voteProviderSyncConfigured && lastSyncedAt);
+  const totalVotes = nominees.reduce(
+    (sum, nominee) => sum + normalizeInteger(nominee.local_vote_count, 0),
+    0
+  );
 
   return {
     categories: categories.map((category) => ({
       ...category,
+      vote_count: nominees
+        .filter((nominee) => nominee.category_id === category.id)
+        .reduce(
+          (sum, nominee) => sum + normalizeInteger(nominee.local_vote_count, 0),
+          0
+        ),
       nominees: nomineesByCategory[category.id] || [],
     })),
     total_nominees: nominees.length,
-    counts_available: countsAvailable,
-    vote_provider: PANACHE_DOR_VOTE_PROVIDER,
+    total_votes: totalVotes,
+    counts_available: true,
+    vote_provider: PAYMENT_PROVIDER,
     vote_provider_name: VOTE_PROVIDER_NAME,
-    vote_provider_sync_configured: voteProviderSyncConfigured,
-    vote_provider_leaderboard_url: CLIQVOTES_EVENT_URL,
-    ayati_sync_configured: voteProviderSyncConfigured,
-    ayati_leaderboard_url: CLIQVOTES_EVENT_URL,
-    last_synced_at: lastSyncedAt,
+    vote_provider_sync_configured: paymentsConfigured,
+    vote_provider_leaderboard_url: null,
+    ayati_sync_configured: false,
+    ayati_leaderboard_url: null,
+    last_synced_at: null,
+    payment: paymentSettings(),
     admin: includeDrafts,
+    ...(includeDrafts
+      ? {
+          payments,
+          payment_summary:
+            paymentSummary || {
+              pending: 0,
+              completed: 0,
+              failed: 0,
+              cancelled: 0,
+              total_votes: totalVotes,
+              total_amount_xaf: 0,
+            },
+        }
+      : {}),
   };
+};
+
+const fetchVoteCounts = async (supabase) => {
+  const { data, error } = await supabase
+    .from("panache_dor_nominee_vote_counts")
+    .select("nominee_id,total_votes");
+
+  if (error) {
+    if (
+      error.code === "42P01" ||
+      error.code === "PGRST205" ||
+      /does not exist|could not find/i.test(error.message || "")
+    ) {
+      return new Map();
+    }
+    throw error;
+  }
+
+  return new Map(
+    (data || []).map((row) => [row.nominee_id, normalizeInteger(row.total_votes)])
+  );
+};
+
+const fetchPaymentAdminData = async (supabase, includeDrafts) => {
+  if (!includeDrafts) {
+    return { payments: [], summary: null };
+  }
+
+  const { data: payments = [], error } = await supabase
+    .from("panache_dor_vote_payments")
+    .select(
+      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(name, slug), category:panache_dor_award_categories(name, slug)`
+    )
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  if (error) {
+    if (
+      error.code === "42P01" ||
+      error.code === "PGRST205" ||
+      /does not exist|could not find/i.test(error.message || "")
+    ) {
+      return { payments: [], summary: null };
+    }
+    throw error;
+  }
+
+  const summary = payments.reduce(
+    (accumulator, payment) => {
+      const status = payment.status || "pending";
+      accumulator[status] = normalizeInteger(accumulator[status], 0) + 1;
+      if (status === "completed") {
+        accumulator.total_votes += normalizeInteger(payment.vote_count, 0);
+        accumulator.total_amount_xaf += normalizeInteger(payment.amount_xaf, 0);
+      }
+      return accumulator;
+    },
+    {
+      pending: 0,
+      completed: 0,
+      failed: 0,
+      cancelled: 0,
+      total_votes: 0,
+      total_amount_xaf: 0,
+    }
+  );
+
+  return { payments, summary };
 };
 
 const fetchVotingPayload = async (supabase, includeDrafts = false) => {
@@ -318,12 +559,20 @@ const fetchVotingPayload = async (supabase, includeDrafts = false) => {
     throw nomineesError;
   }
 
+  const voteCounts = await fetchVoteCounts(supabase);
   const categoryIds = new Set(categories.map((category) => category.id));
-  const nominees = rawNominees.filter((nominee) =>
-    categoryIds.has(nominee.category_id)
+  const nominees = rawNominees
+    .filter((nominee) => categoryIds.has(nominee.category_id))
+    .map((nominee) => ({
+      ...nominee,
+      local_vote_count: voteCounts.get(nominee.id) || 0,
+    }));
+  const { payments, summary } = await fetchPaymentAdminData(
+    supabase,
+    includeDrafts
   );
 
-  return buildVotingPayload(categories, nominees, includeDrafts);
+  return buildVotingPayload(categories, nominees, includeDrafts, payments, summary);
 };
 
 const mutateAndReturnVoting = async (supabase, mutation) => {
@@ -504,15 +753,7 @@ const importCsv = async (supabase, csvText) => {
         throw new Error("Nominee name is required.");
       }
 
-      const ayatiVoteUrl = normalizeUrl(
-        row.vote_url ||
-          row.vote_link ||
-          row.cliqvotes_vote_url ||
-          row.ayati_vote_url ||
-          row.ayati_link
-      );
       const status = normalizeStatus(row.status, "active");
-
       const payload = {
         category_id: category.id,
         slug: slugify(row.slug || name),
@@ -522,14 +763,8 @@ const importCsv = async (supabase, csvText) => {
         photo_url: normalizeText(row.photo_url || row.image_url),
         status,
         sort_order: normalizeInteger(row.sort_order),
-        ayati_vote_url: ayatiVoteUrl,
-        ayati_sync_id: normalizeText(
-          row.vote_provider_sync_id ||
-            row.cliqvotes_artist_id ||
-            row.cliqvotes_id ||
-            row.ayati_sync_id ||
-            row.ayati_id
-        ),
+        ayati_vote_url: normalizeUrl(row.vote_url || row.vote_link),
+        ayati_sync_id: normalizeText(row.vote_provider_sync_id),
         updated_at: new Date().toISOString(),
       };
 
@@ -557,249 +792,501 @@ const importCsv = async (supabase, csvText) => {
   };
 };
 
-const fetchJson = async (url) => {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-    },
-  });
-  const text = await response.text();
-  let payload = null;
-
-  try {
-    payload = JSON.parse(text);
-  } catch {
-    throw new Error(`${VOTE_PROVIDER_NAME} did not return JSON data.`);
+const loadActiveNominee = async (supabase, identifier) => {
+  const normalizedIdentifier = normalizeText(identifier);
+  if (!normalizedIdentifier) {
+    throw createHttpError("Nominee is required.");
   }
 
-  if (!response.ok) {
-    throw new Error(
-      payload?.message ||
-        `${VOTE_PROVIDER_NAME} sync failed (${response.status} ${response.statusText}).`
-    );
+  const query = supabase
+    .from("panache_dor_award_nominees")
+    .select(NOMINEE_COLUMNS)
+    .eq("status", "active");
+  const { data: nominee, error } = await (/^[0-9a-f-]{30,}$/i.test(
+    normalizedIdentifier
+  )
+    ? query.eq("id", normalizedIdentifier)
+    : query.eq("slug", normalizedIdentifier)
+  ).single();
+
+  if (error || !nominee) {
+    const notFound = new Error("Nominee is not available for voting.");
+    notFound.statusCode = 404;
+    throw notFound;
   }
 
-  return payload;
+  const { data: category, error: categoryError } = await supabase
+    .from("panache_dor_award_categories")
+    .select(CATEGORY_COLUMNS)
+    .eq("id", nominee.category_id)
+    .eq("status", "active")
+    .single();
+
+  if (categoryError || !category) {
+    const notFound = new Error("Nominee category is not available for voting.");
+    notFound.statusCode = 404;
+    throw notFound;
+  }
+
+  return { nominee, category };
 };
 
-const fetchCliqVotesPayload = async () => {
-  const categories = await fetchJson(CLIQVOTES_CATEGORIES_URL);
-  const artists = [];
-  let offset = 0;
-  const limit = 100;
-  let total = Number.POSITIVE_INFINITY;
+const buildReceipt = (payment, nominee, category) => ({
+  id: payment.id,
+  tx_ref: payment.tx_ref,
+  reference: payment.campay_reference,
+  nominee_id: payment.nominee_id,
+  nominee_name: nominee?.name || payment.nominee?.name || "Panache nominee",
+  category_id: payment.category_id,
+  category_name: category?.name || payment.category?.name || "Panache D'or",
+  voter_email: payment.voter_email,
+  voter_whatsapp: payment.voter_whatsapp,
+  vote_count: payment.vote_count,
+  amount_xaf: payment.amount_xaf,
+  currency: payment.currency,
+  status: payment.status,
+  verified_at: payment.verified_at,
+});
 
-  while (artists.length < total) {
-    const url = new URL(CLIQVOTES_ARTISTS_URL);
-    url.searchParams.set("eventSlug", PANACHE_DOR_CLIQVOTES_EVENT_SLUG);
-    url.searchParams.set("limit", String(limit));
-    url.searchParams.set("offset", String(offset));
-
-    const payload = await fetchJson(url.toString());
-    const rows = Array.isArray(payload) ? payload : payload.artists || [];
-    total = Number.isFinite(Number(payload.total))
-      ? Number(payload.total)
-      : Number.POSITIVE_INFINITY;
-    artists.push(...rows);
-
-    if (!payload.hasMore || rows.length === 0) {
-      break;
-    }
-    offset += rows.length;
-  }
-
-  return {
-    categories: Array.isArray(categories) ? categories : [],
-    artists,
-  };
-};
-
-const findMatchingNominee = (nominees, categoryId, cliqName) => {
-  const targetKey = normalizeNomineeLookup(cliqName);
-  const categoryMatches = nominees.filter(
-    (nominee) => nominee.category_id === categoryId
-  );
-  const exact = categoryMatches.find(
-    (nominee) => normalizeNomineeLookup(nominee.name) === targetKey
-  );
-  if (exact) {
-    return exact;
-  }
-
-  return categoryMatches.find((nominee) => {
-    const localKey = normalizeNomineeLookup(nominee.name);
-    return (
-      localKey &&
-      targetKey &&
-      (localKey.startsWith(targetKey) ||
-        targetKey.startsWith(localKey) ||
-        localKey.includes(targetKey) ||
-        targetKey.includes(localKey))
-    );
-  });
-};
-
-const buildUniqueNomineeSlug = (name, category) =>
-  `${slugify(name)}-${slugify(category.name || category.slug)}`.slice(0, 90);
-
-const syncCliqVotesCounts = async (supabase) => {
-  if (!voteProviderSyncConfigured) {
+const sendReceiptEmail = async ({ payment, nominee, category }) => {
+  if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM || !payment.voter_email) {
     return {
-      configured: false,
-      provider: PANACHE_DOR_VOTE_PROVIDER,
-      synced: 0,
-      skipped: 0,
-      message:
-        "CliqVotes sync is not configured. Add PANACHE_DOR_CLIQVOTES_BASE_URL and PANACHE_DOR_CLIQVOTES_EVENT_SLUG first.",
+      attempted: false,
+      skipped: true,
+      message: "SMTP is not configured or voter email is missing.",
     };
   }
 
-  const [source, existingCategoriesResult, existingNomineesResult] =
-    await Promise.all([
-      fetchCliqVotesPayload(),
-      supabase
-        .from("panache_dor_award_categories")
-        .select(CATEGORY_COLUMNS)
-        .order("sort_order", { ascending: true }),
-      supabase.from("panache_dor_award_nominees").select(NOMINEE_COLUMNS),
-    ]);
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+  const nomineeName = nominee?.name || payment.nominee?.name || "your nominee";
+  const categoryName = category?.name || payment.category?.name || "Panache D'or";
 
-  if (existingCategoriesResult.error) {
-    throw existingCategoriesResult.error;
+  await transporter.sendMail({
+    from: SMTP_FROM,
+    to: payment.voter_email,
+    subject: `Panache D'or vote receipt - ${nomineeName}`,
+    text: `
+Thank you for voting in the Panache D'or Awards.
+
+Nominee: ${nomineeName}
+Category: ${categoryName}
+Votes: ${payment.vote_count}
+Amount paid: ${payment.amount_xaf} ${payment.currency}
+Transaction reference: ${payment.campay_reference || payment.tx_ref}
+
+Only verified CamPay payments are counted on the leaderboard.
+`.trim(),
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#171411;">
+        <h2 style="margin:0 0 16px;">Panache D'or vote receipt</h2>
+        <p style="margin:0 0 12px;">Thank you for voting in the Panache D'or Awards.</p>
+        <p style="margin:0 0 8px;">Nominee: <strong>${nomineeName}</strong></p>
+        <p style="margin:0 0 8px;">Category: <strong>${categoryName}</strong></p>
+        <p style="margin:0 0 8px;">Votes: <strong>${payment.vote_count}</strong></p>
+        <p style="margin:0 0 8px;">Amount paid: <strong>${payment.amount_xaf} ${payment.currency}</strong></p>
+        <p style="margin:0 0 16px;">Transaction reference: <strong>${payment.campay_reference || payment.tx_ref}</strong></p>
+        <p style="margin:0;">Only verified CamPay payments are counted on the leaderboard.</p>
+      </div>
+    `,
+  });
+
+  return { attempted: true, ok: true };
+};
+
+const updatePaymentReceiptStatus = async (supabase, paymentId, result) => {
+  const { error } = await supabase
+    .from("panache_dor_vote_payments")
+    .update({
+      receipt_email_sent_at: result.ok ? new Date().toISOString() : null,
+      receipt_email_error: result.ok
+        ? null
+        : result.message || result.error || "Receipt email could not be sent.",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", paymentId);
+
+  if (error) {
+    console.error("Could not update Panache D'or receipt email status", error);
   }
-  if (existingNomineesResult.error) {
-    throw existingNomineesResult.error;
+};
+
+const maybeSendReceiptEmail = async (supabase, payment, nominee, category) => {
+  if (payment.receipt_email_sent_at) {
+    return { attempted: false, skipped: true, message: "Receipt already sent." };
   }
 
-  const localCategories = existingCategoriesResult.data || [];
-  const localNominees = [...(existingNomineesResult.data || [])];
-  const categoriesByKey = new Map(
-    localCategories.map((category) => [
-      normalizeCategoryLookup(category.name),
-      category,
-    ])
-  );
-  const cliqCategoriesById = new Map(
-    source.categories.map((category) => [category.id, category])
-  );
-  const syncedAt = new Date().toISOString();
-  const matchedLocalIds = new Set();
-  let synced = 0;
-  let created = 0;
-  let skipped = 0;
-
-  for (const artist of source.artists) {
-    const artistCategories = Array.isArray(artist.categories)
-      ? artist.categories
-      : [];
-
-    for (const artistCategory of artistCategories) {
-      const cliqCategory =
-        cliqCategoriesById.get(artistCategory.id) || artistCategory;
-      const category = categoriesByKey.get(
-        normalizeCategoryLookup(cliqCategory.name || artistCategory.name)
-      );
-
-      if (!category) {
-        skipped += 1;
-        continue;
-      }
-
-      const voteUrl = buildCliqVotesVoteUrl(cliqCategory.id, artist.id);
-      const voteCount = normalizeInteger(artist.totalVotes, 0);
-      const photoUrl = toAbsoluteCliqVotesUrl(artist.photoUrl);
-      const existing = findMatchingNominee(localNominees, category.id, artist.name);
-      const payload = {
-        category_id: category.id,
-        name: normalizeText(artist.name),
-        organization: null,
-        bio: normalizeText(artist.bio),
-        photo_url: existing?.photo_url || photoUrl,
-        status: "active",
-        sort_order: normalizeInteger(existing?.sort_order, 0),
-        ayati_vote_url: voteUrl,
-        ayati_sync_id: normalizeText(artist.id),
-        ayati_vote_count: voteCount,
-        ayati_last_synced_at: syncedAt,
-        updated_at: syncedAt,
-      };
-
-      if (existing) {
-        const { error } = await supabase
-          .from("panache_dor_award_nominees")
-          .update(payload)
-          .eq("id", existing.id);
-
-        if (error) {
-          throw error;
-        }
-
-        Object.assign(existing, payload);
-        matchedLocalIds.add(existing.id);
-        synced += 1;
-      } else {
-        const { data, error } = await supabase
-          .from("panache_dor_award_nominees")
-          .insert({
-            ...payload,
-            slug: buildUniqueNomineeSlug(artist.name, category),
-            created_at: syncedAt,
-          })
-          .select(NOMINEE_COLUMNS)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        if (data) {
-          localNominees.push(data);
-          matchedLocalIds.add(data.id);
-        }
-        created += 1;
-        synced += 1;
-      }
+  try {
+    const result = await sendReceiptEmail({ payment, nominee, category });
+    if (result.attempted) {
+      await updatePaymentReceiptStatus(supabase, payment.id, result);
     }
+    return result;
+  } catch (error) {
+    const result = {
+      attempted: true,
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+    await updatePaymentReceiptStatus(supabase, payment.id, result);
+    return result;
+  }
+};
+
+const initializeCampayVote = async (req, supabase, body) => {
+  const nomineeIdentifier =
+    body.nomineeId || body.nominee_id || body.nomineeSlug || body.nominee_slug;
+  const rawVoterEmail = normalizeText(
+    body.voterEmail || body.voter_email || body.email
+  );
+  const voterEmail = normalizeEmail(rawVoterEmail);
+  const voterWhatsapp = normalizePhone(
+    body.voterWhatsapp || body.voter_whatsapp || body.whatsapp || body.phone
+  );
+  const voteCount = normalizeInteger(body.voteCount || body.vote_count || body.votes);
+
+  if (rawVoterEmail && !voterEmail) {
+    throw createHttpError("Enter a valid email address, or leave it blank.");
+  }
+  if (!Number.isSafeInteger(voteCount) || voteCount < 1) {
+    throw createHttpError("Choose at least 1 vote.");
+  }
+  if (voteCount > 10000) {
+    throw createHttpError("Vote quantity is too high for one payment.");
+  }
+  if (!paymentsConfigured) {
+    const error = new Error("CamPay voting is not configured yet.");
+    error.statusCode = 503;
+    throw error;
   }
 
-  const unmatchedArchiveKeys = new Set(["braidwithpetra"]);
-  let archived = 0;
-  for (const nominee of localNominees) {
-    if (
-      !matchedLocalIds.has(nominee.id) &&
-      unmatchedArchiveKeys.has(normalizeNomineeLookup(nominee.name)) &&
-      nominee.status !== "archived"
-    ) {
-      const { error } = await supabase
-        .from("panache_dor_award_nominees")
-        .update({
-          status: "archived",
-          updated_at: syncedAt,
-        })
-        .eq("id", nominee.id);
+  const { nominee, category } = await loadActiveNominee(supabase, nomineeIdentifier);
+  const amount = moneyAmount(
+    (VOTE_PRICE_XAF + PROCESSING_FEE_PER_VOTE_XAF) * voteCount
+  );
+  const txRef = `panache-dor-${Date.now()}-${crypto
+    .randomBytes(6)
+    .toString("hex")}`;
+  const redirectUrl = `${resolveBaseUrl(
+    req
+  )}/panache-expo/panache-dor/payment/verify?tx_ref=${encodeURIComponent(txRef)}`;
+  const { firstName, lastName } = splitReceiptName(voterEmail);
 
-      if (error) {
-        throw error;
-      }
-      archived += 1;
+  const { data: pendingPayment, error: insertError } = await supabase
+    .from("panache_dor_vote_payments")
+    .insert({
+      nominee_id: nominee.id,
+      category_id: category.id,
+      tx_ref: txRef,
+      provider: PAYMENT_PROVIDER,
+      status: "pending",
+      voter_email: voterEmail,
+      voter_whatsapp: voterWhatsapp,
+      vote_count: voteCount,
+      vote_price_xaf: VOTE_PRICE_XAF,
+      processing_fee_per_vote_xaf: PROCESSING_FEE_PER_VOTE_XAF,
+      amount_xaf: amount,
+      currency: CURRENCY,
+      provider_payload: {
+        initialize_request: {
+          nominee_id: nominee.id,
+          category_id: category.id,
+          vote_count: voteCount,
+          amount,
+          currency: CURRENCY,
+        },
+      },
+    })
+    .select(PAYMENT_COLUMNS)
+    .single();
+
+  if (insertError) {
+    if (
+      insertError.code === "42P01" ||
+      insertError.code === "PGRST205" ||
+      /does not exist|could not find/i.test(insertError.message || "")
+    ) {
+      throw createHttpError(
+        "Panache D'or payment tables are not migrated yet.",
+        503
+      );
+    }
+    throw insertError;
+  }
+
+  const campayPayload = {
+    amount: String(amount),
+    currency: CURRENCY,
+    description: `${voteCount} Panache D'or vote${
+      voteCount === 1 ? "" : "s"
+    } for ${nominee.name}`,
+    external_reference: txRef,
+    redirect_url: redirectUrl,
+    failure_redirect_url: redirectUrl,
+    payment_options: CAMPAY_PAYMENT_OPTIONS,
+    first_name: firstName,
+    last_name: lastName,
+    ...(voterEmail ? { email: voterEmail } : {}),
+    ...(voterWhatsapp ? { from: voterWhatsapp } : {}),
+  };
+
+  try {
+    const campay = await campayRequest("/api/get_payment_link/", {
+      method: "POST",
+      body: JSON.stringify(campayPayload),
+    });
+
+    if (!campay.link || !campay.reference) {
+      const error = new Error("CamPay did not return a payment link.");
+      error.statusCode = 502;
+      error.details = campay;
+      throw error;
+    }
+
+    const { data: payment, error: updateError } = await supabase
+      .from("panache_dor_vote_payments")
+      .update({
+        campay_reference: campay.reference,
+        payment_link: campay.link,
+        provider_payload: {
+          ...(pendingPayment.provider_payload || {}),
+          initialize_response: campay,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", pendingPayment.id)
+      .select(PAYMENT_COLUMNS)
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    return {
+      payment: {
+        id: payment.id,
+        tx_ref: payment.tx_ref,
+        reference: payment.campay_reference,
+        payment_link: payment.payment_link,
+        link: payment.payment_link,
+        amount_xaf: payment.amount_xaf,
+        currency: payment.currency,
+        vote_count: payment.vote_count,
+        nominee_name: nominee.name,
+        category_name: category.name,
+      },
+    };
+  } catch (error) {
+    await supabase
+      .from("panache_dor_vote_payments")
+      .update({
+        status: "failed",
+        failure_reason: error instanceof Error ? error.message : String(error),
+        provider_payload: {
+          ...(pendingPayment.provider_payload || {}),
+          initialize_error: error.details || {
+            message: error instanceof Error ? error.message : String(error),
+          },
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", pendingPayment.id);
+    throw error;
+  }
+};
+
+const loadPaymentForVerification = async (supabase, body) => {
+  const txRef = normalizeText(body.tx_ref || body.txRef);
+  const reference = normalizeText(
+    body.reference || body.transId || body.transaction_id || body.transactionId
+  );
+
+  if (!txRef && !reference) {
+    throw createHttpError("Payment reference is missing.");
+  }
+
+  let query = supabase
+    .from("panache_dor_vote_payments")
+    .select(
+      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+    );
+
+  query = txRef ? query.eq("tx_ref", txRef) : query.eq("campay_reference", reference);
+  const { data: payment, error } = await query.single();
+
+  if (error || !payment) {
+    const notFound = new Error("This Panache D'or payment could not be found.");
+    notFound.statusCode = 404;
+    throw notFound;
+  }
+
+  return payment;
+};
+
+const verifyPaymentRow = async (supabase, payment) => {
+  if (payment.status === "completed") {
+    const receipt = buildReceipt(payment, payment.nominee, payment.category);
+    return {
+      status: "already-counted",
+      message: "This payment has already been verified and counted.",
+      receipt,
+      payment,
+    };
+  }
+
+  const reference = normalizeText(payment.campay_reference);
+  if (!reference) {
+    throw createHttpError("CamPay reference is missing for this payment.");
+  }
+
+  const transaction = await campayRequest(
+    `/api/transaction/${encodeURIComponent(reference)}/`
+  );
+  const providerStatus = String(transaction.status || "").toUpperCase();
+  const paidAmount = Number(transaction.amount);
+  const sameReference = transaction.external_reference === payment.tx_ref;
+  const successful = completedProviderStatuses.has(providerStatus);
+  const enoughPaid = paidAmount >= Number(payment.amount_xaf);
+  const sameCurrency =
+    String(transaction.currency || payment.currency).toUpperCase() ===
+    payment.currency;
+  const now = new Date().toISOString();
+
+  if (successful && sameReference && enoughPaid && sameCurrency) {
+    const { data: completedPayment, error } = await supabase
+      .from("panache_dor_vote_payments")
+      .update({
+        status: "completed",
+        provider_status: providerStatus,
+        provider_payload: {
+          ...(payment.provider_payload || {}),
+          verify_response: transaction,
+        },
+        verified_at: now,
+        failure_reason: null,
+        updated_at: now,
+      })
+      .eq("id", payment.id)
+      .select(
+        `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+      )
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const receiptEmail = await maybeSendReceiptEmail(
+      supabase,
+      completedPayment,
+      completedPayment.nominee,
+      completedPayment.category
+    );
+    const receipt = buildReceipt(
+      completedPayment,
+      completedPayment.nominee,
+      completedPayment.category
+    );
+
+    return {
+      status: "success",
+      message: "Payment verified and votes counted.",
+      receipt,
+      receiptEmail,
+      payment: completedPayment,
+    };
+  }
+
+  const shouldFail =
+    failedProviderStatuses.has(providerStatus) ||
+    (successful && (!sameReference || !enoughPaid || !sameCurrency));
+  const nextStatus = shouldFail ? "failed" : "pending";
+  const failureReason = successful
+    ? "CamPay payment did not match the expected vote transaction."
+    : `CamPay status is ${providerStatus || "pending"}.`;
+
+  const { data: updatedPayment, error } = await supabase
+    .from("panache_dor_vote_payments")
+    .update({
+      status: nextStatus,
+      provider_status: providerStatus || null,
+      provider_payload: {
+        ...(payment.provider_payload || {}),
+        verify_response: transaction,
+      },
+      failure_reason: nextStatus === "failed" ? failureReason : null,
+      updated_at: now,
+    })
+    .eq("id", payment.id)
+    .select(
+      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+    )
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    status: nextStatus,
+    message:
+      nextStatus === "failed"
+        ? "Payment could not be verified for this vote."
+        : "Payment is still pending.",
+    payment: updatedPayment,
+  };
+};
+
+const verifyCampayVote = async (supabase, body) => {
+  const payment = await loadPaymentForVerification(supabase, body);
+  const result = await verifyPaymentRow(supabase, payment);
+  const voting = await fetchVotingPayload(supabase, false);
+  return { ...result, voting };
+};
+
+const verifyPendingCampayVotes = async (supabase, limit = 25) => {
+  const safeLimit = Math.min(Math.max(normalizeInteger(limit, 25), 1), 100);
+  const { data: payments = [], error } = await supabase
+    .from("panache_dor_vote_payments")
+    .select(
+      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+    )
+    .eq("status", "pending")
+    .order("created_at", { ascending: true })
+    .limit(safeLimit);
+
+  if (error) {
+    throw error;
+  }
+
+  const results = [];
+  for (const payment of payments) {
+    try {
+      results.push(await verifyPaymentRow(supabase, payment));
+    } catch (error) {
+      results.push({
+        status: "error",
+        tx_ref: payment.tx_ref,
+        reference: payment.campay_reference,
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   return {
-    configured: true,
-    provider: PANACHE_DOR_VOTE_PROVIDER,
-    synced,
-    created,
-    archived,
-    skipped,
-    source_rows: source.artists.length,
-    source_nominee_category_rows: source.artists.reduce(
-      (count, artist) =>
-        count + (Array.isArray(artist.categories) ? artist.categories.length : 0),
-      0
-    ),
-    synced_at: syncedAt,
-    message: `${synced} nominee-category row${synced === 1 ? "" : "s"} synced from ${VOTE_PROVIDER_NAME}.`,
+    checked: payments.length,
+    completed: results.filter((result) => result.status === "success").length,
+    pending: results.filter((result) => result.status === "pending").length,
+    failed: results.filter((result) => result.status === "failed").length,
+    errors: results.filter((result) => result.status === "error").length,
+    results,
   };
 };
 
@@ -815,9 +1302,29 @@ const handleGet = async (req, res, supabase) => {
 };
 
 const handlePost = async (req, res, supabase) => {
-  assertAdmin(req);
   const body = parseBody(req);
   const action = normalizeText(body.action);
+
+  if (action === "initializeCampayVote") {
+    const result = await initializeCampayVote(req, supabase, body);
+    sendJson(res, 200, result);
+    return;
+  }
+
+  if (action === "verifyCampayVote") {
+    const result = await verifyCampayVote(supabase, body);
+    sendJson(res, 200, result);
+    return;
+  }
+
+  assertAdmin(req);
+
+  if (action === "verifyPendingCampayVotes") {
+    const verifySummary = await verifyPendingCampayVotes(supabase, body.limit);
+    const voting = await fetchVotingPayload(supabase, true);
+    sendJson(res, 200, { verifySummary, voting });
+    return;
+  }
 
   if (action === "createCategory") {
     const category = sanitizeCategory(body.category);
@@ -973,13 +1480,6 @@ const handlePost = async (req, res, supabase) => {
     const importSummary = await importCsv(supabase, csv);
     const voting = await fetchVotingPayload(supabase, true);
     sendJson(res, 200, { importSummary, voting });
-    return;
-  }
-
-  if (action === "syncAyatiCounts" || action === "syncCliqVotesCounts") {
-    const syncSummary = await syncCliqVotesCounts(supabase);
-    const voting = await fetchVotingPayload(supabase, true);
-    sendJson(res, 200, { syncSummary, voting });
     return;
   }
 

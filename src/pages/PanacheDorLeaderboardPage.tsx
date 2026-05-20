@@ -11,7 +11,6 @@ import PanacheAwards from "@/assets/PanacheAwards.jpeg";
 import {
   Award,
   BarChart3,
-  ExternalLink,
   Loader2,
   Medal,
   RefreshCw,
@@ -23,9 +22,6 @@ import { Link } from "react-router-dom";
 type RankedNominee = PanacheDorAwardNominee & {
   category: PanacheDorAwardCategory;
 };
-
-const getVoteUrl = (nominee: RankedNominee) =>
-  nominee.vote_url || nominee.ayati_vote_url;
 
 const getVoteCount = (nominee: RankedNominee) =>
   nominee.vote_count ?? nominee.ayati_vote_count;
@@ -49,12 +45,10 @@ const NomineeLeaderboardRow = ({
   nominee,
   rank,
   showCounts,
-  voteProviderName,
 }: {
   nominee: RankedNominee;
   rank: number;
   showCounts: boolean;
-  voteProviderName: string;
 }) => (
   <article className="grid gap-4 rounded-[1.35rem] border border-black/8 bg-white/78 p-4 md:grid-cols-[auto_74px_1fr_auto] md:items-center">
     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#171411] font-sans text-sm font-semibold text-white">
@@ -95,22 +89,15 @@ const NomineeLeaderboardRow = ({
           {getVoteCount(nominee).toLocaleString()} votes
         </Badge>
       ) : null}
-      {getVoteUrl(nominee) ? (
-        <Button
-          asChild
-          size="sm"
-          className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
-        >
-          <a
-            href={getVoteUrl(nominee) || undefined}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vote on {voteProviderName}
-            <ExternalLink className="ml-2 h-3.5 w-3.5" />
-          </a>
-        </Button>
-      ) : null}
+      <Button
+        asChild
+        size="sm"
+        className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
+      >
+        <Link to={`/panache-expo/panache-dor/nominees/${nominee.slug}`}>
+          Vote with CamPay
+        </Link>
+      </Button>
     </div>
   </article>
 );
@@ -120,10 +107,6 @@ const PanacheDorLeaderboardPage = () => {
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const rankedNominees = useMemo(() => rankNominees(categories), [categories]);
   const showCounts = Boolean(voting?.counts_available);
-  const voteProviderName = voting?.vote_provider_name || "CliqVotes";
-  const voteProviderUrl =
-    voting?.vote_provider_leaderboard_url ||
-    voting?.ayati_leaderboard_url;
 
   return (
     <div className="min-h-screen bg-[#f4f3ef]">
@@ -136,13 +119,13 @@ const PanacheDorLeaderboardPage = () => {
               Panache D&apos;or leaderboard
             </p>
             <h1 className="mt-4 font-sans text-[clamp(3.2rem,7vw,6rem)] font-semibold leading-[0.86] tracking-[-0.08em] text-[#171411]">
-              Official {voteProviderName}
+              Verified Panache
               <span className="block font-display text-[#8241B6]">Vote Counts</span>
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
-              This page shows vote counts only when Panache has an official {voteProviderName}
-              sync source connected. Until then, the nominee directory remains
-              public and every vote button sends supporters to {voteProviderName}.
+              This page shows votes counted from completed CamPay payments
+              only. No button clicks, estimates, or external leaderboard syncs
+              are used as official totals.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -152,22 +135,6 @@ const PanacheDorLeaderboardPage = () => {
               >
                 <Link to="/panache-expo/panache-dor/vote">View nominees</Link>
               </Button>
-              {voteProviderUrl ? (
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
-                >
-                  <a
-                    href={voteProviderUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Official {voteProviderName} source
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
-              ) : null}
             </div>
           </div>
 
@@ -184,8 +151,8 @@ const PanacheDorLeaderboardPage = () => {
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
                 {showCounts
-                  ? `Last sync: ${voting?.last_synced_at || "available"}`
-                  : `Counts will appear only after official ${voteProviderName} sync is configured.`}
+                  ? `${(voting?.total_votes || 0).toLocaleString()} verified votes recorded.`
+                  : "Counts appear once completed CamPay payments are recorded."}
               </p>
             </div>
           </div>
@@ -198,15 +165,14 @@ const PanacheDorLeaderboardPage = () => {
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full bg-[#f8f2e8] px-4 py-2 font-sans text-sm font-semibold text-[#8241B6]">
                     <BarChart3 className="h-4 w-4" />
-                    Official counts not connected
+                    Waiting for verified votes
                   </div>
                   <h2 className="mt-5 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.95] tracking-[-0.06em] text-[#171411]">
-                    The leaderboard is intentionally hidden for now.
+                    The leaderboard is ready for verified CamPay votes.
                   </h2>
                   <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-[#171411]/66">
-                    {voteProviderName} is the source of truth for paid votes. Until Panache has
-                    an official {voteProviderName} API or leaderboard data source connected, we
-                    will not display estimated counts or track button clicks as votes.
+                    Panache is now the source of truth for paid votes. Only
+                    completed CamPay payments are counted here.
                   </p>
                 </div>
                 <Button
@@ -214,7 +180,7 @@ const PanacheDorLeaderboardPage = () => {
                   className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
                 >
                   <Link to="/panache-expo/panache-dor/vote">
-                    Vote through {voteProviderName}
+                    View nominees
                   </Link>
                 </Button>
               </div>
@@ -252,7 +218,6 @@ const PanacheDorLeaderboardPage = () => {
                   nominee={nominee}
                   rank={index + 1}
                   showCounts={showCounts}
-                  voteProviderName={voteProviderName}
                 />
               ))}
             </div>

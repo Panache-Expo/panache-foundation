@@ -26,6 +26,7 @@ import PanacheDorPage from "./pages/PanacheDorPage";
 import PanacheDorVotingPage from "./pages/PanacheDorVotingPage";
 import PanacheDorNomineePage from "./pages/PanacheDorNomineePage";
 import PanacheDorLeaderboardPage from "./pages/PanacheDorLeaderboardPage";
+import PanacheDorPaymentVerifyPage from "./pages/PanacheDorPaymentVerifyPage";
 import PanacheNominationsPage from "./pages/PanacheNominationsPage";
 import MissPanachePage from "./pages/MissPanachePage";
 import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
@@ -127,6 +128,7 @@ const App = () => (
               <Route path="/panache-expo/panache-dor" element={<PanacheDorPage />} />
               <Route path="/panache-expo/panache-dor/vote" element={<PanacheDorVotingPage />} />
               <Route path="/panache-expo/panache-dor/nominees/:slug" element={<PanacheDorNomineePage />} />
+              <Route path="/panache-expo/panache-dor/payment/verify" element={<PanacheDorPaymentVerifyPage />} />
               <Route path="/panache-expo/panache-dor/leaderboard" element={<PanacheDorLeaderboardPage />} />
               <Route path="/panache-expo/workshops" element={<WorkshopsPage />} />
               <Route path="/panache-expo/contact" element={<ContactPage />} />

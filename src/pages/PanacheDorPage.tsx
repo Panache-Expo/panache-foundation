@@ -106,7 +106,7 @@ const PanacheDorPage = () => {
         panelItems={[
           { label: "Flagship crown", value: "Miss Panache D'or" },
           { label: "Focus", value: "Beauty, fashion, craft" },
-          { label: "Voting", value: "CliqVotes-powered links" },
+          { label: "Voting", value: "CamPay verified votes" },
         ]}
       />
 
@@ -194,8 +194,8 @@ const PanacheDorPage = () => {
                   Next action
                 </p>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                  Browse the nominee directory and use each nominee&apos;s CliqVotes link
-                  to vote officially.
+                  Browse the nominee directory and use each nominee&apos;s CamPay
+                  checkout to vote officially.
                 </p>
               </div>
             </div>
@@ -352,9 +352,9 @@ const PanacheDorPage = () => {
               <div className="lg:ml-auto lg:max-w-[38rem]">
                 <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/68">
                   Public nominations are closed for this Panache D&apos;or cycle.
-                  The nominee directory now sends each supporter to the correct
-                  CliqVotes vote/payment link, while official counts remain hidden
-                  unless Panache connects an official CliqVotes data source.
+                  The nominee directory now lets supporters vote through a
+                  Panache-owned CamPay checkout. Only verified payments count
+                  toward the public leaderboard.
                 </p>
 
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">

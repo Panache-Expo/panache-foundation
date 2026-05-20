@@ -112,9 +112,16 @@ const readResponsePayload = async (response: Response) => {
         panacheDorNominee?: PanacheDorAwardNominee;
         photoUrl?: string;
         photo_url?: string;
-        path?: string;
-        importSummary?: PanacheDorCsvImportSummary;
-        syncSummary?: PanacheDorVoteProviderSyncSummary;
+  path?: string;
+  importSummary?: PanacheDorCsvImportSummary;
+  syncSummary?: PanacheDorVoteProviderSyncSummary;
+  verifySummary?: {
+    checked: number;
+    completed: number;
+    pending: number;
+    failed: number;
+    errors: number;
+  };
       }
     | null;
 };
@@ -337,6 +344,7 @@ const mutatePanacheDorVotingDashboard = async (
     voting: payload.voting as unknown as PanacheDorVotingPayload,
     importSummary: payload.importSummary,
     syncSummary: payload.syncSummary,
+    verifySummary: payload.verifySummary,
   };
 };
 
@@ -442,10 +450,11 @@ export const importPanacheDorNomineesCsv = async (
   });
 };
 
-export const syncPanacheDorCliqVotesCounts = async (accessKey: string) => {
+export const verifyPendingPanacheDorCampayVotes = async (accessKey: string) => {
   return mutatePanacheDorVotingDashboard(accessKey, {
-    action: "syncCliqVotesCounts",
+    action: "verifyPendingCampayVotes",
   });
 };
 
-export const syncPanacheDorAyatiCounts = syncPanacheDorCliqVotesCounts;
+export const syncPanacheDorCliqVotesCounts = verifyPendingPanacheDorCampayVotes;
+export const syncPanacheDorAyatiCounts = verifyPendingPanacheDorCampayVotes;

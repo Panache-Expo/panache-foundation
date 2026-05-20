@@ -1,5 +1,6 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { PanacheDorVoteForm } from "@/components/PanacheDorVoteForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type {
@@ -7,7 +8,7 @@ import type {
   PanacheDorAwardNominee,
 } from "@/integrations/supabase/services";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
-import { Award, ArrowLeft, ExternalLink, Loader2, Trophy } from "lucide-react";
+import { Award, ArrowLeft, Loader2, Trophy } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -15,16 +16,12 @@ type NomineeWithCategory = PanacheDorAwardNominee & {
   category: PanacheDorAwardCategory;
 };
 
-const getVoteUrl = (nominee: NomineeWithCategory) =>
-  nominee.vote_url || nominee.ayati_vote_url;
-
 const getVoteCount = (nominee: NomineeWithCategory) =>
   nominee.vote_count ?? nominee.ayati_vote_count;
 
 const PanacheDorNomineePage = () => {
   const { slug } = useParams();
   const { data: voting, isLoading, error } = usePanacheDorVoting();
-  const voteProviderName = voting?.vote_provider_name || "CliqVotes";
 
   const nominees = useMemo(
     () =>
@@ -112,7 +109,7 @@ const PanacheDorNomineePage = () => {
                   ) : (
                     <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/68">
                       This nominee is listed for Panache D&apos;or voting. Use the
-                      CliqVotes link to support them officially.
+                      Panache CamPay voting flow to support them officially.
                     </p>
                   )}
 
@@ -122,7 +119,7 @@ const PanacheDorNomineePage = () => {
                         Vote source
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
-                        {voteProviderName} payment link
+                        Panache CamPay checkout
                       </p>
                     </div>
                     <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
@@ -130,33 +127,20 @@ const PanacheDorNomineePage = () => {
                         Vote count
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
-                        {voting?.counts_available
-                          ? `${getVoteCount(nominee).toLocaleString()} official votes`
-                          : "Hidden until official CliqVotes sync is connected"}
+                        {getVoteCount(nominee).toLocaleString()} verified votes
                       </p>
                     </div>
                   </div>
 
+                  <div className="mt-8">
+                    <PanacheDorVoteForm
+                      nominee={nominee}
+                      category={nominee.category}
+                      payment={voting?.payment}
+                    />
+                  </div>
+
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                    {getVoteUrl(nominee) ? (
-                      <Button
-                        asChild
-                        className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
-                      >
-                        <a
-                          href={getVoteUrl(nominee) || undefined}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Vote on {voteProviderName}
-                          <ExternalLink className="ml-2 h-4 w-4" />
-                        </a>
-                      </Button>
-                    ) : (
-                      <Badge variant="secondary" className="w-fit rounded-full px-5 py-3">
-                        Vote link coming soon
-                      </Badge>
-                    )}
                     <Button
                       asChild
                       variant="outline"
