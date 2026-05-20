@@ -109,7 +109,7 @@ const PanacheDorNomineePage = () => {
                   ) : (
                     <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/68">
                       This nominee is listed for Panache D&apos;or voting. Use the
-                      Panache CamPay voting flow to support them officially.
+                      secure voting flow to support them officially.
                     </p>
                   )}
 
@@ -119,7 +119,7 @@ const PanacheDorNomineePage = () => {
                         Vote source
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
-                        Panache CamPay checkout
+                        Secure verified payment
                       </p>
                     </div>
                     <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">

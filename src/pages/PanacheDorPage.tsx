@@ -106,7 +106,7 @@ const PanacheDorPage = () => {
         panelItems={[
           { label: "Flagship crown", value: "Miss Panache D'or" },
           { label: "Focus", value: "Beauty, fashion, craft" },
-          { label: "Voting", value: "CamPay verified votes" },
+          { label: "Voting", value: "Verified public votes" },
         ]}
       />
 
@@ -194,8 +194,8 @@ const PanacheDorPage = () => {
                   Next action
                 </p>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
-                  Browse the nominee directory and use each nominee&apos;s CamPay
-                  checkout to vote officially.
+                  Browse the nominee directory and use each nominee&apos;s secure
+                  payment flow to vote officially.
                 </p>
               </div>
             </div>
@@ -353,7 +353,7 @@ const PanacheDorPage = () => {
                 <p className="font-sans text-[1rem] leading-relaxed text-[#171411]/68">
                   Public nominations are closed for this Panache D&apos;or cycle.
                   The nominee directory now lets supporters vote through a
-                  Panache-owned CamPay checkout. Only verified payments count
+                  Panache-owned secure payment flow. Only verified payments count
                   toward the public leaderboard.
                 </p>
 

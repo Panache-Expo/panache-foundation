@@ -78,7 +78,7 @@ const PanacheDorVotingPage = () => {
         <section className="mx-auto grid max-w-7xl gap-10 px-6 md:px-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-center">
           <div>
             <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-              CamPay-powered voting
+              Secure online voting
             </p>
             <h1 className="mt-4 font-sans text-[clamp(3.2rem,7vw,6rem)] font-semibold leading-[0.86] tracking-[-0.08em] text-[#171411]">
               Panache D&apos;or
@@ -86,7 +86,7 @@ const PanacheDorVotingPage = () => {
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
               Browse the official nominee directory. Each nominee profile now
-              has a Panache-owned CamPay checkout, and only verified payments
+              has an on-site secure payment flow, and only verified payments
               count on the leaderboard.
             </p>
 
@@ -122,7 +122,7 @@ const PanacheDorVotingPage = () => {
                 Official nominee directory
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
-                Vote payments happen through CamPay and are verified by Panache
+                Vote payments happen securely on this site and are verified by Panache
                 before they appear in the totals.
               </p>
             </div>
@@ -138,7 +138,7 @@ const PanacheDorVotingPage = () => {
                 </p>
                 <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/62">
                   Search by name, brand, or category. Vote totals stay hidden
-                  from estimates; only completed CamPay payments are counted.
+                  from estimates; only completed verified payments are counted.
                 </p>
               </div>
               <div className="grid gap-3 md:grid-cols-[1fr_auto]">
@@ -275,7 +275,7 @@ const PanacheDorVotingPage = () => {
                         className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
                       >
                         <Link to={`/panache-expo/panache-dor/nominees/${nominee.slug}`}>
-                          Vote with CamPay
+                          Vote securely
                         </Link>
                       </Button>
                     </div>

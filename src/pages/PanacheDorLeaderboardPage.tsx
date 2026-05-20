@@ -95,7 +95,7 @@ const NomineeLeaderboardRow = ({
         className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
       >
         <Link to={`/panache-expo/panache-dor/nominees/${nominee.slug}`}>
-          Vote with CamPay
+          Vote securely
         </Link>
       </Button>
     </div>
@@ -123,7 +123,7 @@ const PanacheDorLeaderboardPage = () => {
               <span className="block font-display text-[#8241B6]">Vote Counts</span>
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
-              This page shows votes counted from completed CamPay payments
+              This page shows votes counted from completed verified payments
               only. No button clicks, estimates, or external leaderboard syncs
               are used as official totals.
             </p>
@@ -152,7 +152,7 @@ const PanacheDorLeaderboardPage = () => {
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
                 {showCounts
                   ? `${(voting?.total_votes || 0).toLocaleString()} verified votes recorded.`
-                  : "Counts appear once completed CamPay payments are recorded."}
+                  : "Counts appear once completed verified payments are recorded."}
               </p>
             </div>
           </div>
@@ -168,11 +168,11 @@ const PanacheDorLeaderboardPage = () => {
                     Waiting for verified votes
                   </div>
                   <h2 className="mt-5 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.95] tracking-[-0.06em] text-[#171411]">
-                    The leaderboard is ready for verified CamPay votes.
+                    The leaderboard is ready for verified votes.
                   </h2>
                   <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-[#171411]/66">
                     Panache is now the source of truth for paid votes. Only
-                    completed CamPay payments are counted here.
+                    completed verified payments are counted here.
                   </p>
                 </div>
                 <Button

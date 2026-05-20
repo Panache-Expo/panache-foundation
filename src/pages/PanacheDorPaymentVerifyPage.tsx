@@ -77,7 +77,7 @@ const PanacheDorPaymentVerifyPage = () => {
                 Verifying your payment
               </h1>
               <p className="mt-3 font-sans text-sm text-[#171411]/64">
-                Please wait while Panache confirms the CamPay transaction.
+                Please wait while Panache confirms the payment.
               </p>
             </>
           ) : error ? (
@@ -103,7 +103,7 @@ const PanacheDorPaymentVerifyPage = () => {
               </h1>
               <p className="mt-3 font-sans text-sm text-[#171411]/64">
                 {result?.message ||
-                  "If your payment is still pending, refresh this page after CamPay completes it."}
+                  "If your payment is still pending, refresh this page after it completes."}
               </p>
 
               {result?.receipt ? (

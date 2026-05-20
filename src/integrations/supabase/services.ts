@@ -141,7 +141,6 @@ export type PanacheDorVotingPayload = {
 export type PanacheDorVoteInitializePayload = {
   nomineeId: string;
   voterEmail?: string;
-  voterWhatsapp?: string;
   voteCount: number;
 };
 
@@ -166,14 +165,18 @@ export type PanacheDorVoteInitializeResponse = {
   payment: {
     id: string;
     tx_ref: string;
-    reference: string;
-    payment_link: string;
-    link: string;
     amount_xaf: number;
     currency: string;
     vote_count: number;
     nominee_name: string;
     category_name: string;
+    widget: {
+      amount: number;
+      currency: string;
+      description: string;
+      externalReference: string;
+      redirectUrl: string;
+    };
   };
 };
 
@@ -383,14 +386,13 @@ export const panacheDorVotingService = {
         action: 'initializeCampayVote',
         nomineeId: data.nomineeId,
         voterEmail: data.voterEmail,
-        voterWhatsapp: data.voterWhatsapp,
         voteCount: data.voteCount,
       }),
     });
     const payload = await readPanacheDorVotingResponse(response);
 
     if (!response.ok || !payload?.payment) {
-      throw new Error(payload?.message || "Could not start the CamPay payment.");
+      throw new Error(payload?.message || "Could not start the secure payment.");
     }
 
     return payload as PanacheDorVoteInitializeResponse;
@@ -411,7 +413,7 @@ export const panacheDorVotingService = {
     const payload = await readPanacheDorVotingResponse(response);
 
     if (!response.ok || !payload?.status) {
-      throw new Error(payload?.message || "Could not verify the CamPay payment.");
+      throw new Error(payload?.message || "Could not verify the payment.");
     }
 
     return payload as PanacheDorVoteVerifyResponse;

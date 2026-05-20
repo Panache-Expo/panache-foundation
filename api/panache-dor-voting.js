@@ -15,7 +15,7 @@ const PANACHE_DOR_PHOTO_MAX_BYTES = Number.parseInt(
 );
 
 const PAYMENT_PROVIDER = process.env.PANACHE_DOR_PAYMENT_PROVIDER || "campay";
-const VOTE_PROVIDER_NAME = "Panache CamPay";
+const VOTE_PROVIDER_NAME = "Secure payment";
 const CAMPAY_BASE_URL = (
   process.env.PANACHE_DOR_CAMPAY_BASE_URL ||
   process.env.CAMPAY_BASE_URL ||
@@ -882,7 +882,7 @@ Votes: ${payment.vote_count}
 Amount paid: ${payment.amount_xaf} ${payment.currency}
 Transaction reference: ${payment.campay_reference || payment.tx_ref}
 
-Only verified CamPay payments are counted on the leaderboard.
+Only verified payments are counted on the leaderboard.
 `.trim(),
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#171411;">
@@ -893,7 +893,7 @@ Only verified CamPay payments are counted on the leaderboard.
         <p style="margin:0 0 8px;">Votes: <strong>${payment.vote_count}</strong></p>
         <p style="margin:0 0 8px;">Amount paid: <strong>${payment.amount_xaf} ${payment.currency}</strong></p>
         <p style="margin:0 0 16px;">Transaction reference: <strong>${payment.campay_reference || payment.tx_ref}</strong></p>
-        <p style="margin:0;">Only verified CamPay payments are counted on the leaderboard.</p>
+        <p style="margin:0;">Only verified payments are counted on the leaderboard.</p>
       </div>
     `,
   });
@@ -947,9 +947,6 @@ const initializeCampayVote = async (req, supabase, body) => {
     body.voterEmail || body.voter_email || body.email
   );
   const voterEmail = normalizeEmail(rawVoterEmail);
-  const voterWhatsapp = normalizePhone(
-    body.voterWhatsapp || body.voter_whatsapp || body.whatsapp || body.phone
-  );
   const voteCount = normalizeInteger(body.voteCount || body.vote_count || body.votes);
 
   if (rawVoterEmail && !voterEmail) {
@@ -962,7 +959,7 @@ const initializeCampayVote = async (req, supabase, body) => {
     throw createHttpError("Vote quantity is too high for one payment.");
   }
   if (!paymentsConfigured) {
-    const error = new Error("CamPay voting is not configured yet.");
+    const error = new Error("Secure payment is not configured yet.");
     error.statusCode = 503;
     throw error;
   }
@@ -977,7 +974,16 @@ const initializeCampayVote = async (req, supabase, body) => {
   const redirectUrl = `${resolveBaseUrl(
     req
   )}/panache-expo/panache-dor/payment/verify?tx_ref=${encodeURIComponent(txRef)}`;
-  const { firstName, lastName } = splitReceiptName(voterEmail);
+  const description = `${voteCount} Panache D'or vote${
+    voteCount === 1 ? "" : "s"
+  } for ${nominee.name}`;
+  const widgetConfig = {
+    amount,
+    currency: CURRENCY,
+    description,
+    externalReference: txRef,
+    redirectUrl,
+  };
 
   const { data: pendingPayment, error: insertError } = await supabase
     .from("panache_dor_vote_payments")
@@ -988,7 +994,7 @@ const initializeCampayVote = async (req, supabase, body) => {
       provider: PAYMENT_PROVIDER,
       status: "pending",
       voter_email: voterEmail,
-      voter_whatsapp: voterWhatsapp,
+      voter_whatsapp: null,
       vote_count: voteCount,
       vote_price_xaf: VOTE_PRICE_XAF,
       processing_fee_per_vote_xaf: PROCESSING_FEE_PER_VOTE_XAF,
@@ -1002,6 +1008,7 @@ const initializeCampayVote = async (req, supabase, body) => {
           amount,
           currency: CURRENCY,
         },
+        widget_config: widgetConfig,
       },
     })
     .select(PAYMENT_COLUMNS)
@@ -1021,85 +1028,18 @@ const initializeCampayVote = async (req, supabase, body) => {
     throw insertError;
   }
 
-  const campayPayload = {
-    amount: String(amount),
-    currency: CURRENCY,
-    description: `${voteCount} Panache D'or vote${
-      voteCount === 1 ? "" : "s"
-    } for ${nominee.name}`,
-    external_reference: txRef,
-    redirect_url: redirectUrl,
-    failure_redirect_url: redirectUrl,
-    payment_options: CAMPAY_PAYMENT_OPTIONS,
-    first_name: firstName,
-    last_name: lastName,
-    ...(voterEmail ? { email: voterEmail } : {}),
-    ...(voterWhatsapp ? { from: voterWhatsapp } : {}),
+  return {
+    payment: {
+      id: pendingPayment.id,
+      tx_ref: pendingPayment.tx_ref,
+      amount_xaf: pendingPayment.amount_xaf,
+      currency: pendingPayment.currency,
+      vote_count: pendingPayment.vote_count,
+      nominee_name: nominee.name,
+      category_name: category.name,
+      widget: widgetConfig,
+    },
   };
-
-  try {
-    const campay = await campayRequest("/api/get_payment_link/", {
-      method: "POST",
-      body: JSON.stringify(campayPayload),
-    });
-
-    if (!campay.link || !campay.reference) {
-      const error = new Error("CamPay did not return a payment link.");
-      error.statusCode = 502;
-      error.details = campay;
-      throw error;
-    }
-
-    const { data: payment, error: updateError } = await supabase
-      .from("panache_dor_vote_payments")
-      .update({
-        campay_reference: campay.reference,
-        payment_link: campay.link,
-        provider_payload: {
-          ...(pendingPayment.provider_payload || {}),
-          initialize_response: campay,
-        },
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", pendingPayment.id)
-      .select(PAYMENT_COLUMNS)
-      .single();
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    return {
-      payment: {
-        id: payment.id,
-        tx_ref: payment.tx_ref,
-        reference: payment.campay_reference,
-        payment_link: payment.payment_link,
-        link: payment.payment_link,
-        amount_xaf: payment.amount_xaf,
-        currency: payment.currency,
-        vote_count: payment.vote_count,
-        nominee_name: nominee.name,
-        category_name: category.name,
-      },
-    };
-  } catch (error) {
-    await supabase
-      .from("panache_dor_vote_payments")
-      .update({
-        status: "failed",
-        failure_reason: error instanceof Error ? error.message : String(error),
-        provider_payload: {
-          ...(pendingPayment.provider_payload || {}),
-          initialize_error: error.details || {
-            message: error instanceof Error ? error.message : String(error),
-          },
-        },
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", pendingPayment.id);
-    throw error;
-  }
 };
 
 const loadPaymentForVerification = async (supabase, body) => {
@@ -1130,6 +1070,46 @@ const loadPaymentForVerification = async (supabase, body) => {
   return payment;
 };
 
+const attachPaymentReference = async (supabase, payment, body) => {
+  const reference = normalizeText(
+    body.reference || body.transId || body.transaction_id || body.transactionId
+  );
+
+  if (!reference || payment.campay_reference === reference) {
+    return payment;
+  }
+
+  if (payment.campay_reference && payment.campay_reference !== reference) {
+    throw createHttpError("Payment reference does not match this vote.", 409);
+  }
+
+  const now = new Date().toISOString();
+  const { data: updatedPayment, error } = await supabase
+    .from("panache_dor_vote_payments")
+    .update({
+      campay_reference: reference,
+      provider_payload: {
+        ...(payment.provider_payload || {}),
+        widget_callback: {
+          reference,
+          received_at: now,
+        },
+      },
+      updated_at: now,
+    })
+    .eq("id", payment.id)
+    .select(
+      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+    )
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return updatedPayment;
+};
+
 const verifyPaymentRow = async (supabase, payment) => {
   if (payment.status === "completed") {
     const receipt = buildReceipt(payment, payment.nominee, payment.category);
@@ -1143,7 +1123,7 @@ const verifyPaymentRow = async (supabase, payment) => {
 
   const reference = normalizeText(payment.campay_reference);
   if (!reference) {
-    throw createHttpError("CamPay reference is missing for this payment.");
+    throw createHttpError("Payment reference is missing for this payment.");
   }
 
   const transaction = await campayRequest(
@@ -1151,7 +1131,9 @@ const verifyPaymentRow = async (supabase, payment) => {
   );
   const providerStatus = String(transaction.status || "").toUpperCase();
   const paidAmount = Number(transaction.amount);
-  const sameReference = transaction.external_reference === payment.tx_ref;
+  const externalReference =
+    transaction.external_reference || transaction.externalReference;
+  const sameReference = externalReference === payment.tx_ref;
   const successful = completedProviderStatuses.has(providerStatus);
   const enoughPaid = paidAmount >= Number(payment.amount_xaf);
   const sameCurrency =
@@ -1209,8 +1191,8 @@ const verifyPaymentRow = async (supabase, payment) => {
     (successful && (!sameReference || !enoughPaid || !sameCurrency));
   const nextStatus = shouldFail ? "failed" : "pending";
   const failureReason = successful
-    ? "CamPay payment did not match the expected vote transaction."
-    : `CamPay status is ${providerStatus || "pending"}.`;
+    ? "Payment did not match the expected vote transaction."
+    : `Payment status is ${providerStatus || "pending"}.`;
 
   const { data: updatedPayment, error } = await supabase
     .from("panache_dor_vote_payments")
@@ -1246,7 +1228,12 @@ const verifyPaymentRow = async (supabase, payment) => {
 
 const verifyCampayVote = async (supabase, body) => {
   const payment = await loadPaymentForVerification(supabase, body);
-  const result = await verifyPaymentRow(supabase, payment);
+  const paymentWithReference = await attachPaymentReference(
+    supabase,
+    payment,
+    body
+  );
+  const result = await verifyPaymentRow(supabase, paymentWithReference);
   const voting = await fetchVotingPayload(supabase, false);
   return { ...result, voting };
 };
