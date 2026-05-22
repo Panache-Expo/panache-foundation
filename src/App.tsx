@@ -26,6 +26,7 @@ import PanacheDorPage from "./pages/PanacheDorPage";
 import PanacheDorVotingPage from "./pages/PanacheDorVotingPage";
 import PanacheDorNomineePage from "./pages/PanacheDorNomineePage";
 import PanacheDorLeaderboardPage from "./pages/PanacheDorLeaderboardPage";
+import PanacheDorRevenueDashboardPage from "./pages/PanacheDorRevenueDashboardPage";
 import PanacheDorPaymentVerifyPage from "./pages/PanacheDorPaymentVerifyPage";
 import PanacheNominationsPage from "./pages/PanacheNominationsPage";
 import MissPanachePage from "./pages/MissPanachePage";
@@ -143,6 +144,7 @@ const App = () => (
               <Route path="/cyes/contact" element={<ContactPage />} />
               <Route path="/panache-expo/participants-dashboard" element={<ParticipantsDashboardPage />} />
               <Route path="/admin/participants" element={<ParticipantsDashboardPage />} />
+              <Route path="/admin/panache-dor-revenue" element={<PanacheDorRevenueDashboardPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
