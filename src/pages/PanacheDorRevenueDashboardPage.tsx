@@ -616,19 +616,6 @@ const PanacheDorRevenueDashboardPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-border/60 bg-muted/20">
-              <CardContent className="p-5">
-                <p className="font-semibold text-primary">Assumptions</p>
-                <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                  {revenue.assumptions.map((assumption) => (
-                    <li key={assumption}>{assumption}</li>
-                  ))}
-                </ul>
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Last generated: {new Date(revenue.generated_at).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
           </div>
         ) : null}
       </main>

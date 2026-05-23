@@ -145,16 +145,16 @@ const PanacheDorLeaderboardPage = () => {
         <section className="mx-auto grid max-w-7xl gap-10 px-6 md:px-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-center">
           <div>
             <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-              Panache D&apos;or leaderboard
+              People&apos;s Choice leaderboard
             </p>
             <h1 className="mt-4 font-sans text-[clamp(3.2rem,7vw,6rem)] font-semibold leading-[0.86] tracking-[-0.08em] text-[#171411]">
-              Verified Panache
-              <span className="block font-display text-[#8241B6]">Vote Counts</span>
+              Overall Public
+              <span className="block font-display text-[#8241B6]">Ranking</span>
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
-              This page shows votes counted from completed verified payments
-              only. No button clicks, estimates, or external leaderboard syncs
-              are used as official totals.
+              This overall ranking is the public People&apos;s Choice view. Votes
+              are counted from completed verified payments only; category pages
+              show the category-specific race before voters open a nominee profile.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -162,7 +162,9 @@ const PanacheDorLeaderboardPage = () => {
                 asChild
                 className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
               >
-                <Link to="/panache-expo/panache-dor/vote">View nominees</Link>
+                <Link to="/panache-expo/panache-dor/vote">
+                  Choose a voting category
+                </Link>
               </Button>
             </div>
           </div>
@@ -176,11 +178,11 @@ const PanacheDorLeaderboardPage = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#171411]/84 via-[#171411]/20 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6">
               <Badge className="rounded-full bg-white text-[#171411] hover:bg-white">
-                {showCounts ? "Verified rankings synced" : "Rankings preparing"}
+                {showCounts ? "Overall ranking synced" : "Ranking preparing"}
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
                 {showCounts
-                  ? "Official rankings update from completed verified payments."
+                  ? "The People's Choice ranking updates from completed verified payments."
                   : "Rankings appear once completed verified payments are recorded."}
               </p>
             </div>
@@ -197,11 +199,11 @@ const PanacheDorLeaderboardPage = () => {
                     Waiting for verified votes
                   </div>
                   <h2 className="mt-5 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.95] tracking-[-0.06em] text-[#171411]">
-                    The leaderboard is ready for verified votes.
+                    The overall leaderboard is ready for verified votes.
                   </h2>
                   <p className="mt-4 max-w-2xl font-sans text-base leading-relaxed text-[#171411]/66">
-                    Panache is now the source of truth for paid votes. Only
-                    completed verified payments are counted here.
+                    The overall People&apos;s Choice table appears here once
+                    completed verified payments are counted.
                   </p>
                 </div>
                 <Button
@@ -209,7 +211,7 @@ const PanacheDorLeaderboardPage = () => {
                   className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
                 >
                   <Link to="/panache-expo/panache-dor/vote">
-                    View nominees
+                    Choose a voting category
                   </Link>
                 </Button>
               </div>
@@ -274,11 +276,9 @@ const PanacheDorLeaderboardPage = () => {
                             Ranks restart inside this category.
                           </p>
                         </div>
-                        {showCounts ? (
-                          <Badge className="rounded-full bg-white px-4 py-2 text-[#171411] hover:bg-white">
-                            {(category.vote_count || 0).toLocaleString()} votes
-                          </Badge>
-                        ) : null}
+                        <Badge className="rounded-full bg-white px-4 py-2 text-[#171411] hover:bg-white">
+                          Category ranking
+                        </Badge>
                       </div>
                       <div className="mt-4 space-y-3">
                         {category.rankedNominees.map((nominee, index) => (

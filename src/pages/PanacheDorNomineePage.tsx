@@ -3,58 +3,39 @@ import { Header } from "@/components/Header";
 import { PanacheDorVoteForm } from "@/components/PanacheDorVoteForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type {
-  PanacheDorAwardCategory,
-  PanacheDorAwardNominee,
-} from "@/integrations/supabase/services";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
+import {
+  flattenPanacheDorNominees,
+  getPanacheDorCategoryVoteUrl,
+  getPanacheDorMotivation,
+  getPanacheDorVoteCount,
+  rankPanacheDorNominees,
+  type PanacheDorNomineeWithCategory,
+} from "@/lib/panache-dor-ranking";
 import { Award, ArrowLeft, Loader2, Trophy } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-
-type NomineeWithCategory = PanacheDorAwardNominee & {
-  category: PanacheDorAwardCategory;
-};
-
-const getVoteCount = (nominee: NomineeWithCategory) =>
-  nominee.vote_count ?? nominee.ayati_vote_count;
-
-const compareNomineesByRank = (
-  left: NomineeWithCategory,
-  right: NomineeWithCategory
-) => {
-  if (getVoteCount(right) !== getVoteCount(left)) {
-    return getVoteCount(right) - getVoteCount(left);
-  }
-  return left.name.localeCompare(right.name);
-};
 
 const PanacheDorNomineePage = () => {
   const { slug } = useParams();
   const { data: voting, isLoading, error } = usePanacheDorVoting();
 
   const nominees = useMemo(
-    () =>
-      (voting?.categories || []).flatMap((category) =>
-        category.nominees.map((nominee) => ({
-          ...nominee,
-          category,
-        }))
-      ),
+    () => flattenPanacheDorNominees(voting?.categories || []),
     [voting?.categories]
   );
 
   const rankedNominees = useMemo(
-    () => [...nominees].sort(compareNomineesByRank),
+    () => rankPanacheDorNominees(nominees),
     [nominees]
   );
   const nominee = nominees.find((entry) => entry.slug === slug);
   const rankedCategoryNominees = useMemo(
     () =>
       nominee
-        ? nominees
-            .filter((entry) => entry.category_id === nominee.category_id)
-            .sort(compareNomineesByRank)
+        ? rankPanacheDorNominees(
+            nominees.filter((entry) => entry.category_id === nominee.category_id)
+          )
         : [],
     [nominee, nominees]
   );
@@ -65,6 +46,13 @@ const PanacheDorNomineePage = () => {
     ? rankedCategoryNominees.findIndex((entry) => entry.id === nominee.id) + 1
     : 0;
   const showCounts = Boolean(voting?.counts_available);
+  const nomineeMotivation =
+    showCounts && nominee
+      ? getPanacheDorMotivation(rankedCategoryNominees, nominee.id)
+      : null;
+  const backToCategoryUrl = nominee
+    ? getPanacheDorCategoryVoteUrl(nominee.category.slug)
+    : "/panache-expo/panache-dor/vote";
   const relatedNominees = rankedCategoryNominees
     .filter((entry) => nominee && entry.id !== nominee.id)
     .slice(0, 3);
@@ -76,11 +64,11 @@ const PanacheDorNomineePage = () => {
       <main className="pb-20 pt-24 md:pb-24">
         <section className="mx-auto max-w-7xl px-6 md:px-10">
           <Link
-            to="/panache-expo/panache-dor/vote"
+            to={backToCategoryUrl}
             className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-[#f8f2e8]"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to nominees
+            {nominee ? `Back to ${nominee.category.name}` : "Back to nominees"}
           </Link>
 
           {isLoading ? (
@@ -173,13 +161,33 @@ const PanacheDorNomineePage = () => {
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
                         {showCounts
-                          ? `${getVoteCount(nominee).toLocaleString()} verified votes`
+                          ? `${getPanacheDorVoteCount(
+                              nominee
+                            ).toLocaleString()} verified votes`
                           : "Verified votes are not public yet."}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-8">
+                    {nomineeMotivation ? (
+                      <div className="mb-4 rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
+                        <p className="font-sans text-sm font-semibold text-[#171411]">
+                          {nomineeMotivation.isCloseRace
+                            ? "Close category race"
+                            : "Voting goal"}
+                        </p>
+                        <p
+                          className={`mt-2 font-sans text-sm leading-relaxed ${
+                            nomineeMotivation.isCloseRace
+                              ? "font-semibold text-[#8241B6]"
+                              : "text-[#171411]/64"
+                          }`}
+                        >
+                          {nomineeMotivation.text}
+                        </p>
+                      </div>
+                    ) : null}
                     <PanacheDorVoteForm
                       nominee={nominee}
                       category={nominee.category}
@@ -194,7 +202,7 @@ const PanacheDorNomineePage = () => {
                       className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                     >
                       <Link to="/panache-expo/panache-dor/leaderboard">
-                        Leaderboard
+                        View overall leaderboard
                         <Trophy className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
@@ -208,11 +216,17 @@ const PanacheDorNomineePage = () => {
                     More in {nominee.category.name}
                   </h2>
                   <div className="mt-5 grid gap-4 md:grid-cols-3">
-                    {relatedNominees.map((entry: NomineeWithCategory) => {
+                    {relatedNominees.map((entry: PanacheDorNomineeWithCategory) => {
                       const categoryRank =
                         rankedCategoryNominees.findIndex(
                           (rankedEntry) => rankedEntry.id === entry.id
                         ) + 1;
+                      const relatedMotivation = showCounts
+                        ? getPanacheDorMotivation(
+                            rankedCategoryNominees,
+                            entry.id
+                          )
+                        : null;
 
                       return (
                       <Link
@@ -230,11 +244,22 @@ const PanacheDorNomineePage = () => {
                             </p>
                             {showCounts ? (
                               <p className="mt-1 font-sans text-sm text-[#171411]/60">
-                                {getVoteCount(entry).toLocaleString()} verified votes
+                                {getPanacheDorVoteCount(entry).toLocaleString()} verified votes
                               </p>
                             ) : null}
                           </div>
                         </div>
+                        {relatedMotivation ? (
+                          <p
+                            className={`mt-3 font-sans text-sm ${
+                              relatedMotivation.isCloseRace
+                                ? "font-semibold text-[#8241B6]"
+                                : "text-[#171411]/60"
+                            }`}
+                          >
+                            {relatedMotivation.text}
+                          </p>
+                        ) : null}
                         {entry.organization ? (
                           <p className="mt-1 font-sans text-sm text-[#171411]/60">
                             {entry.organization}
