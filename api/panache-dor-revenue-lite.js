@@ -245,10 +245,8 @@ const buildRevenueSummary = async (supabase) => {
   const grossVoteRevenueXaf = moneyAmount(totalVotes * VOTE_PRICE_XAF);
   const cardGrossRevenueXaf = moneyAmount(cardVotes * VOTE_PRICE_XAF);
   const momoGrossRevenueXaf = moneyAmount(momoVotes * VOTE_PRICE_XAF);
-  const processingFeeCollectedXaf = moneyAmount(totalVotes * PROCESSING_FEE_PER_VOTE_XAF);
-  const totalCollectedEstimateXaf = moneyAmount(
-    totalVotes * (VOTE_PRICE_XAF + PROCESSING_FEE_PER_VOTE_XAF)
-  );
+  const processingFeeIgnoredXaf = moneyAmount(totalVotes * PROCESSING_FEE_PER_VOTE_XAF);
+  const totalCollectedEstimateXaf = grossVoteRevenueXaf;
   const cardProviderFeeXaf = moneyAmount(cardGrossRevenueXaf * CARD_FEE_RATE);
   const momoProviderFeeXaf = moneyAmount(momoGrossRevenueXaf * MOMO_FEE_RATE);
   const providerFeesXaf = cardProviderFeeXaf + momoProviderFeeXaf;
@@ -268,7 +266,8 @@ const buildRevenueSummary = async (supabase) => {
     completed_payment_count: payments.length,
     successful_payment_count: payments.length,
     gross_vote_revenue_xaf: grossVoteRevenueXaf,
-    estimated_processing_fee_collected_xaf: processingFeeCollectedXaf,
+    estimated_processing_fee_collected_xaf: 0,
+    ignored_processing_fee_xaf: processingFeeIgnoredXaf,
     estimated_total_collected_xaf: totalCollectedEstimateXaf,
     card_payment_count: cardPayments.length,
     card_votes: cardVotes,
@@ -281,9 +280,7 @@ const buildRevenueSummary = async (supabase) => {
     momo_gross_revenue_xaf: momoGrossRevenueXaf,
     estimated_momo_provider_fee_xaf: momoProviderFeeXaf,
     estimated_provider_fees_xaf: providerFeesXaf,
-    estimated_net_revenue_xaf: moneyAmount(
-      grossVoteRevenueXaf + processingFeeCollectedXaf - providerFeesXaf
-    ),
+    estimated_net_revenue_xaf: moneyAmount(grossVoteRevenueXaf - providerFeesXaf),
     campay_checked_payment_count: payments.filter(
       (payment) => payment.provider_payload?.verify_response
     ).length,
@@ -305,7 +302,8 @@ const buildRevenueSummary = async (supabase) => {
       "Total votes come from Supabase nominee vote counts when available.",
       "Card votes are detected from stored Campay verification payload fields, not from the original payment_options request.",
       "All non-card votes are treated as MOMO for fee estimation.",
-      "Provider fee estimates are applied to vote-price revenue only, not to any extra processing fee collected.",
+      "Estimated total collected ignores any extra per-vote processing fee and uses vote-price revenue only.",
+      "Provider fee estimates are applied to vote-price revenue only.",
     ],
   };
 };
