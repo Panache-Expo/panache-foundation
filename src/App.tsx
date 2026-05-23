@@ -146,6 +146,7 @@ const App = () => (
               <Route path="/admin/participants" element={<ParticipantsDashboardPage />} />
               <Route path="/admin/panache-dor-revenue" element={<PanacheDorRevenueDashboardPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
