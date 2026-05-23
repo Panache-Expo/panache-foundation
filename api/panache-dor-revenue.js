@@ -7,6 +7,9 @@ const CURRENCY = (process.env.PANACHE_DOR_CURRENCY || process.env.CURRENCY || "X
 const successfulStatuses = new Set(["SUCCESS", "SUCCESSFUL", "COMPLETED"]);
 const pendingStatuses = new Set(["PENDING", "INITIATED", "PROCESSING"]);
 const failedStatuses = new Set(["FAILED", "CANCELLED", "CANCELED", "ERROR"]);
+const ignoredDisbursementReferences = new Set([
+  "2b3575f5-f4f6-423a-94f9-6a6d739da775",
+]);
 
 const moneyAmount = (value) => Math.round(Number(value || 0));
 
@@ -69,11 +72,15 @@ const fetchSyncedDisbursements = async () => {
     return emptyDisbursementSummary(false, error.message || "Could not read disbursements.");
   }
 
-  const summary = emptyDisbursementSummary(true, null);
-  summary.transaction_count = data.length;
-  summary.withdrawal_count = data.length;
+  const includedWithdrawals = data.filter(
+    (row) => !ignoredDisbursementReferences.has(String(row.campay_reference || ""))
+  );
 
-  for (const row of data) {
+  const summary = emptyDisbursementSummary(true, null);
+  summary.transaction_count = includedWithdrawals.length;
+  summary.withdrawal_count = includedWithdrawals.length;
+
+  for (const row of includedWithdrawals) {
     const amount = moneyAmount(row.amount_xaf);
     const status = String(row.status || "UNKNOWN").toUpperCase();
 
@@ -91,7 +98,7 @@ const fetchSyncedDisbursements = async () => {
     }
   }
 
-  summary.recent_disbursements = data.slice(0, 25).map((row) => ({
+  summary.recent_disbursements = includedWithdrawals.slice(0, 25).map((row) => ({
     reference: maskReference(row.campay_reference),
     external_reference: maskReference(row.external_reference),
     amount_xaf: moneyAmount(row.amount_xaf),
@@ -115,10 +122,12 @@ const normalizeRevenue = async (payload) => {
   const disbursements = await fetchSyncedDisbursements();
   const grossVoteRevenueXaf = moneyAmount(revenue.gross_vote_revenue_xaf);
   const providerFeesXaf = moneyAmount(revenue.estimated_provider_fees_xaf);
-  const netBeforeDisbursementsXaf = moneyAmount(grossVoteRevenueXaf - providerFeesXaf);
+  const estimatedTotalCollectedXaf = moneyAmount(
+    grossVoteRevenueXaf - providerFeesXaf
+  );
   const successfulDisbursementsXaf = moneyAmount(disbursements.successful_withdrawals_xaf);
   const cashAfterDisbursementsXaf = moneyAmount(
-    netBeforeDisbursementsXaf - successfulDisbursementsXaf
+    estimatedTotalCollectedXaf - successfulDisbursementsXaf
   );
 
   return {
@@ -127,8 +136,8 @@ const normalizeRevenue = async (payload) => {
       ...revenue,
       processing_fee_per_vote_xaf: 0,
       estimated_processing_fee_collected_xaf: 0,
-      estimated_total_collected_xaf: grossVoteRevenueXaf,
-      estimated_net_before_disbursements_xaf: netBeforeDisbursementsXaf,
+      estimated_total_collected_xaf: estimatedTotalCollectedXaf,
+      estimated_net_before_disbursements_xaf: estimatedTotalCollectedXaf,
       successful_disbursements_xaf: successfulDisbursementsXaf,
       pending_disbursements_xaf: moneyAmount(disbursements.pending_withdrawals_xaf),
       failed_disbursements_xaf: moneyAmount(disbursements.failed_withdrawals_xaf),
@@ -147,8 +156,9 @@ const normalizeRevenue = async (payload) => {
           const text = String(assumption).toLowerCase();
           return !text.includes("processing fee");
         }),
-        "Estimated total collected ignores processing fees and uses vote-price revenue only.",
+        "Estimated total collected ignores extra processing fees.",
         "Successful synced Campay disbursement withdrawals are deducted from estimated net revenue.",
+        "The 18,650 XAF disbursement is intentionally ignored in this dashboard calculation.",
       ],
     },
   };

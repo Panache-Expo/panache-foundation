@@ -41,6 +41,18 @@ type PaymentClassification = {
   campay_error?: string | null;
 };
 
+type Disbursement = {
+  reference?: string | null;
+  external_reference?: string | null;
+  amount_xaf: number;
+  currency?: string | null;
+  status?: string | null;
+  phone?: string | null;
+  operator?: string | null;
+  description?: string | null;
+  transaction_date?: string | null;
+};
+
 type RevenueSummary = {
   generated_at: string;
   currency: string;
@@ -58,6 +70,21 @@ type RevenueSummary = {
   gross_vote_revenue_xaf: number;
   estimated_processing_fee_collected_xaf: number;
   estimated_total_collected_xaf: number;
+  estimated_net_before_disbursements_xaf?: number;
+  successful_disbursements_xaf?: number;
+  pending_disbursements_xaf?: number;
+  failed_disbursements_xaf?: number;
+  estimated_cash_after_disbursements_xaf?: number;
+  campay_disbursement_sync_available?: boolean;
+  campay_disbursement_sync_error?: string | null;
+  campay_disbursement_count?: number;
+  campay_successful_disbursement_count?: number;
+  campay_pending_disbursement_count?: number;
+  campay_failed_disbursement_count?: number;
+  recent_disbursements?: Disbursement[];
+  total_disbursed_xaf?: number;
+  disbursement_count?: number;
+  disbursement_lookup_error?: string | null;
   card_payment_count: number;
   card_votes: number;
   card_gross_revenue_xaf: number;
@@ -204,6 +231,20 @@ const PanacheDorRevenueDashboardPage = () => {
     }
     return revenue.momo_votes / revenue.total_votes;
   }, [revenue]);
+
+  const successfulDisbursements = revenue
+    ? revenue.successful_disbursements_xaf ?? revenue.total_disbursed_xaf ?? 0
+    : 0;
+  const disbursementCount = revenue
+    ? revenue.campay_successful_disbursement_count ??
+      revenue.disbursement_count ??
+      0
+    : 0;
+  const disbursementError = revenue
+    ? revenue.campay_disbursement_sync_error ??
+      revenue.disbursement_lookup_error ??
+      null
+    : null;
 
   const handleUnlock = async () => {
     const key = accessKeyInput.trim();
@@ -362,8 +403,8 @@ const PanacheDorRevenueDashboardPage = () => {
                   revenue.estimated_net_revenue_xaf,
                   revenue.currency
                 )}
-                helper={`After estimated provider fees of ${formatMoney(
-                  revenue.estimated_provider_fees_xaf,
+                helper={`Estimated collected amount minus synced disbursements of ${formatMoney(
+                  successfulDisbursements,
                   revenue.currency
                 )}`}
                 icon={ShieldCheck}
@@ -458,7 +499,7 @@ const PanacheDorRevenueDashboardPage = () => {
                   completed payment rows.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-4">
+              <CardContent className="grid gap-4 md:grid-cols-5">
                 <div className="rounded-2xl border border-border/60 p-4">
                   <p className="text-sm text-muted-foreground">Completed payments</p>
                   <p className="mt-1 text-xl font-semibold text-primary">
@@ -475,6 +516,17 @@ const PanacheDorRevenueDashboardPage = () => {
                   <p className="text-sm text-muted-foreground">Vote gap</p>
                   <p className="mt-1 text-xl font-semibold text-primary">
                     {formatNumber(revenue.vote_gap)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/60 p-4">
+                  <p className="text-sm text-muted-foreground">Total disbursed</p>
+                  <p className="mt-1 text-xl font-semibold text-primary">
+                    {formatMoney(successfulDisbursements, revenue.currency)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {disbursementError
+                      ? disbursementError
+                      : `${formatNumber(disbursementCount)} withdrawal row(s)`}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border/60 p-4">

@@ -1,13 +1,39 @@
 import { createClient } from "@supabase/supabase-js";
+import fs from "node:fs";
+
+function loadEnvFile(path) {
+  if (!fs.existsSync(path)) return;
+  const text = fs.readFileSync(path, "utf8");
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const separator = line.indexOf("=");
+    if (separator < 0) continue;
+    const key = line.slice(0, separator).trim();
+    let value = line.slice(separator + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvFile(".env.local");
+loadEnvFile(".env");
 
 const baseUrl = (process.env.PANACHE_DOR_CAMPAY_BASE_URL || "https://www.campay.net").replace(/\/+$/, "");
-const authHeader = process.env.PANACHE_DOR_CAMPAY_AUTH_HEADER;
+let authHeader = process.env.PANACHE_DOR_CAMPAY_AUTH_HEADER;
+const campayUsername =
+  process.env.PANACHE_DOR_CAMPAY_APP_USERNAME || process.env.CAMPAY_APP_USERNAME;
+const campayPassword =
+  process.env.PANACHE_DOR_CAMPAY_APP_PASSWORD || process.env.CAMPAY_APP_PASSWORD;
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!authHeader) {
-  throw new Error("Missing PANACHE_DOR_CAMPAY_AUTH_HEADER. Example value format: Token <campay-token>");
-}
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error("Missing Supabase service credentials.");
@@ -27,12 +53,40 @@ async function readJson(response) {
   }
 }
 
+async function getCampayAuthHeader() {
+  if (authHeader) return authHeader;
+  if (!campayUsername || !campayPassword) {
+    throw new Error(
+      "Missing CamPay auth. Set PANACHE_DOR_CAMPAY_AUTH_HEADER or PANACHE_DOR_CAMPAY_APP_USERNAME/PANACHE_DOR_CAMPAY_APP_PASSWORD."
+    );
+  }
+
+  const response = await fetch(`${baseUrl}/api/token/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username: campayUsername,
+      password: campayPassword,
+    }),
+  });
+  const data = await readJson(response);
+
+  if (!response.ok || !data?.token) {
+    throw new Error(`Campay auth failed: ${response.status} ${JSON.stringify(data)}`);
+  }
+
+  authHeader = `Token ${data.token}`;
+  return authHeader;
+}
+
 async function getCampayHistory(startDate, endDate) {
   const response = await fetch(`${baseUrl}/api/history/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: authHeader,
+      Authorization: await getCampayAuthHeader(),
     },
     body: JSON.stringify({
       start_date: startDate,
@@ -76,6 +130,9 @@ function classifyCampayTransaction(tx) {
     .toLowerCase();
 
   const amount = Number(tx.amount || tx.amount_paid || tx.value || 0);
+
+  if (Number(tx.debit || 0) > 0) return "withdrawal";
+  if (Number(tx.credit || 0) > 0) return "deposit";
 
   if (
     text.includes("disburse") ||
