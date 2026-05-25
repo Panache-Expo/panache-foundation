@@ -17,6 +17,8 @@ type PanacheDorVoteFormProps = {
   payment?: PanacheDorPaymentSettings;
 };
 
+const quickVoteOptions = [5, 10, 20, 50, 100];
+
 export const PanacheDorVoteForm = ({
   nominee,
   category,
@@ -114,10 +116,36 @@ export const PanacheDorVoteForm = ({
             onChange={(event) => setVoteCount(event.target.value)}
             className="mt-2 h-12 rounded-full border-black/10 bg-white"
           />
+          <div className="mt-3">
+            <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-[#171411]/54">
+              Quick boost
+            </p>
+            <div className="mt-2 grid grid-cols-5 gap-2">
+              {quickVoteOptions.map((option) => {
+                const isSelected = normalizedVoteCount === option;
+
+                return (
+                  <Button
+                    key={option}
+                    type="button"
+                    variant="outline"
+                    onClick={() => setVoteCount(String(option))}
+                    className={`h-10 rounded-full border-black/10 px-2 font-sans text-sm font-semibold ${
+                      isSelected
+                        ? "bg-[#171411] text-white hover:bg-[#171411]/92 hover:text-white"
+                        : "bg-white text-[#171411] hover:bg-white"
+                    }`}
+                  >
+                    {option}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
         </div>
         <div>
           <Label htmlFor={`panacheDorEmail-${nominee.id}`}>
-            Email for receipt, optional
+            Email for receipt, option
           </Label>
           <Input
             id={`panacheDorEmail-${nominee.id}`}

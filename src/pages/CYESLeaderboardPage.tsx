@@ -28,7 +28,6 @@ import {
   RefreshCw,
   Search,
   Trophy,
-  Vote,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -36,7 +35,6 @@ import { Link } from "react-router-dom";
 type RankedNominee = CYESAwardNominee & {
   categoryId: string;
   categoryName: string;
-  categoryVoteCount: number;
   rank: number;
   totalNomineesInCategory: number;
 };
@@ -104,7 +102,6 @@ const rankCategoryNominees = (category: CYESAwardCategory): RankedNominee[] => {
       ...nominee,
       categoryId: category.id,
       categoryName: category.name,
-      categoryVoteCount: category.vote_count,
       rank,
       totalNomineesInCategory: sortedNominees.length,
     };
@@ -157,8 +154,7 @@ const NomineeRow = ({ nominee }: { nominee: RankedNominee }) => (
       </p>
     </div>
     <div className="inline-flex w-fit items-center gap-2 rounded-full bg-[#f3fbf6] px-4 py-2 font-sans text-sm font-semibold text-[#156D3B]">
-      <Vote className="h-4 w-4" />
-      {nominee.vote_count} votes
+      Final position
     </div>
   </article>
 );
@@ -227,7 +223,6 @@ const CYESLeaderboardPage = () => {
       ? [selectedCategory]
       : [];
 
-  const totalVotes = voting?.total_votes || 0;
   const nomineeCount = allRankedNominees.length;
   const activeCategoryCount = rankedCategories.filter(
     (category) => category.rankedNominees.length > 0
@@ -250,7 +245,7 @@ const CYESLeaderboardPage = () => {
               vote standings.
             </>
           }
-          description="Voting has ended, and participants can now review public vote totals, category positions, and the nominees leading each CYECD Awards category."
+          description="Voting has ended, and participants can now review public standings, category positions, and the nominees leading each CYECD Awards category. Exact vote counts are kept private."
           actions={
             <>
               <a href="#leaderboard">
@@ -281,8 +276,8 @@ const CYESLeaderboardPage = () => {
               accentClassName: "text-[#1875D2]",
             },
             {
-              label: "Votes",
-              value: String(totalVotes),
+              label: "Counts",
+              value: "Private",
               accentClassName: "text-[#CC2129]",
             },
           ]}
@@ -381,7 +376,7 @@ const CYESLeaderboardPage = () => {
                     Overall spotlight
                   </p>
                   <h2 className="mt-2 font-sans text-[1.7rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
-                    Top vote counts
+                    Overall standings
                   </h2>
                 </div>
                 <Trophy className="h-8 w-8 text-[#FFB200]" />
@@ -433,7 +428,7 @@ const CYESLeaderboardPage = () => {
                         </p>
                       </div>
                       <p className="font-sans text-sm font-semibold text-[#156D3B]">
-                        {nominee.vote_count} votes
+                        Overall #{index + 1}
                       </p>
                     </div>
                   ))}
@@ -495,8 +490,7 @@ const CYESLeaderboardPage = () => {
                       ) : null}
                     </div>
                     <div className="inline-flex items-center gap-2 rounded-full bg-[#eef5fb] px-4 py-2 font-sans text-sm font-semibold text-[#1875D2]">
-                      <Vote className="h-4 w-4" />
-                      {category.vote_count} category votes
+                      Final category ranking
                     </div>
                   </div>
 

@@ -150,8 +150,10 @@ export type PanacheDorVoteReceipt = {
   reference?: string | null;
   nominee_id: string;
   nominee_name: string;
+  nominee_slug?: string | null;
   category_id: string;
   category_name: string;
+  category_slug?: string | null;
   voter_email?: string | null;
   voter_whatsapp?: string | null;
   vote_count: number;

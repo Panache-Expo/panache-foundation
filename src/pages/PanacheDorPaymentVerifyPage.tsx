@@ -4,7 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { panacheDorVotingService } from "@/integrations/supabase/services";
 import type { PanacheDorVoteVerifyResponse } from "@/integrations/supabase/services";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import {
+  getPanacheDorMotivation,
+  rankPanacheDorCategoryNominees,
+} from "@/lib/panache-dor-ranking";
+import { CheckCircle2, Loader2, MessageCircle, Share2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -16,6 +20,7 @@ const PanacheDorPaymentVerifyPage = () => {
   const [result, setResult] = useState<PanacheDorVoteVerifyResponse | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [shareNotice, setShareNotice] = useState("");
 
   const txRef = searchParams.get("tx_ref") || searchParams.get("txRef") || "";
   const reference =
@@ -66,6 +71,78 @@ const PanacheDorPaymentVerifyPage = () => {
 
   const isSuccess =
     result?.status === "success" || result?.status === "already-counted";
+  const receipt = result?.receipt;
+  const receiptCategory = receipt
+    ? result?.voting?.categories.find((category) =>
+        category.nominees.some((nominee) => nominee.id === receipt.nominee_id)
+      )
+    : undefined;
+  const receiptNominee = receiptCategory?.nominees.find(
+    (nominee) => nominee.id === receipt?.nominee_id
+  );
+  const receiptMotivation =
+    receipt && receiptCategory
+      ? getPanacheDorMotivation(
+          rankPanacheDorCategoryNominees(receiptCategory),
+          receipt.nominee_id
+        )
+      : null;
+  const closeRaceShareLine =
+    receiptMotivation?.kind === "close-gap" ? receiptMotivation.text : "";
+  const shareOrigin =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://panache-foundation.org";
+  const sharePath = (() => {
+    if (receipt?.nominee_slug) {
+      return `/panache-expo/panache-dor/nominees/${receipt.nominee_slug}`;
+    }
+    if (receiptNominee?.slug) {
+      return `/panache-expo/panache-dor/nominees/${receiptNominee.slug}`;
+    }
+    if (receipt?.category_slug) {
+      return `/panache-expo/panache-dor/vote?category=${receipt.category_slug}`;
+    }
+    if (receiptCategory?.slug) {
+      return `/panache-expo/panache-dor/vote?category=${receiptCategory.slug}`;
+    }
+    return "/panache-expo/panache-dor/vote";
+  })();
+  const shareUrl = `${shareOrigin}${sharePath}`;
+  const shareText = receipt
+    ? `I just voted for ${receipt.nominee_name} in the Panache D'or Awards. ${
+        closeRaceShareLine ? `${closeRaceShareLine} ` : ""
+      }Help them win by voting too.`
+    : "Support your favorite nominee in the Panache D'or Awards.";
+  const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(
+    `${shareText} ${shareUrl}`
+  )}`;
+
+  const handleShare = async () => {
+    setShareNotice("");
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "Panache D'or Awards",
+          text: shareText,
+          url: shareUrl,
+        });
+        setShareNotice("Thanks for helping spread the word.");
+      } catch (shareError) {
+        if (
+          shareError instanceof DOMException &&
+          shareError.name === "AbortError"
+        ) {
+          return;
+        }
+        setShareNotice("If sharing did not open, use the WhatsApp button below.");
+      }
+      return;
+    }
+
+    window.open(whatsappShareUrl, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="min-h-screen bg-[#f4f3ef]">
@@ -102,7 +179,7 @@ const PanacheDorPaymentVerifyPage = () => {
                 {result?.status || "pending"}
               </Badge>
               <h1 className="mt-5 font-sans text-3xl font-semibold tracking-[-0.05em] text-[#171411]">
-                {isSuccess ? "Your votes have been counted" : "Payment pending"}
+                {isSuccess ? "Thanks for voting" : "Payment pending"}
               </h1>
               <p className="mt-3 font-sans text-sm text-[#171411]/64">
                 {result?.message ||
@@ -125,6 +202,48 @@ const PanacheDorPaymentVerifyPage = () => {
                     </p>
                     <p>Reference: {result.receipt.reference || result.receipt.tx_ref}</p>
                   </div>
+                </div>
+              ) : null}
+
+              {isSuccess ? (
+                <div className="mx-auto mt-5 max-w-md rounded-[1.4rem] border border-[#8241B6]/16 bg-white p-5">
+                  <p className="font-sans text-sm font-semibold text-[#171411]">
+                    Help {receipt?.nominee_name || "your nominee"} win
+                  </p>
+                  <p className="mt-2 font-sans text-sm text-[#171411]/64">
+                    Share with 5 friends so they can support too. On mobile, the
+                    Share button can open your phone&apos;s share sheet, where
+                    WhatsApp Status may be available.
+                  </p>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <Button
+                      type="button"
+                      onClick={handleShare}
+                      className="h-11 rounded-full bg-[#171411] px-5 text-white hover:bg-[#171411]/92"
+                    >
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="h-11 rounded-full border-black/12 bg-white px-5"
+                    >
+                      <a
+                        href={whatsappShareUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        WhatsApp
+                      </a>
+                    </Button>
+                  </div>
+                  {shareNotice ? (
+                    <p className="mt-3 font-sans text-xs text-[#171411]/58">
+                      {shareNotice}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
 

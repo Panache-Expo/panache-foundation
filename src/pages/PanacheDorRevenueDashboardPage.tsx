@@ -72,6 +72,9 @@ type RevenueSummary = {
   estimated_total_collected_xaf: number;
   estimated_net_before_disbursements_xaf?: number;
   successful_disbursements_xaf?: number;
+  successful_disbursement_withdrawals_xaf?: number;
+  successful_disbursement_fees_xaf?: number;
+  campay_disbursement_fee_rate?: number;
   pending_disbursements_xaf?: number;
   failed_disbursements_xaf?: number;
   estimated_cash_after_disbursements_xaf?: number;
@@ -234,6 +237,9 @@ const PanacheDorRevenueDashboardPage = () => {
 
   const successfulDisbursements = revenue
     ? revenue.successful_disbursements_xaf ?? revenue.total_disbursed_xaf ?? 0
+    : 0;
+  const successfulWithdrawalFees = revenue
+    ? revenue.successful_disbursement_fees_xaf ?? 0
     : 0;
   const disbursementCount = revenue
     ? revenue.campay_successful_disbursement_count ??
@@ -458,8 +464,7 @@ const PanacheDorRevenueDashboardPage = () => {
                     MOMO payments
                   </CardTitle>
                   <CardDescription>
-                    Remaining successful votes are treated as MOMO. MOMO fees use{" "}
-                    {formatPercent(revenue.momo_fee_rate)}.
+                    Remaining successful votes are treated as MOMO. MOMO fees use 1%.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-3">
@@ -526,7 +531,12 @@ const PanacheDorRevenueDashboardPage = () => {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {disbursementError
                       ? disbursementError
-                      : `${formatNumber(disbursementCount)} withdrawal row(s)`}
+                      : `${formatNumber(
+                          disbursementCount
+                        )} withdrawal row(s), incl. ${formatMoney(
+                          successfulWithdrawalFees,
+                          revenue.currency
+                        )} fee`}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border/60 p-4">

@@ -24,7 +24,6 @@ import {
   MessageCircle,
   RefreshCw,
   Trophy,
-  Vote,
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -70,9 +69,6 @@ const getOptimizedSupabaseImageUrl = (imageUrl?: string | null) => {
   return `${optimizedUrl}${separator}width=300&height=300&resize=cover&quality=60`;
 };
 
-const formatVoteCount = (count: number) =>
-  `${count.toLocaleString()} vote${count === 1 ? "" : "s"}`;
-
 const getNomineeClassification = (
   nominee: CYESAwardNominee,
   nominees: CYESAwardNominee[]
@@ -88,7 +84,7 @@ const getNomineeClassification = (
 
   if (nominee.vote_count === 0) {
     return {
-      label: "No votes recorded",
+      label: "Finalist",
       className: "bg-[#F7F5F1] text-[#6E6255]",
     };
   }
@@ -149,9 +145,8 @@ const CYESVotingPage = () => {
     return {
       categories: categoriesWithNominees.length,
       nominees,
-      votes: voting?.total_votes || 0,
     };
-  }, [categories, voting?.total_votes]);
+  }, [categories]);
 
   const channelUrl = voting?.announcement_channel_url || CYES_WHATSAPP_CHANNEL_URL;
   const closedMessage = voting?.closed_message || FALLBACK_CLOSED_MESSAGE;
@@ -204,8 +199,8 @@ const CYESVotingPage = () => {
               accentClassName: "text-[#156D3B]",
             },
             {
-              label: "Votes",
-              value: String(categoryStats.votes),
+              label: "Counts",
+              value: "Private",
               accentClassName: "text-[#1875D2]",
             },
           ]}
@@ -305,7 +300,7 @@ const CYESVotingPage = () => {
                       </div>
                       <div className="inline-flex items-center gap-2 rounded-full bg-[#eef5fb] px-4 py-2 font-sans text-sm font-semibold text-[#1875D2]">
                         <BarChart3 className="h-4 w-4" />
-                        {formatVoteCount(category.vote_count)}
+                        Final standings
                       </div>
                     </div>
 
@@ -359,8 +354,7 @@ const CYESVotingPage = () => {
                               </div>
                               <div className="flex flex-col items-start gap-2 md:items-end">
                                 <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 font-sans text-sm font-semibold text-[#171411] shadow-[0_8px_22px_rgba(17,16,14,0.06)]">
-                                  <Vote className="h-4 w-4 text-[#CC2129]" />
-                                  {formatVoteCount(nominee.vote_count)}
+                                  Final position #{index + 1}
                                 </span>
                                 <span
                                   className={`inline-flex rounded-full px-3 py-1 font-sans text-xs font-semibold ${classification.className}`}
