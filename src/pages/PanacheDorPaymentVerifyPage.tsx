@@ -8,16 +8,36 @@ import {
   getPanacheDorMotivation,
   rankPanacheDorCategoryNominees,
 } from "@/lib/panache-dor-ranking";
-import { CheckCircle2, Loader2, MessageCircle, Share2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Loader2,
+  MessageCircle,
+  Share2,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 const PANACHE_DOR_WHATSAPP_CHANNEL_URL =
   "https://whatsapp.com/channel/0029Vb8Cg42ATRSgvXAcXE3L";
 
+const isPreviewAllowed = () => {
+  if (import.meta.env.DEV) {
+    return true;
+  }
+
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+};
+
 const PanacheDorPaymentVerifyPage = () => {
   const [searchParams] = useSearchParams();
-  const [result, setResult] = useState<PanacheDorVoteVerifyResponse | null>(null);
+  const [result, setResult] = useState<PanacheDorVoteVerifyResponse | null>(
+    null,
+  );
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [shareNotice, setShareNotice] = useState("");
@@ -28,11 +48,94 @@ const PanacheDorPaymentVerifyPage = () => {
     searchParams.get("transId") ||
     searchParams.get("transaction_id") ||
     "";
+  const previewMode = searchParams.get("preview") === "success";
 
   useEffect(() => {
     let mounted = true;
 
     const verify = async () => {
+      if (previewMode && isPreviewAllowed()) {
+        setResult({
+          status: "success",
+          message:
+            "Preview mode: this is how the confirmation page looks after a successful vote.",
+          receipt: {
+            id: "preview-payment",
+            tx_ref: "preview-panache-dor-vote",
+            reference: "preview-reference",
+            nominee_id: "preview-nominee",
+            nominee_name: "Lin's Glamour Burea",
+            nominee_slug: "lin-s-glamour-burea",
+            category_id: "preview-category",
+            category_name: "Lash and Brow Artist of the Year",
+            category_slug: "lash-artist-of-the-year",
+            voter_email: null,
+            voter_whatsapp: null,
+            vote_count: 5,
+            amount_xaf: 500,
+            currency: "XAF",
+            status: "completed",
+            verified_at: new Date().toISOString(),
+          },
+          voting: {
+            categories: [
+              {
+                id: "preview-category",
+                slug: "lash-artist-of-the-year",
+                name: "Lash and Brow Artist of the Year",
+                description: null,
+                status: "active",
+                sort_order: 1,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                vote_count: 122,
+                nominees: [
+                  {
+                    id: "preview-leader",
+                    category_id: "preview-category",
+                    slug: "category-leader",
+                    name: "Category Leader",
+                    organization: null,
+                    bio: null,
+                    photo_url: null,
+                    status: "active",
+                    sort_order: 1,
+                    ayati_vote_url: null,
+                    ayati_sync_id: null,
+                    ayati_vote_count: 66,
+                    ayati_last_synced_at: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    vote_count: 66,
+                  },
+                  {
+                    id: "preview-nominee",
+                    category_id: "preview-category",
+                    slug: "lin-s-glamour-burea",
+                    name: "Lin's Glamour Burea",
+                    organization: null,
+                    bio: null,
+                    photo_url: null,
+                    status: "active",
+                    sort_order: 2,
+                    ayati_vote_url: null,
+                    ayati_sync_id: null,
+                    ayati_vote_count: 60,
+                    ayati_last_synced_at: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    vote_count: 60,
+                  },
+                ],
+              },
+            ],
+            total_votes: 122,
+          },
+        });
+        setIsLoading(false);
+        return;
+      }
+
       if (!txRef && !reference) {
         setError("Payment reference is missing.");
         setIsLoading(false);
@@ -52,7 +155,7 @@ const PanacheDorPaymentVerifyPage = () => {
           setError(
             verifyError instanceof Error
               ? verifyError.message
-              : "Could not verify the payment."
+              : "Could not verify the payment.",
           );
         }
       } finally {
@@ -67,24 +170,24 @@ const PanacheDorPaymentVerifyPage = () => {
     return () => {
       mounted = false;
     };
-  }, [reference, txRef]);
+  }, [previewMode, reference, txRef]);
 
   const isSuccess =
     result?.status === "success" || result?.status === "already-counted";
   const receipt = result?.receipt;
   const receiptCategory = receipt
     ? result?.voting?.categories.find((category) =>
-        category.nominees.some((nominee) => nominee.id === receipt.nominee_id)
+        category.nominees.some((nominee) => nominee.id === receipt.nominee_id),
       )
     : undefined;
   const receiptNominee = receiptCategory?.nominees.find(
-    (nominee) => nominee.id === receipt?.nominee_id
+    (nominee) => nominee.id === receipt?.nominee_id,
   );
   const receiptMotivation =
     receipt && receiptCategory
       ? getPanacheDorMotivation(
           rankPanacheDorCategoryNominees(receiptCategory),
-          receipt.nominee_id
+          receipt.nominee_id,
         )
       : null;
   const closeRaceShareLine =
@@ -115,7 +218,7 @@ const PanacheDorPaymentVerifyPage = () => {
       }Help them win by voting too.`
     : "Support your favorite nominee in the Panache D'or Awards.";
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(
-    `${shareText} ${shareUrl}`
+    `${shareText} ${shareUrl}`,
   )}`;
 
   const handleShare = async () => {
@@ -136,7 +239,9 @@ const PanacheDorPaymentVerifyPage = () => {
         ) {
           return;
         }
-        setShareNotice("If sharing did not open, use the WhatsApp button below.");
+        setShareNotice(
+          "If sharing did not open, use the WhatsApp button below.",
+        );
       }
       return;
     }
@@ -200,7 +305,10 @@ const PanacheDorPaymentVerifyPage = () => {
                       Amount: {result.receipt.amount_xaf.toLocaleString()}{" "}
                       {result.receipt.currency}
                     </p>
-                    <p>Reference: {result.receipt.reference || result.receipt.tx_ref}</p>
+                    <p>
+                      Reference:{" "}
+                      {result.receipt.reference || result.receipt.tx_ref}
+                    </p>
                   </div>
                 </div>
               ) : null}
@@ -211,34 +319,19 @@ const PanacheDorPaymentVerifyPage = () => {
                     Help {receipt?.nominee_name || "your nominee"} win
                   </p>
                   <p className="mt-2 font-sans text-sm text-[#171411]/64">
-                    Share with 5 friends so they can support too. On mobile, the
-                    Share button can open your phone&apos;s share sheet, where
-                    WhatsApp Status may be available.
+                    Share with 5 friends to help them win.
                   </p>
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                    <Button
-                      type="button"
-                      onClick={handleShare}
-                      className="h-11 rounded-full bg-[#171411] px-5 text-white hover:bg-[#171411]/92"
-                    >
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Share
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="h-11 rounded-full border-black/12 bg-white px-5"
-                    >
-                      <a
-                        href={whatsappShareUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        WhatsApp
-                      </a>
-                    </Button>
-                  </div>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-11 rounded-full border-black/12 bg-white px-5 mt-4 "
+                  >
+                    <a href={whatsappShareUrl} target="_blank" rel="noreferrer">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      WhatsApp
+                    </a>
+                  </Button>
                   {shareNotice ? (
                     <p className="mt-3 font-sans text-xs text-[#171411]/58">
                       {shareNotice}
@@ -273,7 +366,7 @@ const PanacheDorPaymentVerifyPage = () => {
             </>
           )}
 
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          {/* <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button
               asChild
               className="h-12 rounded-full bg-[#171411] px-7 text-white hover:bg-[#171411]/92"
@@ -289,7 +382,7 @@ const PanacheDorPaymentVerifyPage = () => {
             >
               <Link to="/panache-expo/panache-dor/vote">Back to nominees</Link>
             </Button>
-          </div>
+          </div> */}
         </section>
       </main>
 

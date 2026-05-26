@@ -8,7 +8,7 @@ import type {
   PanacheDorPaymentSettings,
 } from "@/integrations/supabase/services";
 import { panacheDorVotingService } from "@/integrations/supabase/services";
-import { CreditCard, Loader2 } from "lucide-react";
+import { CreditCard, Loader2, Star } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 
 type PanacheDorVoteFormProps = {
@@ -18,6 +18,7 @@ type PanacheDorVoteFormProps = {
 };
 
 const quickVoteOptions = [5, 10, 20, 50, 100];
+const popularVoteOption = 5;
 
 export const PanacheDorVoteForm = ({
   nominee,
@@ -25,7 +26,7 @@ export const PanacheDorVoteForm = ({
   payment,
 }: PanacheDorVoteFormProps) => {
   const [email, setEmail] = useState("");
-  const [voteCount, setVoteCount] = useState("1");
+  const [voteCount, setVoteCount] = useState(String(popularVoteOption));
   const [isPreparingPayment, setIsPreparingPayment] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -107,6 +108,9 @@ export const PanacheDorVoteForm = ({
       <div className="mt-5 grid gap-4">
         <div>
           <Label htmlFor={`panacheDorVotes-${nominee.id}`}>Number of votes</Label>
+          <p className="mt-1 rounded-full bg-white px-3 py-2 font-sans text-xs font-semibold text-[#8241B6]">
+            You can vote more than once.
+          </p>
           <Input
             id={`panacheDorVotes-${nominee.id}`}
             type="number"
@@ -123,6 +127,7 @@ export const PanacheDorVoteForm = ({
             <div className="mt-2 grid grid-cols-5 gap-2">
               {quickVoteOptions.map((option) => {
                 const isSelected = normalizedVoteCount === option;
+                const isPopular = option === popularVoteOption;
 
                 return (
                   <Button
@@ -130,13 +135,23 @@ export const PanacheDorVoteForm = ({
                     type="button"
                     variant="outline"
                     onClick={() => setVoteCount(String(option))}
-                    className={`h-10 rounded-full border-black/10 px-2 font-sans text-sm font-semibold ${
-                      isSelected
-                        ? "bg-[#171411] text-white hover:bg-[#171411]/92 hover:text-white"
-                        : "bg-white text-[#171411] hover:bg-white"
+                    className={`relative h-auto min-h-10 overflow-visible rounded-full border px-2 py-2 font-sans text-sm font-semibold ${
+                      isPopular
+                        ? "border-[#8241B6] bg-[#8241B6] text-white shadow-[0_10px_24px_rgba(130,65,182,0.22)] hover:bg-[#8241B6]/92 hover:text-white"
+                        : isSelected
+                          ? "border-[#171411] bg-[#171411] text-white hover:bg-[#171411]/92 hover:text-white"
+                          : "border-black/10 bg-white text-[#171411] hover:bg-white"
                     }`}
                   >
-                    {option}
+                    {isPopular ? (
+                      <Star
+                        className="absolute right-1.5 top-1 h-4 w-4 rotate-12 fill-[#FDBA11] text-[#FDBA11] drop-shadow-[0_2px_4px_rgba(253,186,17,0.75)]"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    <span className="flex flex-col items-center justify-center leading-none">
+                      <span>{option}</span>
+                    </span>
                   </Button>
                 );
               })}
@@ -145,7 +160,7 @@ export const PanacheDorVoteForm = ({
         </div>
         <div>
           <Label htmlFor={`panacheDorEmail-${nominee.id}`}>
-            Email for receipt, option
+            Email for receipt, optional
           </Label>
           <Input
             id={`panacheDorEmail-${nominee.id}`}

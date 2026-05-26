@@ -185,6 +185,120 @@ export type PanacheDorVoteVerifyResponse = {
   voting?: PanacheDorVotingPayload;
 };
 
+export type EventTicketPackage = {
+  id: string;
+  event_id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  price_xaf: number;
+  admit_count: number;
+  benefits: string[];
+  status: string;
+  sort_order: number;
+  style_key: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type EventTicketEvent = {
+  id: string;
+  slug: string;
+  title: string;
+  short_title: string;
+  event_date: string;
+  event_date_label: string;
+  venue: string;
+  brand: 'cyes' | 'panache-dor' | string;
+  packages: EventTicketPackage[];
+};
+
+export type EventTicketPaymentSettings = {
+  provider: string;
+  provider_name: string;
+  payments_configured: boolean;
+  currency: string;
+  demo_mode?: boolean;
+  demo_payment_amount_xaf?: number | null;
+};
+
+export type EventTicketsPayload = {
+  event: EventTicketEvent;
+  payment: EventTicketPaymentSettings;
+};
+
+export type EventTicketInitializePayload = {
+  eventSlug: string;
+  packageSlug: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerWhatsapp?: string;
+  whatsappConsent?: boolean;
+};
+
+export type EventTicketInitializeResponse = {
+  order: {
+    id: string;
+    tx_ref: string;
+    reference?: string | null;
+    payment_link: string;
+    amount_xaf: number;
+    currency: string;
+    event_title: string;
+    package_name: string;
+    redirect_url?: string;
+  };
+};
+
+export type EventTicketIssued = {
+  id: string;
+  ticket_code: string;
+  qr_token: string;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_whatsapp?: string | null;
+  admit_count: number;
+  checked_in_count: number;
+  status: string;
+  issued_at: string;
+  check_in_url: string;
+  download_url: string;
+  qr_image_data_url: string;
+  event: Omit<EventTicketEvent, 'packages'>;
+  package: EventTicketPackage;
+  order: {
+    id: string;
+    tx_ref: string;
+    reference?: string | null;
+    amount_xaf: number;
+    currency: string;
+    status: string;
+  };
+};
+
+export type EventTicketVerifyResponse = {
+  status: 'success' | 'pending' | 'failed' | 'already-counted' | string;
+  message?: string;
+  ticket?: EventTicketIssued;
+};
+
+export type EventTicketStaffTicket = {
+  id: string;
+  ticket_code: string;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_whatsapp?: string | null;
+  admit_count: number;
+  checked_in_count: number;
+  remaining_count: number;
+  status: string;
+  issued_at: string;
+  last_checked_in_at?: string | null;
+  event: Omit<EventTicketEvent, 'packages'>;
+  package: EventTicketPackage;
+  order_status?: string;
+};
+
 type CompetitionApplicationSubmitPayload =
   Omit<CompetitionApplicationInsert, 'id' | 'created_at' | 'updated_at'> & {
     competitionTitle?: string;
@@ -415,6 +529,141 @@ export const panacheDorVotingService = {
     }
 
     return payload as PanacheDorVoteVerifyResponse;
+  },
+};
+
+// Event ticketing service
+const EVENT_TICKETS_API_URL =
+  import.meta.env.VITE_EVENT_TICKETS_API_URL || '/api/event-tickets';
+
+const readEventTicketsResponse = async (response: Response) => {
+  return (await response.json().catch(() => null)) as
+    | (Partial<EventTicketsPayload> &
+        Partial<EventTicketInitializeResponse> &
+        Partial<EventTicketVerifyResponse> & {
+          message?: string;
+          tickets?: EventTicketStaffTicket[];
+          checked_in_count?: number;
+        })
+    | null;
+};
+
+export const eventTicketsService = {
+  async getEvent(eventSlug: string) {
+    const response = await fetch(
+      `${EVENT_TICKETS_API_URL}?eventSlug=${encodeURIComponent(eventSlug)}`
+    );
+    const payload = await readEventTicketsResponse(response);
+
+    if (!response.ok || !payload?.event || !payload?.payment) {
+      throw new Error(payload?.message || 'Could not load tickets.');
+    }
+
+    return payload as EventTicketsPayload;
+  },
+
+  async initializePayment(data: EventTicketInitializePayload) {
+    const response = await fetch(EVENT_TICKETS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'initializeTicketPayment',
+        ...data,
+      }),
+    });
+    const payload = await readEventTicketsResponse(response);
+
+    if (!response.ok || !payload?.order) {
+      throw new Error(payload?.message || 'Could not start ticket payment.');
+    }
+
+    return payload as EventTicketInitializeResponse;
+  },
+
+  async verifyPayment(data: { txRef?: string; reference?: string }) {
+    const response = await fetch(EVENT_TICKETS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'verifyTicketPayment',
+        tx_ref: data.txRef,
+        reference: data.reference,
+      }),
+    });
+    const payload = await readEventTicketsResponse(response);
+
+    if (!response.ok || !payload?.status) {
+      throw new Error(payload?.message || 'Could not verify ticket payment.');
+    }
+
+    return payload as EventTicketVerifyResponse;
+  },
+
+  async lookupTicket(data: {
+    accessKey: string;
+    ticketCode?: string;
+    token?: string;
+    search?: string;
+  }) {
+    const response = await fetch(EVENT_TICKETS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-dashboard-key': data.accessKey,
+      },
+      body: JSON.stringify({
+        action: 'lookupTicket',
+        ticketCode: data.ticketCode,
+        token: data.token,
+        search: data.search,
+      }),
+    });
+    const payload = await readEventTicketsResponse(response);
+
+    if (!response.ok || !payload?.tickets) {
+      throw new Error(payload?.message || 'Could not find ticket.');
+    }
+
+    return payload.tickets;
+  },
+
+  async checkInTicket(data: {
+    accessKey: string;
+    ticketCode: string;
+    token?: string;
+    count: number;
+    checkedInBy?: string;
+    method?: 'qr' | 'manual';
+  }) {
+    const response = await fetch(EVENT_TICKETS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-dashboard-key': data.accessKey,
+      },
+      body: JSON.stringify({
+        action: 'checkInTicket',
+        ticketCode: data.ticketCode,
+        token: data.token,
+        count: data.count,
+        checkedInBy: data.checkedInBy,
+        method: data.method,
+      }),
+    });
+    const payload = await readEventTicketsResponse(response);
+
+    if (!response.ok || !payload?.ticket) {
+      throw new Error(payload?.message || 'Could not check in ticket.');
+    }
+
+    return {
+      ticket: payload.ticket as EventTicketStaffTicket,
+      checked_in_count: payload.checked_in_count || data.count,
+    };
   },
 };
 

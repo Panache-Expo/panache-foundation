@@ -282,7 +282,7 @@ const fetchSyncedDisbursements = async () => {
   const { data = [], error } = await supabase
     .from("panache_dor_campay_transactions")
     .select(
-      "campay_reference, external_reference, direction, amount_xaf, currency, status, phone, operator, description, transaction_date, created_at"
+      "campay_reference, external_reference, direction, amount_xaf, currency, status, phone, operator, description, transaction_date, created_at, excluded_from_revenue"
     )
     .eq("direction", "withdrawal")
     .order("transaction_date", { ascending: false, nullsFirst: false })
@@ -300,7 +300,9 @@ const fetchSyncedDisbursements = async () => {
   }
 
   const includedWithdrawals = data.filter(
-    (row) => !ignoredDisbursementReferences.has(String(row.campay_reference || ""))
+    (row) =>
+      !row.excluded_from_revenue &&
+      !ignoredDisbursementReferences.has(String(row.campay_reference || ""))
   );
 
   const summary = emptyDisbursementSummary(true, null);

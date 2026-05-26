@@ -111,6 +111,25 @@ const PanacheDorPage = () => {
       />
 
       <main className="px-6 pb-20 pt-10 md:pb-24">
+        <section className="mx-auto mb-10 max-w-6xl">
+          <ExpoSurface className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
+                Awards night access
+              </p>
+              <h2 className="mt-2 font-sans text-[clamp(1.9rem,3vw,2.7rem)] font-semibold leading-[0.96] tracking-[-0.05em] text-[#171411]">
+                Buy your Panache D&apos;or ticket for 11 July.
+              </h2>
+            </div>
+            <Button
+              asChild
+              className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+            >
+              <Link to="/panache-expo/panache-dor/tickets">Buy tickets</Link>
+            </Button>
+          </ExpoSurface>
+        </section>
+
         <section className="mx-auto max-w-6xl">
           <div className="grid gap-6 lg:grid-cols-3">
             {recognitionCards.map((card) => {

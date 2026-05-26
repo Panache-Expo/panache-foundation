@@ -415,6 +415,12 @@ const CYESPage = () => {
                     </Button>
                   </Link>
 
+                  <Link to="/cyes/tickets" className="inline-flex">
+                    <Button className="h-11 rounded-full bg-[#156D3B] px-6 font-sans text-sm font-semibold text-white hover:bg-[#156D3B]/90">
+                      Buy awards tickets
+                    </Button>
+                  </Link>
+
                   <a
                     href={CYES_WHATSAPP_CHANNEL_URL}
                     target="_blank"

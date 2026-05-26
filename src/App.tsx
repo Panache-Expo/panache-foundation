@@ -28,6 +28,9 @@ import PanacheDorNomineePage from "./pages/PanacheDorNomineePage";
 import PanacheDorLeaderboardPage from "./pages/PanacheDorLeaderboardPage";
 import PanacheDorRevenueDashboardPage from "./pages/PanacheDorRevenueDashboardPage";
 import PanacheDorPaymentVerifyPage from "./pages/PanacheDorPaymentVerifyPage";
+import EventTicketsPage from "./pages/EventTicketsPage";
+import EventTicketPaymentVerifyPage from "./pages/EventTicketPaymentVerifyPage";
+import EventTicketCheckInPage from "./pages/EventTicketCheckInPage";
 import PanacheNominationsPage from "./pages/PanacheNominationsPage";
 import MissPanachePage from "./pages/MissPanachePage";
 import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
@@ -131,6 +134,8 @@ const App = () => (
               <Route path="/panache-expo/panache-dor/nominees/:slug" element={<PanacheDorNomineePage />} />
               <Route path="/panache-expo/panache-dor/payment/verify" element={<PanacheDorPaymentVerifyPage />} />
               <Route path="/panache-expo/panache-dor/leaderboard" element={<PanacheDorLeaderboardPage />} />
+              <Route path="/panache-expo/panache-dor/tickets" element={<EventTicketsPage eventSlug="panache-dor-awards-night" />} />
+              <Route path="/panache-expo/panache-dor/tickets/payment/verify" element={<EventTicketPaymentVerifyPage brand="panache-dor" />} />
               <Route path="/panache-expo/workshops" element={<WorkshopsPage />} />
               <Route path="/panache-expo/contact" element={<ContactPage />} />
               <Route path="/panache-expo/register" element={<RegisterPage />} />
@@ -141,7 +146,10 @@ const App = () => (
               <Route path="/cyes/leaderboard" element={<CYESLeaderboardPage />} />
               <Route path="/cyes/register" element={<CYESRegisterPage />} />
               <Route path="/cyes/pitch-competition" element={<CYESPitchCompetitionPage />} />
+              <Route path="/cyes/tickets" element={<EventTicketsPage eventSlug="cyes-awards-night" />} />
+              <Route path="/cyes/tickets/payment/verify" element={<EventTicketPaymentVerifyPage brand="cyes" />} />
               <Route path="/cyes/contact" element={<ContactPage />} />
+              <Route path="/tickets/check-in" element={<EventTicketCheckInPage />} />
               <Route path="/panache-expo/participants-dashboard" element={<ParticipantsDashboardPage />} />
               <Route path="/admin/participants" element={<ParticipantsDashboardPage />} />
               <Route path="/admin/panache-dor-revenue" element={<PanacheDorRevenueDashboardPage />} />

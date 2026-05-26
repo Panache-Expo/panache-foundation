@@ -24,7 +24,7 @@ export const DeveloperContactCta = () => (
       <span className="text-[0.72rem] font-medium text-white/70">
         Need a website like this?
       </span>
-      <span>Talk to Glen</span>
+      {/* <span>Talk to Glen</span> */}
     </span>
   </a>
 );
