@@ -155,7 +155,7 @@ export const CYESRegisterPage = () => {
     try {
       setIsFinalizingSubmission(true);
 
-      await submitCompetitionApplication.mutateAsync({
+      const submission = await submitCompetitionApplication.mutateAsync({
         application_code: applicationCode,
         competition_slug: registrationConfig.competitionSlug,
         category: selectedTopic,
@@ -180,6 +180,9 @@ export const CYESRegisterPage = () => {
           whatsapp_channel_url: registrationSettings.postSubmitHref,
         },
       });
+      const notificationFailed =
+        submission?.notification?.attempted &&
+        submission.notification.ok === false;
 
       formRef.current?.reset();
       setAgreedToTerms(false);
@@ -188,8 +191,13 @@ export const CYESRegisterPage = () => {
       setSubmittedApplicationCode(applicationCode);
 
       toast({
-        title: "Registration saved",
-        description: registrationSettings.successMessage,
+        title: notificationFailed
+          ? "Registration saved, email not sent"
+          : "Registration saved",
+        description: notificationFailed
+          ? "Your registration was saved, but the confirmation email could not be sent. Please join the CYES announcements channel for updates."
+          : registrationSettings.successMessage,
+        variant: notificationFailed ? "destructive" : "default",
       });
     } catch (error) {
       toast({

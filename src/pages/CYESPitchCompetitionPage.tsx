@@ -44,8 +44,8 @@ import { Link } from "react-router-dom";
 import {
   buildCompetitionApplicationCode,
   competitionRegistrationLinks,
+  getCompetitionPaymentSettings,
 } from "@/lib/registration-links";
-import { sendCompetitionRegistrationEmail } from "@/lib/send-registration-email";
 
 const industries = [
   "Agriculture & Agribusiness",
@@ -73,6 +73,7 @@ const runningDurationOptions = [
 ];
 
 const paymentConfig = competitionRegistrationLinks.cyesPitch;
+const paymentSettings = getCompetitionPaymentSettings(paymentConfig);
 
 const pitchHeroCards = [
   {
@@ -125,7 +126,7 @@ const prizeCards = [
 
 const processSteps = [
   "Submit your application through the form below.",
-  "Complete payment through Ayati to lock your place in the pool.",
+  "Sponsors have covered the registration fee for this cycle.",
   "Applications are reviewed and the final shortlist is selected.",
   "Only 20 businesses will pitch live in Buea during 9-11 July 2026.",
   "A jury panel evaluates every pitch and selects the strongest idea.",
@@ -149,8 +150,8 @@ const CYESPitchCompetitionPage = () => {
     }
 
     const timeoutId = window.setTimeout(() => {
-      window.location.assign(paymentConfig.paymentHref);
-    }, 1600);
+      window.location.assign(paymentSettings.postSubmitHref);
+    }, paymentSettings.redirectDelayMs);
 
     return () => window.clearTimeout(timeoutId);
   }, [submittedApplicationCode]);
@@ -211,7 +212,7 @@ const CYESPitchCompetitionPage = () => {
     try {
       setIsFinalizingSubmission(true);
 
-      await submitCompetitionApplication.mutateAsync({
+      const submission = await submitCompetitionApplication.mutateAsync({
         application_code: applicationCode,
         competition_slug: paymentConfig.competitionSlug,
         category: industry,
@@ -222,9 +223,12 @@ const CYESPitchCompetitionPage = () => {
         city,
         country: "Cameroon",
         motivation: whySelected,
-        payment_status: "pending",
-        payment_platform: "ayatickets",
+        payment_status: paymentSettings.paymentStatus,
+        payment_platform: paymentSettings.paymentPlatform,
         review_status: "submitted",
+        competitionTitle: paymentConfig.title,
+        postSubmitHref: paymentSettings.postSubmitHref,
+        notificationEmails: paymentSettings.notificationEmails,
         form_payload: {
           business_name: businessName,
           business_summary: oneSentence,
@@ -243,23 +247,9 @@ const CYESPitchCompetitionPage = () => {
         },
       });
 
-      let emailWarning: string | null = null;
-
-      try {
-        await sendCompetitionRegistrationEmail({
-          applicantEmail: email,
-          applicantFirstName: fullName,
-          competitionTitle: paymentConfig.title,
-          applicationCode,
-          paymentHref: paymentConfig.paymentHref,
-          category: industry,
-        });
-      } catch (error) {
-        emailWarning =
-          error instanceof Error
-            ? error.message
-            : "We could not send the confirmation email.";
-      }
+      const notificationFailed =
+        submission?.notification?.attempted &&
+        submission.notification.ok === false;
 
       formRef.current?.reset();
       setAgreedToDeclaration(false);
@@ -271,9 +261,10 @@ const CYESPitchCompetitionPage = () => {
 
       toast({
         title: "Application saved",
-        description: emailWarning
-          ? `${emailWarning} Your application was still saved and you are being redirected to Ayati.`
-          : "A confirmation email has been sent. Redirecting you to Ayati to complete payment.",
+        description: notificationFailed
+          ? "Your application was saved, but the confirmation email could not be sent. Please join the CYES announcements channel for updates."
+          : paymentSettings.successMessage,
+        variant: notificationFailed ? "destructive" : "default",
       });
     } catch (error) {
       toast({
@@ -305,7 +296,7 @@ const CYESPitchCompetitionPage = () => {
               </span>
             </>
           }
-          description="The CYES pitch competition is built for founders with strong ideas, a clear problem, and a business worth backing. Submit your application, complete payment, and compete for one of the final live slots."
+          description="The CYES pitch competition is built for founders with strong ideas, a clear problem, and a business worth backing. Submit your sponsored application and compete for one of the final live slots."
           actions={
             <>
               <a
@@ -330,7 +321,7 @@ const CYESPitchCompetitionPage = () => {
             },
             {
               label: "Fee",
-              value: "20,000 CFA",
+              value: "Free - sponsor covered",
               accentClassName: "text-[#1875D2]",
             },
             {
@@ -471,9 +462,14 @@ const CYESPitchCompetitionPage = () => {
           {submittedApplicationCode ? (
             <CompetitionPaymentRedirect
               applicationCode={submittedApplicationCode}
-              paymentHref={paymentConfig.paymentHref}
-              title="CYES Pitch Application Received"
-              description="Your application is now stored in the CYES registration system. Complete your Ayati payment to finish the registration flow."
+              paymentHref={paymentSettings.postSubmitHref}
+              title={paymentConfig.successTitle || "CYES Pitch Application Received"}
+              description={
+                paymentConfig.successDescription ||
+                "Your application is now stored in the CYES registration system."
+              }
+              actionLabel={paymentSettings.ctaLabel}
+              postSubmitCopy={paymentSettings.postSubmitCopy}
             />
           ) : (
             <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
@@ -487,7 +483,8 @@ const CYESPitchCompetitionPage = () => {
                 <p className="mt-4 font-sans text-[1rem] leading-relaxed text-[#171411]/72">
                   We want to understand the business, the problem, the model, and
                   why your idea deserves one of the final live spots. Fill the
-                  form carefully, then continue to Ayati for payment.
+                  form carefully. Sponsors have covered the registration fee for
+                  this cycle.
                 </p>
 
                 <div className="mt-8 space-y-3">
@@ -515,7 +512,7 @@ const CYESPitchCompetitionPage = () => {
                     Application form
                   </p>
                   <h2 className="mt-4 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-[#171411]">
-                    Save your application, then continue to Ayati.
+                    Save your sponsored application.
                   </h2>
                 </div>
 
@@ -839,8 +836,8 @@ const CYESPitchCompetitionPage = () => {
                         className="font-sans text-sm leading-relaxed text-[#171411]/72"
                       >
                         I confirm that all information provided is accurate and I
-                        understand that payment is required on Ayati after this
-                        form is submitted.
+                        understand that sponsor coverage makes this application
+                        free for this cycle.
                       </Label>
                     </div>
                   </div>
@@ -850,11 +847,11 @@ const CYESPitchCompetitionPage = () => {
                       Registration Fee
                     </p>
                     <p className="mt-1 font-sans text-[1.4rem] font-semibold tracking-[-0.05em] text-[#171411]">
-                      20,000 CFA
+                      Free - sponsor covered
                     </p>
                     <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
                       Save the application here first. You will then continue to
-                      Ayati to complete payment.
+                      the CYES announcements channel for updates.
                     </p>
                   </div>
 

@@ -421,15 +421,7 @@ const CYESPage = () => {
                     </Button>
                   </Link>
 
-                  <a
-                    href={CYES_WHATSAPP_CHANNEL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-11 items-center justify-center rounded-full border border-[#25D366]/25 bg-white/80 px-6 font-sans text-sm font-semibold text-[#156D3B] transition-colors hover:bg-white"
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4 text-[#25D366]" />
-                    Join channel
-                  </a>
+                  
                 </div>
 
                 <div className="relative mt-12 flex h-[19rem] items-center justify-center md:hidden">

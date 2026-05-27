@@ -1,20 +1,32 @@
 import nodemailer from "nodemailer";
 
-const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
-const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const envValue = (...names) => {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value !== undefined && value !== null && String(value).trim()) {
+      return String(value).trim();
+    }
+  }
+  return "";
+};
+
+const SMTP_HOST = envValue("SMTP_HOST", "PANACHE_SMTP_HOST") || "smtp.gmail.com";
+const SMTP_PORT = Number(envValue("SMTP_PORT", "PANACHE_SMTP_PORT") || 465);
+const SMTP_SECURE_SETTING = envValue("SMTP_SECURE", "PANACHE_SMTP_SECURE");
 const SMTP_SECURE =
-  String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false";
-const SMTP_USER = process.env.SMTP_USER || "";
-const SMTP_PASS = process.env.SMTP_PASS || "";
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
+  SMTP_SECURE_SETTING
+    ? String(SMTP_SECURE_SETTING).toLowerCase() !== "false"
+    : SMTP_PORT === 465;
+const SMTP_USER = envValue("SMTP_USER", "SMTP_USERNAME", "PANACHE_SMTP_USER", "PANACHE_SMTP_USERNAME");
+const SMTP_PASS = envValue("SMTP_PASS", "SMTP_PASSWORD", "PANACHE_SMTP_PASS", "PANACHE_SMTP_PASSWORD");
+const SMTP_FROM = envValue("SMTP_FROM", "PANACHE_SMTP_FROM", "PANACHE_SMTP_FROM_EMAIL") || SMTP_USER || "";
 const REGISTRATION_SUPPORT_EMAIL =
-  process.env.REGISTRATION_SUPPORT_EMAIL || SMTP_USER || "";
+  envValue("REGISTRATION_SUPPORT_EMAIL", "PANACHE_SUPPORT_EMAIL") || SMTP_USER || "";
 const ADMIN_NOTIFICATION_EMAILS =
-  process.env.ADMIN_NOTIFICATION_EMAILS ||
-  process.env.PANACHE_NOTIFICATION_EMAILS ||
+  envValue("ADMIN_NOTIFICATION_EMAILS", "PANACHE_NOTIFICATION_EMAILS") ||
   "glenmue2020@gmail.com";
 const PARTICIPANTS_DASHBOARD_PATH =
-  process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
+  envValue("PARTICIPANTS_DASHBOARD_PATH") || "/panache-expo/participants-dashboard";
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
@@ -69,6 +81,59 @@ const normalizeAdminEmails = (value) => {
       .filter(Boolean);
   }
   return [];
+};
+
+const getErrorMessage = (error, fallback) =>
+  error instanceof Error ? error.message : fallback;
+
+const createTransportOptions = () => {
+  const options = [];
+  const addOption = (port, secure) => {
+    const key = `${SMTP_HOST}:${port}:${secure}`;
+    if (options.some((option) => option.key === key)) {
+      return;
+    }
+    options.push({
+      key,
+      host: SMTP_HOST,
+      port,
+      secure,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+  };
+
+  addOption(SMTP_PORT, SMTP_SECURE);
+
+  if (SMTP_HOST.toLowerCase().includes("gmail.com")) {
+    addOption(465, true);
+    addOption(587, false);
+  }
+
+  return options;
+};
+
+const createVerifiedTransporter = async () => {
+  let lastError = null;
+
+  for (const option of createTransportOptions()) {
+    const { key, ...transportOption } = option;
+    const transporter = nodemailer.createTransport(transportOption);
+
+    try {
+      await transporter.verify();
+      return transporter;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Could not connect to the SMTP server.");
 };
 
 const resolveDashboardUrl = (req, dashboardUrlFromBody) => {
@@ -262,15 +327,17 @@ export default async function handler(req, res) {
 
   const actionLabel = isFree ? "Continue to WhatsApp" : "Complete payment";
 
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
+  let transporter;
+  try {
+    transporter = await createVerifiedTransporter();
+  } catch (error) {
+    return sendJson(res, 500, {
+      message: getErrorMessage(
+        error,
+        "Could not connect to the registration email server."
+      ),
+    });
+  }
 
   const mailTasks = [];
   if (recipientType === "applicant" || recipientType === "both") {
@@ -349,10 +416,10 @@ export default async function handler(req, res) {
     await Promise.all(mailTasks);
   } catch (error) {
     return sendJson(res, 500, {
-      message:
-        error instanceof Error
-          ? error.message
-          : "Could not send the registration notification email.",
+      message: getErrorMessage(
+        error,
+        "Could not send the registration notification email."
+      ),
     });
   }
 

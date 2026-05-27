@@ -5,13 +5,22 @@ const SUPABASE_URL =
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 const DASHBOARD_ACCESS_KEY = process.env.DASHBOARD_ACCESS_KEY || "";
-const REGISTRATION_SUPPORT_EMAIL = process.env.REGISTRATION_SUPPORT_EMAIL || "";
+const envValue = (...names) => {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value !== undefined && value !== null && String(value).trim()) {
+      return String(value).trim();
+    }
+  }
+  return "";
+};
+const REGISTRATION_SUPPORT_EMAIL =
+  envValue("REGISTRATION_SUPPORT_EMAIL", "PANACHE_SUPPORT_EMAIL") || "";
 const ADMIN_NOTIFICATION_EMAILS =
-  process.env.ADMIN_NOTIFICATION_EMAILS ||
-  process.env.PANACHE_NOTIFICATION_EMAILS ||
+  envValue("ADMIN_NOTIFICATION_EMAILS", "PANACHE_NOTIFICATION_EMAILS") ||
   "glenmue2020@gmail.com";
 const PARTICIPANTS_DASHBOARD_PATH =
-  process.env.PARTICIPANTS_DASHBOARD_PATH || "/panache-expo/participants-dashboard";
+  envValue("PARTICIPANTS_DASHBOARD_PATH") || "/panache-expo/participants-dashboard";
 const REGISTRATION_EMAIL_ENDPOINT = "/api/send-registration-email";
 
 const ALLOWED_COMPETITION_SLUGS = new Set([

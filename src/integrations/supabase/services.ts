@@ -308,6 +308,20 @@ type CompetitionApplicationSubmitPayload =
     [key: string]: unknown;
   };
 
+export type CompetitionApplicationNotificationResult = {
+  attempted?: boolean;
+  ok?: boolean;
+  skipped?: boolean;
+  reason?: string;
+  error?: string;
+  raw?: unknown;
+};
+
+export type CompetitionApplicationSubmitResponse = {
+  application: CompetitionApplication | null;
+  notification?: CompetitionApplicationNotificationResult;
+};
+
 // Contact Submissions Service
 export const contactService = {
   async submit(data: Omit<ContactSubmission, 'id' | 'created_at'>) {
@@ -357,7 +371,11 @@ export const competitionApplicationService = {
     });
 
     const payload = (await response.json().catch(() => null)) as
-      | { application?: CompetitionApplication; message?: string }
+      | {
+          application?: CompetitionApplication;
+          notification?: CompetitionApplicationNotificationResult;
+          message?: string;
+        }
       | null;
 
     if (!response.ok || !payload) {
@@ -367,7 +385,10 @@ export const competitionApplicationService = {
       );
     }
 
-    return payload.application || null;
+    return {
+      application: payload.application || null,
+      notification: payload.notification,
+    } satisfies CompetitionApplicationSubmitResponse;
   },
 };
 

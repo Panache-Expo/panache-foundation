@@ -10,8 +10,8 @@ import {
 } from "@/integrations/supabase/services";
 import cyesHero from "@/assets/CYESCDAwards.jpeg";
 import panacheHero from "@/assets/PanacheAwards.jpeg";
-import cyesTicketBg from "@/assets/tickets/cyes-ticket-bg.png";
-import panacheTicketBg from "@/assets/tickets/panache-dor-ticket-bg.png";
+import cyesTicketBg from "@/assets/tickets/cyes-ticket-bg-downloaded.png";
+import panacheTicketBg from "@/assets/tickets/panache-dor-ticket-bg-downloaded.png";
 import {
   CalendarDays,
   Check,
