@@ -464,27 +464,36 @@ const loadPublicEvent = async (supabase, eventSlug) => {
   }
 
   return {
-    ...event,
-    ...(ticketEventDisplayOverrides[event.slug] || {}),
+    ...applyTicketEventDisplayOverrides(event),
     packages: (event.packages || [])
       .filter((ticketPackage) => ticketPackage.status === "active")
       .sort((left, right) => left.sort_order - right.sort_order),
   };
 };
 
-const serializeEvent = (event) => ({
-  id: event.id,
-  slug: event.slug,
-  title: event.title,
-  short_title: event.short_title,
-  event_date: event.event_date,
-  event_date_label: event.event_date_label,
-  venue: event.venue,
-  brand: event.brand,
-  packages: event.packages || [],
+const applyTicketEventDisplayOverrides = (event) => ({
+  ...event,
+  ...(ticketEventDisplayOverrides[event?.slug] || {}),
 });
 
+const serializeEvent = (event) => {
+  const displayEvent = applyTicketEventDisplayOverrides(event);
+
+  return {
+    id: displayEvent.id,
+    slug: displayEvent.slug,
+    title: displayEvent.title,
+    short_title: displayEvent.short_title,
+    event_date: displayEvent.event_date,
+    event_date_label: displayEvent.event_date_label,
+    venue: displayEvent.venue,
+    brand: displayEvent.brand,
+    packages: displayEvent.packages || [],
+  };
+};
+
 const buildTicketResponse = async (req, ticket, order, event, ticketPackage) => {
+  const displayEvent = applyTicketEventDisplayOverrides(event);
   const checkInUrl = buildCheckInUrl(req, ticket);
   const qrImageDataUrl = await QRCode.toDataURL(checkInUrl, {
     width: 420,
@@ -506,7 +515,7 @@ const buildTicketResponse = async (req, ticket, order, event, ticketPackage) => 
     check_in_url: checkInUrl,
     download_url: buildDownloadUrl(req, ticket),
     qr_image_data_url: qrImageDataUrl,
-    event: serializeEvent({ ...event, packages: [] }),
+    event: serializeEvent({ ...displayEvent, packages: [] }),
     package: ticketPackage,
     order: {
       id: order.id,
@@ -835,6 +844,7 @@ const formatCompactXaf = (amount) => {
 };
 
 const buildTicketPdfBuffer = async ({ req, ticket, order, event, ticketPackage }) => {
+  event = applyTicketEventDisplayOverrides(event);
   const width = 420;
   const height = 760;
   const theme = getTicketVisualTheme(event, ticketPackage);
@@ -1006,6 +1016,7 @@ const updateTicketEmailStatus = async (supabase, orderId, result) => {
 };
 
 const sendTicketEmail = async ({ req, ticket, order, event, ticketPackage }) => {
+  event = applyTicketEventDisplayOverrides(event);
   if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM || !order.buyer_email) {
     return {
       attempted: false,
