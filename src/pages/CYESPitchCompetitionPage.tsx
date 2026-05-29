@@ -126,7 +126,7 @@ const prizeCards = [
 
 const processSteps = [
   "Submit your application through the form below.",
-  "Sponsors have covered the registration fee for this cycle.",
+  "Complete your Ayati payment to confirm the application.",
   "Applications are reviewed and the final shortlist is selected.",
   "Only 20 businesses will pitch live in Buea during 9-11 July 2026.",
   "A jury panel evaluates every pitch and selects the strongest idea.",
@@ -262,7 +262,7 @@ const CYESPitchCompetitionPage = () => {
       toast({
         title: "Application saved",
         description: notificationFailed
-          ? "Your application was saved, but the confirmation email could not be sent. Please join the CYES announcements channel for updates."
+          ? `Your application was saved, but the confirmation email could not be sent. ${paymentSettings.pendingMessage}`
           : paymentSettings.successMessage,
         variant: notificationFailed ? "destructive" : "default",
       });
@@ -296,7 +296,7 @@ const CYESPitchCompetitionPage = () => {
               </span>
             </>
           }
-          description="The CYES pitch competition is built for founders with strong ideas, a clear problem, and a business worth backing. Submit your sponsored application and compete for one of the final live slots."
+          description="The CYES pitch competition is built for founders with strong ideas, a clear problem, and a business worth backing. Submit your application and compete for one of the final live slots."
           actions={
             <>
               <a
@@ -321,7 +321,7 @@ const CYESPitchCompetitionPage = () => {
             },
             {
               label: "Fee",
-              value: "Free - sponsor covered",
+              value: "20,000 CFA",
               accentClassName: "text-[#1875D2]",
             },
             {
@@ -483,8 +483,8 @@ const CYESPitchCompetitionPage = () => {
                 <p className="mt-4 font-sans text-[1rem] leading-relaxed text-[#171411]/72">
                   We want to understand the business, the problem, the model, and
                   why your idea deserves one of the final live spots. Fill the
-                  form carefully. Sponsors have covered the registration fee for
-                  this cycle.
+                  form carefully. After submission, you will continue to Ayati
+                  to complete the 20,000 CFA registration payment.
                 </p>
 
                 <div className="mt-8 space-y-3">
@@ -512,7 +512,7 @@ const CYESPitchCompetitionPage = () => {
                     Application form
                   </p>
                   <h2 className="mt-4 font-sans text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.93] tracking-[-0.065em] text-[#171411]">
-                    Save your sponsored application.
+                    Save your application.
                   </h2>
                 </div>
 
@@ -836,8 +836,8 @@ const CYESPitchCompetitionPage = () => {
                         className="font-sans text-sm leading-relaxed text-[#171411]/72"
                       >
                         I confirm that all information provided is accurate and I
-                        understand that sponsor coverage makes this application
-                        free for this cycle.
+                        understand that payment is required on Ayati after this
+                        form is submitted.
                       </Label>
                     </div>
                   </div>
@@ -847,11 +847,11 @@ const CYESPitchCompetitionPage = () => {
                       Registration Fee
                     </p>
                     <p className="mt-1 font-sans text-[1.4rem] font-semibold tracking-[-0.05em] text-[#171411]">
-                      Free - sponsor covered
+                      20,000 CFA
                     </p>
                     <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/66">
                       Save the application here first. You will then continue to
-                      the CYES announcements channel for updates.
+                      Ayati to complete payment.
                     </p>
                   </div>
 
@@ -864,7 +864,7 @@ const CYESPitchCompetitionPage = () => {
                   >
                     {submitCompetitionApplication.isPending || isFinalizingSubmission
                       ? "Saving application..."
-                      : "Save application and continue"}
+                      : "Save application and continue to payment"}
                   </Button>
                 </form>
               </div>

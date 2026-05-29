@@ -6,6 +6,8 @@ import { AwardsDropdown } from "@/components/AwardsDropdown";
 import { SponsorsMarquee } from "@/components/SponsorsMarquee";
 import { Founder } from "@/components/Founder";
 import { Footer } from "@/components/Footer";
+import { ImmersiveGallery } from "@/components/ImmersiveGallery";
+
 
 const PanacheExpoPage = () => {
   return (
@@ -14,12 +16,14 @@ const PanacheExpoPage = () => {
       <Hero />
       <About />
       <AwardsDropdown />
-      <Gallery />
+      {/* <Gallery /> */}
+      <ImmersiveGallery/>
       <SponsorsMarquee />
       <Founder />
       <Footer />
     </div>
   );
 };
+
 
 export default PanacheExpoPage;

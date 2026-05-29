@@ -66,16 +66,16 @@ export const competitionRegistrationLinks: Record<
   cyesPitch: {
     title: "CYES Business Pitch Competition",
     description:
-      "Complete your sponsored application on the website first, then continue to the official CYES announcements channel.",
-    postSubmitAction: "redirect_whatsapp",
-    paymentMode: "free",
+      "Complete your application on the website first, then continue to Ayati to complete payment.",
+    postSubmitAction: "redirect_payment",
+    paymentMode: "paid",
     path: "/cyes/pitch-competition",
     competitionSlug: "cyes-pitch-competition",
     codePrefix: "CYESP",
-    whatsappGroupUrl: CYES_WHATSAPP_CHANNEL_URL,
+    paymentHref: "https://ayati.me/5see",
     successTitle: "CYES Pitch Application Received",
     successDescription:
-      "Your pitch application is now saved in the Panache registration system. Continue to the CYES announcements channel for updates.",
+      "Your application is now stored in the CYES registration system. Complete your Ayati payment to finish the registration flow.",
     notificationRecipientEmails: CYES_NOTIFICATION_EMAILS,
   },
   exhibitionStands: {

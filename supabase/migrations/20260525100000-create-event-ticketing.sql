@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS public.event_ticket_events (
   short_title TEXT NOT NULL,
   event_date DATE NOT NULL,
   event_date_label TEXT NOT NULL,
-  venue TEXT NOT NULL DEFAULT 'Buea, Cameroon',
+  venue TEXT NOT NULL DEFAULT 'Chariot Hotel, Buea',
   brand TEXT NOT NULL CHECK (brand IN ('cyes', 'panache-dor')),
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'draft', 'archived')),
   sort_order INTEGER NOT NULL DEFAULT 0,
@@ -132,8 +132,8 @@ USING (
 
 WITH seeded_events(slug, title, short_title, event_date, event_date_label, venue, brand, sort_order) AS (
   VALUES
-    ('cyes-awards-night', 'CYES Awards Night', 'CYES Awards', DATE '2026-07-09', '9 July 2026', 'Buea, Cameroon', 'cyes', 10),
-    ('panache-dor-awards-night', 'Panache D''or Awards Night', 'Panache D''or', DATE '2026-07-11', '11 July 2026', 'Buea, Cameroon', 'panache-dor', 20)
+    ('cyes-awards-night', 'CYES & Awards Night', 'CYES & Awards', DATE '2026-07-09', '9 July 2026', 'Chariot Hotel, Buea', 'cyes', 10),
+    ('panache-dor-awards-night', 'Panache D''or Awards Night', 'Panache D''or', DATE '2026-07-11', '11 July 2026', 'Chariot Hotel, Buea', 'panache-dor', 20)
 )
 INSERT INTO public.event_ticket_events (
   slug,

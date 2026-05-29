@@ -59,13 +59,13 @@ export const Hero = () => {
                     Secure Your Spot
                   </Button>
                 </Link>
-                <Link to="/panache-expo/panache-dor">
+                <Link to="/panache-expo/panache-dor/tickets">
                   <Button
                     size="lg"
                     variant="outline"
                     className="h-12 w-52 rounded-full border-white/60 bg-white/15 px-7 text-base font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-[#211d1b] hover:border-white hover:shadow-lg hover:shadow-white/20"
                   >
-                    Explore
+                    Buy awards tickets
                   </Button>
                 </Link>
               </div>

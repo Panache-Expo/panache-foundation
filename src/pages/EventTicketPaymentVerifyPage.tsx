@@ -15,9 +15,9 @@ type EventTicketPaymentVerifyPageProps = {
 
 const brandConfig = {
   cyes: {
-    title: "CYES ticket confirmation",
+    title: "CYES & Awards ticket confirmation",
     backHref: "/cyes/tickets",
-    backLabel: "Back to CYES tickets",
+    backLabel: "Back to CYES & Awards tickets",
     accent: "text-[#156D3B]",
     button: "bg-[#156D3B] hover:bg-[#156D3B]/92",
     bg: "bg-[#f7f8f3]",
@@ -77,11 +77,11 @@ const buildPreviewTicket = (brand: EventTicketPaymentVerifyPageProps["brand"]) =
     ? {
         id: "preview-cyes-event",
         slug: "cyes-awards-night",
-        title: "CYES Awards Night",
-        short_title: "CYES Awards",
+        title: "CYES & Awards Night",
+        short_title: "CYES & Awards",
         event_date: "2026-07-09",
         event_date_label: "9 July 2026",
-        venue: "Buea, Cameroon",
+        venue: "Chariot Hotel, Buea",
         brand: "cyes",
       }
     : {
@@ -91,7 +91,7 @@ const buildPreviewTicket = (brand: EventTicketPaymentVerifyPageProps["brand"]) =
         short_title: "Panache D'or",
         event_date: "2026-07-11",
         event_date_label: "11 July 2026",
-        venue: "Buea, Cameroon",
+        venue: "Chariot Hotel, Buea",
         brand: "panache-dor",
       };
 

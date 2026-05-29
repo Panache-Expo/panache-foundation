@@ -82,6 +82,17 @@ const ticketEventDetails = {
   },
 };
 
+const ticketEventDisplayOverrides = {
+  "cyes-awards-night": {
+    title: "CYES & Awards Night",
+    short_title: "CYES & Awards",
+    venue: "Chariot Hotel, Buea",
+  },
+  "panache-dor-awards-night": {
+    venue: "Chariot Hotel, Buea",
+  },
+};
+
 const ticketPackageVisuals = {
   "prestige-table-8": {
     tier: "PRESTIGE",
@@ -454,6 +465,7 @@ const loadPublicEvent = async (supabase, eventSlug) => {
 
   return {
     ...event,
+    ...(ticketEventDisplayOverrides[event.slug] || {}),
     packages: (event.packages || [])
       .filter((ticketPackage) => ticketPackage.status === "active")
       .sort((left, right) => left.sort_order - right.sort_order),

@@ -29,8 +29,8 @@ type EventTicketsPageProps = {
 
 const pageThemes = {
   "cyes-awards-night": {
-    eyebrow: "CYES Awards Night tickets",
-    headline: "Reserve your CYES Awards Night pass.",
+    eyebrow: "CYES & Awards tickets",
+    headline: "Reserve your CYES & Awards pass.",
     description:
       "Choose your table or access pass for the 9 July awards night. Your ticket is emailed after verified payment.",
     heroImage: cyesHero,
@@ -262,7 +262,7 @@ export const EventTicketsPage = ({ eventSlug }: EventTicketsPageProps) => {
                   {payload?.event.title || "Awards Night"}
                 </p>
                 <p className="mt-1 font-sans text-sm text-white/72">
-                  {payload?.event.venue || "Buea, Cameroon"}
+                  {payload?.event.venue || "Chariot Hotel, Buea"}
                 </p>
               </div>
             </div>
