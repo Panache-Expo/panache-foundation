@@ -33,11 +33,19 @@ export interface CompetitionRegistrationConfig {
   redirectDelayMs?: number;
 }
 
-const DEFAULT_NOTIFICATION_EMAILS = ["glenmue2020@gmail.com"];
-const CYES_NOTIFICATION_EMAILS = [
-  ...DEFAULT_NOTIFICATION_EMAILS,
-  "info.cyescyecdawards@gmail.com",
-];
+const parseNotificationEmails = (value?: string) =>
+  (value || "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+
+const DEFAULT_NOTIFICATION_EMAILS = parseNotificationEmails(
+  import.meta.env.VITE_REGISTRATION_NOTIFICATION_EMAILS ||
+    import.meta.env.VITE_PANACHE_NOTIFICATION_EMAILS
+);
+const CYES_NOTIFICATION_EMAILS = parseNotificationEmails(
+  import.meta.env.VITE_CYES_NOTIFICATION_EMAILS
+);
 
 export const competitionRegistrationLinks: Record<
   | "cyesSummit"
