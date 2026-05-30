@@ -59,6 +59,21 @@ const PANACHE_DOR_BASE_URL = (
   process.env.PANACHE_FRONTEND_BASE_URL ||
   ""
 ).replace(/\/+$/, "");
+const AUTO_VERIFY_ENABLED =
+  String(process.env.PANACHE_DOR_AUTO_VERIFY_ENABLED ?? "true")
+    .trim()
+    .toLowerCase() !== "false";
+const AUTO_VERIFY_STARTED_AT =
+  process.env.PANACHE_DOR_AUTO_VERIFY_STARTED_AT ||
+  "2026-05-30T02:43:13.900Z";
+const AUTO_VERIFY_LIMIT = Number.parseInt(
+  process.env.PANACHE_DOR_AUTO_VERIFY_LIMIT || "10",
+  10
+);
+const AUTO_VERIFY_COOLDOWN_MS = Number.parseInt(
+  process.env.PANACHE_DOR_AUTO_VERIFY_COOLDOWN_MS || "3600000",
+  10
+);
 const paymentsConfigured = Boolean(
   PAYMENT_PROVIDER === "campay" && CAMPAY_APP_USERNAME && CAMPAY_APP_PASSWORD
 );
@@ -92,6 +107,8 @@ let campayTokenCache = {
   token: "",
   expiresAt: 0,
 };
+let lastAutoVerifyAt = 0;
+let autoVerifyInFlight = null;
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
@@ -164,6 +181,16 @@ const normalizeInteger = (value, fallback = 0) => {
   }
   const parsed = Number.parseInt(String(value), 10);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeIsoTimestamp = (value) => {
+  const raw = normalizeText(value);
+  if (!raw) {
+    return null;
+  }
+
+  const timestamp = Date.parse(raw);
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
 };
 
 const normalizeUrl = (value) => {
@@ -1386,6 +1413,111 @@ const verifyPendingCampayVotes = async (supabase, limit = 25) => {
   };
 };
 
+const autoVerifyRecentCampayVotes = async (
+  supabase,
+  { force = false, limit = AUTO_VERIFY_LIMIT } = {}
+) => {
+  const cutoffIso = normalizeIsoTimestamp(AUTO_VERIFY_STARTED_AT);
+  if (!AUTO_VERIFY_ENABLED) {
+    return { skipped: true, reason: "Auto verification is disabled." };
+  }
+  if (!paymentsConfigured) {
+    return { skipped: true, reason: "CamPay credentials are not configured." };
+  }
+  if (!cutoffIso) {
+    return { skipped: true, reason: "Auto verification cutoff is invalid." };
+  }
+
+  const now = Date.now();
+  const defaultLimit = Number.isFinite(AUTO_VERIFY_LIMIT)
+    ? AUTO_VERIFY_LIMIT
+    : 10;
+  const configuredCooldownMs = Number.isFinite(AUTO_VERIFY_COOLDOWN_MS)
+    ? AUTO_VERIFY_COOLDOWN_MS
+    : 3600000;
+  const cooldownMs = Math.max(normalizeInteger(configuredCooldownMs, 0), 0);
+  if (!force && cooldownMs > 0 && now - lastAutoVerifyAt < cooldownMs) {
+    return {
+      skipped: true,
+      reason: "Auto verification cooldown is active.",
+      cutoff: cutoffIso,
+    };
+  }
+  if (autoVerifyInFlight) {
+    return {
+      skipped: true,
+      reason: "Auto verification is already running.",
+      cutoff: cutoffIso,
+    };
+  }
+
+  const safeLimit = Math.min(
+    Math.max(normalizeInteger(limit, defaultLimit), 1),
+    100
+  );
+  lastAutoVerifyAt = now;
+  autoVerifyInFlight = (async () => {
+    const { data: payments = [], error } = await supabase
+      .from("panache_dor_vote_payments")
+      .select(
+        `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+      )
+      .eq("status", "pending")
+      .gte("created_at", cutoffIso)
+      .order("updated_at", { ascending: true })
+      .order("created_at", { ascending: true })
+      .limit(safeLimit);
+
+    if (error) {
+      throw error;
+    }
+
+    const results = [];
+    for (const payment of payments) {
+      try {
+        results.push(await verifyPaymentRow(supabase, payment));
+      } catch (error) {
+        results.push({
+          status: "error",
+          tx_ref: payment.tx_ref,
+          reference: payment.campay_reference,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const completed = results.filter(
+      (result) => result.status === "success"
+    );
+    return {
+      skipped: false,
+      cutoff: cutoffIso,
+      checked: payments.length,
+      completed: completed.length,
+      completed_votes: completed.reduce(
+        (sum, result) => sum + normalizeInteger(result.payment?.vote_count, 0),
+        0
+      ),
+      pending: results.filter((result) => result.status === "pending").length,
+      failed: results.filter((result) => result.status === "failed").length,
+      errors: results.filter((result) => result.status === "error").length,
+      results: results.slice(0, 20).map((result) => ({
+        status: result.status,
+        message: result.message,
+        tx_ref: result.payment?.tx_ref || result.tx_ref || null,
+        reference: result.payment?.campay_reference || result.reference || null,
+        vote_count: result.payment?.vote_count || null,
+      })),
+    };
+  })();
+
+  try {
+    return await autoVerifyInFlight;
+  } finally {
+    autoVerifyInFlight = null;
+  }
+};
+
 const reconcileCampayHistory = async (supabase, body = {}) => {
   const today = new Date().toISOString().slice(0, 10);
   const startDate = normalizeDate(
@@ -1587,13 +1719,30 @@ const reconcileCampayHistory = async (supabase, body = {}) => {
 
 const handleGet = async (req, res, supabase) => {
   const includeDrafts = isDashboardRequest(req);
+  let autoVerifySummary = null;
+  try {
+    autoVerifySummary = await autoVerifyRecentCampayVotes(supabase);
+  } catch (error) {
+    console.error("Panache D'or auto verification failed", {
+      message: error instanceof Error ? error.message : String(error),
+      code: error?.code || "",
+    });
+    autoVerifySummary = {
+      skipped: true,
+      reason: "Auto verification failed.",
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
   const voting = await fetchVotingPayload(supabase, includeDrafts);
 
   if (!includeDrafts) {
     setPublicCacheHeaders(res);
   }
 
-  sendJson(res, 200, { voting });
+  sendJson(res, 200, {
+    voting,
+    ...(includeDrafts ? { autoVerifySummary } : {}),
+  });
 };
 
 const handlePost = async (req, res, supabase) => {
@@ -1618,6 +1767,16 @@ const handlePost = async (req, res, supabase) => {
     const verifySummary = await verifyPendingCampayVotes(supabase, body.limit);
     const voting = await fetchVotingPayload(supabase, true);
     sendJson(res, 200, { verifySummary, voting });
+    return;
+  }
+
+  if (action === "autoVerifyRecentCampayVotes") {
+    const autoVerifySummary = await autoVerifyRecentCampayVotes(supabase, {
+      force: true,
+      limit: body.limit,
+    });
+    const voting = await fetchVotingPayload(supabase, true);
+    sendJson(res, 200, { autoVerifySummary, voting });
     return;
   }
 
