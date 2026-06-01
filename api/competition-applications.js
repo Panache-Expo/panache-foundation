@@ -1,10 +1,6 @@
-import { createClient } from "\u0040supabase/supabase-js";
-
-const env = process["env"] || {};
-const dbUrl = env["SUPABASE_URL"] || "";
-const credential = "";
+const name = "KEY";
 
 export default function handler(req, res) {
   res.statusCode = 200;
-  res.end(JSON.stringify({ ok: Boolean(createClient), hasUrl: Boolean(dbUrl), hasCredential: Boolean(credential) }));
+  res.end(JSON.stringify({ ok: true, name }));
 }
