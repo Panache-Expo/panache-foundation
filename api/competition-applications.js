@@ -1,6 +1,4 @@
-const name = "KEY";
-
 export default function handler(req, res) {
   res.statusCode = 200;
-  res.end(JSON.stringify({ ok: true, name }));
+  res.end(JSON.stringify({ ok: true }));
 }
