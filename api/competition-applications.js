@@ -1,1 +1,4 @@
-export default function handler() {}
+export default function handler(req, res) {
+  res.statusCode = 200;
+  res.end(JSON.stringify({ ok: true }));
+}
