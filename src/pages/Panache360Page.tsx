@@ -158,6 +158,12 @@ const Panache360Page = () => {
                   </Button>
                 </Link>
 
+                <Link to="/panache-expo/panache-360/vote">
+                  <Button className="h-14 rounded-full bg-[#8241B6] px-8 font-sans text-base font-semibold text-white hover:bg-[#8241B6]/92">
+                    Vote for contestants
+                  </Button>
+                </Link>
+
                 <a
                   href="#tracks"
                   className="inline-flex h-14 items-center justify-center gap-2 rounded-full border border-black/12 bg-white/55 px-7 font-sans text-base font-semibold text-[#171411] backdrop-blur-sm transition-colors hover:bg-white/78"

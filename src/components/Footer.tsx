@@ -286,9 +286,9 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-6">
-          <a href="#" className="transition-opacity hover:opacity-60">
+          <Link to="/privacy-policy" className="transition-opacity hover:opacity-60">
             Privacy Policy
-          </a>
+          </Link>
           <a href="#" className="transition-opacity hover:opacity-60">
             Terms of Services
           </a>

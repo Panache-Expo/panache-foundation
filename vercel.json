@@ -1,4 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
+  "crons": [
+    {
+      "path": "/api/panache-dor-voting",
+      "schedule": "15 2 * * *"
+    },
+    {
+      "path": "/api/panache-360-voting",
+      "schedule": "45 2 * * *"
+    }
+  ]
 }

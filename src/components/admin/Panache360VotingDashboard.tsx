@@ -18,25 +18,25 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type {
-  PanacheDorAwardCategory,
-  PanacheDorAwardNominee,
-  PanacheDorPaidPendingPayment,
-  PanacheDorPaidPendingSummary,
-  PanacheDorVotePayment,
+  Panache360AwardCategory,
+  Panache360AwardNominee,
+  Panache360PaidPendingPayment,
+  Panache360PaidPendingSummary,
+  Panache360VotePayment,
 } from "@/integrations/supabase/services";
 import { useToast } from "@/hooks/use-toast";
 import {
-  createPanacheDorVotingCategory,
-  createPanacheDorVotingNominee,
-  fetchPanacheDorVotingDashboard,
-  importPanacheDorNomineesCsv,
-  reconcilePanacheDorCampayHistory,
-  recoverPanacheDorPaidPendingVotes,
-  scanPanacheDorPaidPendingVotes,
-  updatePanacheDorVotingCategory,
-  updatePanacheDorVotingNominee,
-  uploadPanacheDorVotingNomineePhoto,
-  verifyPendingPanacheDorCampayVotes,
+  createPanache360VotingCategory,
+  createPanache360VotingNominee,
+  fetchPanache360VotingDashboard,
+  importPanache360NomineesCsv,
+  reconcilePanache360CampayHistory,
+  recoverPanache360PaidPendingVotes,
+  scanPanache360PaidPendingVotes,
+  updatePanache360VotingCategory,
+  updatePanache360VotingNominee,
+  uploadPanache360VotingNomineePhoto,
+  verifyPendingPanache360CampayVotes,
 } from "@/lib/dashboard-admin";
 import {
   BarChart3,
@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type PanacheDorVotingDashboardProps = {
+type Panache360VotingDashboardProps = {
   accessKey: string;
 };
 
@@ -94,7 +94,7 @@ const csvTemplate =
   "category,name,organization,bio,photo_url,status,sort_order\n" +
   "Makeup Artist of the Year,Example Nominee,Example Studio,Short bio,https://example.com/photo.jpg,active,10";
 
-const emptyPaidPendingSummary: PanacheDorPaidPendingSummary = {
+const emptyPaidPendingSummary: Panache360PaidPendingSummary = {
   count: 0,
   total_votes: 0,
   total_amount_xaf: 0,
@@ -129,7 +129,7 @@ const toSortOrder = (value: string) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const categoryToDraft = (category: PanacheDorAwardCategory): CategoryDraft => ({
+const categoryToDraft = (category: Panache360AwardCategory): CategoryDraft => ({
   slug: category.slug,
   name: category.name,
   description: category.description || "",
@@ -137,7 +137,7 @@ const categoryToDraft = (category: PanacheDorAwardCategory): CategoryDraft => ({
   sort_order: String(category.sort_order ?? 0),
 });
 
-const nomineeToDraft = (nominee: PanacheDorAwardNominee): NomineeDraft => ({
+const nomineeToDraft = (nominee: Panache360AwardNominee): NomineeDraft => ({
   category_id: nominee.category_id,
   slug: nominee.slug,
   name: nominee.name,
@@ -179,11 +179,11 @@ const statusBadgeVariant = (status: string) => {
   return "outline";
 };
 
-export const PanacheDorVotingDashboard = ({
+export const Panache360VotingDashboard = ({
   accessKey,
-}: PanacheDorVotingDashboardProps) => {
+}: Panache360VotingDashboardProps) => {
   const { toast } = useToast();
-  const [categories, setCategories] = useState<PanacheDorAwardCategory[]>([]);
+  const [categories, setCategories] = useState<Panache360AwardCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedNomineeId, setSelectedNomineeId] = useState("");
   const [categoryDraft, setCategoryDraft] = useState(emptyCategoryDraft);
@@ -208,12 +208,12 @@ export const PanacheDorVotingDashboard = ({
   const [voteProviderSyncConfigured, setVoteProviderSyncConfigured] =
     useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
-  const [payments, setPayments] = useState<PanacheDorVotePayment[]>([]);
+  const [payments, setPayments] = useState<Panache360VotePayment[]>([]);
   const [paidPendingPayments, setPaidPendingPayments] = useState<
-    PanacheDorPaidPendingPayment[]
+    Panache360PaidPendingPayment[]
   >([]);
   const [paidPendingSummary, setPaidPendingSummary] =
-    useState<PanacheDorPaidPendingSummary>(emptyPaidPendingSummary);
+    useState<Panache360PaidPendingSummary>(emptyPaidPendingSummary);
   const [paymentSummary, setPaymentSummary] = useState({
     pending: 0,
     completed: 0,
@@ -266,7 +266,7 @@ export const PanacheDorVotingDashboard = ({
 
     setIsLoading(true);
     try {
-      const voting = await fetchPanacheDorVotingDashboard(accessKey);
+      const voting = await fetchPanache360VotingDashboard(accessKey);
       setCategories(voting.categories);
       setCountsAvailable(voting.counts_available);
       setVoteProviderSyncConfigured(
@@ -296,7 +296,7 @@ export const PanacheDorVotingDashboard = ({
       });
     } catch (error) {
       toast({
-        title: "Panache D'or voting unavailable",
+        title: "Panache 360 voting unavailable",
         description:
           error instanceof Error
             ? error.message
@@ -340,7 +340,7 @@ export const PanacheDorVotingDashboard = ({
   }, [selectedNominee, selectedCategoryId]);
 
   const refreshFromVoting = (voting: {
-    categories: PanacheDorAwardCategory[];
+    categories: Panache360AwardCategory[];
     counts_available?: boolean;
     vote_provider_sync_configured?: boolean;
     ayati_sync_configured?: boolean;
@@ -354,9 +354,9 @@ export const PanacheDorVotingDashboard = ({
       total_votes: number;
       total_amount_xaf: number;
     };
-    payments?: PanacheDorVotePayment[];
-    paid_pending_payments?: PanacheDorPaidPendingPayment[];
-    paid_pending_summary?: PanacheDorPaidPendingSummary;
+    payments?: Panache360VotePayment[];
+    paid_pending_payments?: Panache360PaidPendingPayment[];
+    paid_pending_summary?: Panache360PaidPendingSummary;
   }) => {
     setCategories(voting.categories);
     if (typeof voting.counts_available === "boolean") {
@@ -392,7 +392,7 @@ export const PanacheDorVotingDashboard = ({
 
     setIsSavingCategory(true);
     try {
-      const result = await createPanacheDorVotingCategory(accessKey, {
+      const result = await createPanache360VotingCategory(accessKey, {
         slug: newCategoryDraft.slug.trim() || undefined,
         name: newCategoryDraft.name.trim(),
         description: newCategoryDraft.description.trim() || null,
@@ -403,7 +403,7 @@ export const PanacheDorVotingDashboard = ({
       setNewCategoryDraft(emptyCategoryDraft());
       toast({
         title: "Category created",
-        description: "Panache D'or nominees can now be added here.",
+        description: "Panache 360 nominees can now be added here.",
       });
     } catch (error) {
       toast({
@@ -423,7 +423,7 @@ export const PanacheDorVotingDashboard = ({
 
     setIsSavingCategory(true);
     try {
-      const result = await updatePanacheDorVotingCategory(
+      const result = await updatePanache360VotingCategory(
         accessKey,
         selectedCategory.id,
         {
@@ -437,7 +437,7 @@ export const PanacheDorVotingDashboard = ({
       refreshFromVoting(result.voting);
       toast({
         title: "Category saved",
-        description: "Panache D'or category details were updated.",
+        description: "Panache 360 category details were updated.",
       });
     } catch (error) {
       toast({
@@ -462,7 +462,7 @@ export const PanacheDorVotingDashboard = ({
 
     setIsSavingNominee(true);
     try {
-      const result = await createPanacheDorVotingNominee(accessKey, {
+      const result = await createPanache360VotingNominee(accessKey, {
         category_id: newNomineeDraft.category_id,
         slug: newNomineeDraft.slug.trim() || undefined,
         name: newNomineeDraft.name.trim(),
@@ -498,7 +498,7 @@ export const PanacheDorVotingDashboard = ({
 
     setIsSavingNominee(true);
     try {
-      const result = await updatePanacheDorVotingNominee(
+      const result = await updatePanache360VotingNominee(
         accessKey,
         selectedNominee.id,
         {
@@ -517,7 +517,7 @@ export const PanacheDorVotingDashboard = ({
       refreshFromVoting(result.voting);
       toast({
         title: forcedStatus === "archived" ? "Nominee archived" : "Nominee saved",
-        description: "Panache D'or nominee details were updated.",
+        description: "Panache 360 nominee details were updated.",
       });
     } catch (error) {
       toast({
@@ -557,7 +557,7 @@ export const PanacheDorVotingDashboard = ({
     setIsUploadingPhoto(true);
     try {
       const base64 = await readFileAsBase64(file);
-      const upload = await uploadPanacheDorVotingNomineePhoto(accessKey, {
+      const upload = await uploadPanache360VotingNomineePhoto(accessKey, {
         fileName: file.name,
         contentType: file.type,
         base64,
@@ -602,7 +602,7 @@ export const PanacheDorVotingDashboard = ({
 
     setIsImportingCsv(true);
     try {
-      const result = await importPanacheDorNomineesCsv(accessKey, csvText);
+      const result = await importPanache360NomineesCsv(accessKey, csvText);
       refreshFromVoting(result.voting);
       toast({
         title: "CSV import complete",
@@ -625,7 +625,7 @@ export const PanacheDorVotingDashboard = ({
   const handleVerifyPendingPayments = async () => {
     setIsVerifyingPayments(true);
     try {
-      const result = await verifyPendingPanacheDorCampayVotes(accessKey);
+      const result = await verifyPendingPanache360CampayVotes(accessKey);
       refreshFromVoting(result.voting);
       toast({
         title: "Pending payments checked",
@@ -656,7 +656,7 @@ export const PanacheDorVotingDashboard = ({
 
     setIsReconcilingPayments(true);
     try {
-      const result = await reconcilePanacheDorCampayHistory(accessKey, {
+      const result = await reconcilePanache360CampayHistory(accessKey, {
         startDate: reconcileStartDate,
         endDate: reconcileEndDate,
         dryRun,
@@ -687,7 +687,7 @@ export const PanacheDorVotingDashboard = ({
   const handleScanPaidPendingVotes = async () => {
     setIsScanningPaidPending(true);
     try {
-      const result = await scanPanacheDorPaidPendingVotes(accessKey);
+      const result = await scanPanache360PaidPendingVotes(accessKey);
       refreshFromVoting(result.voting);
       const summary = result.voting.paid_pending_summary;
       toast({
@@ -710,7 +710,7 @@ export const PanacheDorVotingDashboard = ({
   const handleRecoverPaidPendingVotes = async () => {
     setIsRecoveringPaidPending(true);
     try {
-      const result = await recoverPanacheDorPaidPendingVotes(accessKey);
+      const result = await recoverPanache360PaidPendingVotes(accessKey);
       refreshFromVoting(result.voting);
       const summary = result.recoverPaidPendingSummary as
         | {
@@ -744,7 +744,7 @@ export const PanacheDorVotingDashboard = ({
       <CardHeader className="gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <CardTitle className="font-display text-2xl text-primary">
-            Panache D&apos;or Voting
+            Panache 360 Voting
           </CardTitle>
           <CardDescription>
             Manage nominee pages and verified CamPay votes. Counts come only
@@ -936,9 +936,9 @@ export const PanacheDorVotingDashboard = ({
             </div>
             <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]">
               <div>
-                <Label htmlFor="panacheDorReconcileStart">Start date</Label>
+                <Label htmlFor="panache360ReconcileStart">Start date</Label>
                 <Input
-                  id="panacheDorReconcileStart"
+                  id="panache360ReconcileStart"
                   type="date"
                   value={reconcileStartDate}
                   onChange={(event) => setReconcileStartDate(event.target.value)}
@@ -946,9 +946,9 @@ export const PanacheDorVotingDashboard = ({
                 />
               </div>
               <div>
-                <Label htmlFor="panacheDorReconcileEnd">End date</Label>
+                <Label htmlFor="panache360ReconcileEnd">End date</Label>
                 <Input
-                  id="panacheDorReconcileEnd"
+                  id="panache360ReconcileEnd"
                   type="date"
                   value={reconcileEndDate}
                   onChange={(event) => setReconcileEndDate(event.target.value)}
@@ -1073,9 +1073,9 @@ export const PanacheDorVotingDashboard = ({
               </div>
 
               <div className="space-y-4">
-                <Label htmlFor="panacheDorCategorySelect">Category</Label>
+                <Label htmlFor="panache360CategorySelect">Category</Label>
                 <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                  <SelectTrigger id="panacheDorCategorySelect">
+                  <SelectTrigger id="panache360CategorySelect">
                     <SelectValue placeholder="Choose category" />
                   </SelectTrigger>
                   <SelectContent>

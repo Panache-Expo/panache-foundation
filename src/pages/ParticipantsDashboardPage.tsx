@@ -1,6 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { CYESVotingDashboard } from "@/components/admin/CYESVotingDashboard";
+import { Panache360VotingDashboard } from "@/components/admin/Panache360VotingDashboard";
 import { PanacheDorVotingDashboard } from "@/components/admin/PanacheDorVotingDashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -521,6 +522,12 @@ const ParticipantsDashboardPage = () => {
                   CYES Voting
                 </TabsTrigger>
                 <TabsTrigger
+                  value="panache-360-voting"
+                  className="rounded-full border border-border/60 bg-card px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+                >
+                  Panache 360 Voting
+                </TabsTrigger>
+                <TabsTrigger
                   value="panache-dor-voting"
                   className="rounded-full border border-border/60 bg-card px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
                 >
@@ -812,6 +819,10 @@ const ParticipantsDashboardPage = () => {
 
               <TabsContent value="cyes-voting" className="space-y-6">
                 <CYESVotingDashboard accessKey={dashboardAccessKey} />
+              </TabsContent>
+
+              <TabsContent value="panache-360-voting" className="space-y-6">
+                <Panache360VotingDashboard accessKey={dashboardAccessKey} />
               </TabsContent>
 
               <TabsContent value="panache-dor-voting" className="space-y-6">

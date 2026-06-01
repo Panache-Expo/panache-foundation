@@ -17,6 +17,10 @@ import CharityNightPage from "./pages/CharityNightPage";
 import ExhibitionStandsPage from "./pages/ExhibitionStandsPage";
 import Panache360Page from "./pages/Panache360Page";
 import Panache360RegisterPage from "./pages/Panache360RegisterPage";
+import Panache360VotingPage from "./pages/Panache360VotingPage";
+import Panache360NomineePage from "./pages/Panache360NomineePage";
+import Panache360PaymentVerifyPage from "./pages/Panache360PaymentVerifyPage";
+import Panache360LeaderboardPage from "./pages/Panache360LeaderboardPage";
 import FashionNightPage from "./pages/FashionNightPage";
 import FashionNightRegisterPage from "./pages/FashionNightRegisterPage";
 import { WorkshopsPage } from "./pages/WorkshopsPage";
@@ -35,6 +39,7 @@ import PanacheNominationsPage from "./pages/PanacheNominationsPage";
 import MissPanachePage from "./pages/MissPanachePage";
 import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
 import ParticipantsDashboardPage from "./pages/ParticipantsDashboardPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 import { DeveloperContactCta } from "./components/DeveloperContactCta";
@@ -125,6 +130,10 @@ const App = () => (
               <Route path="/panache-expo/nominations" element={<PanacheNominationsPage />} />
               <Route path="/panache-expo/panache-360" element={<Panache360Page />} />
               <Route path="/panache-expo/panache-360/register" element={<Panache360RegisterPage />} />
+              <Route path="/panache-expo/panache-360/vote" element={<Panache360VotingPage />} />
+              <Route path="/panache-expo/panache-360/nominees/:slug" element={<Panache360NomineePage />} />
+              <Route path="/panache-expo/panache-360/payment/verify" element={<Panache360PaymentVerifyPage />} />
+              <Route path="/panache-expo/panache-360/leaderboard" element={<Panache360LeaderboardPage />} />
               <Route path="/panache-expo/panache-fashion-night" element={<FashionNightPage />} />
               <Route path="/panache-expo/panache-fashion-night/register" element={<FashionNightRegisterPage />} />
               <Route path="/panache-expo/miss-panache" element={<MissPanachePage />} />
@@ -153,6 +162,7 @@ const App = () => (
               <Route path="/panache-expo/participants-dashboard" element={<ParticipantsDashboardPage />} />
               <Route path="/admin/participants" element={<ParticipantsDashboardPage />} />
               <Route path="/admin/panache-dor-revenue" element={<PanacheDorRevenueDashboardPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               
               <Route path="*" element={<NotFound />} />

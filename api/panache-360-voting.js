@@ -6,84 +6,88 @@ const SUPABASE_URL =
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const DASHBOARD_ACCESS_KEY = process.env.DASHBOARD_ACCESS_KEY || "";
-const PANACHE_DOR_PHOTO_BUCKET =
-  process.env.PANACHE_DOR_NOMINEE_PHOTO_BUCKET ||
-  "panache-dor-nominee-photos";
-const PANACHE_DOR_PHOTO_MAX_BYTES = Number.parseInt(
-  process.env.PANACHE_DOR_NOMINEE_PHOTO_MAX_BYTES || String(3 * 1024 * 1024),
+const PANACHE_360_PHOTO_BUCKET =
+  process.env.PANACHE_360_NOMINEE_PHOTO_BUCKET ||
+  "panache-360-nominee-photos";
+const PANACHE_360_PHOTO_MAX_BYTES = Number.parseInt(
+  process.env.PANACHE_360_NOMINEE_PHOTO_MAX_BYTES || String(3 * 1024 * 1024),
   10
 );
 
-const PAYMENT_PROVIDER = process.env.PANACHE_DOR_PAYMENT_PROVIDER || "campay";
+const PAYMENT_PROVIDER = process.env.PANACHE_360_PAYMENT_PROVIDER || "campay";
 const VOTE_PROVIDER_NAME = "Secure payment";
 const CAMPAY_BASE_URL = (
-  process.env.PANACHE_DOR_CAMPAY_BASE_URL ||
+  process.env.PANACHE_360_CAMPAY_BASE_URL ||
   process.env.CAMPAY_BASE_URL ||
   "https://www.campay.net"
 ).replace(/\/+$/, "");
 const CAMPAY_APP_USERNAME =
-  process.env.PANACHE_DOR_CAMPAY_APP_USERNAME ||
+  process.env.PANACHE_360_CAMPAY_APP_USERNAME ||
   process.env.CAMPAY_APP_USERNAME ||
   process.env.CAMPAY_USERNAME ||
   "";
 const CAMPAY_APP_PASSWORD =
-  process.env.PANACHE_DOR_CAMPAY_APP_PASSWORD ||
+  process.env.PANACHE_360_CAMPAY_APP_PASSWORD ||
   process.env.CAMPAY_APP_PASSWORD ||
   process.env.CAMPAY_PASSWORD ||
   "";
 const CAMPAY_PAYMENT_OPTIONS =
-  process.env.PANACHE_DOR_CAMPAY_PAYMENT_OPTIONS ||
+  process.env.PANACHE_360_CAMPAY_PAYMENT_OPTIONS ||
   process.env.CAMPAY_PAYMENT_OPTIONS ||
   "MOMO,CARD";
 const CAMPAY_TOKEN_TTL_MS = Number.parseInt(
-  process.env.PANACHE_DOR_CAMPAY_TOKEN_TTL_MS ||
+  process.env.PANACHE_360_CAMPAY_TOKEN_TTL_MS ||
     process.env.CAMPAY_TOKEN_TTL_MS ||
     String(45 * 60 * 1000),
   10
 );
 const VOTE_PRICE_XAF = Number.parseInt(
-  process.env.PANACHE_DOR_VOTE_PRICE_XAF || "100",
+  process.env.PANACHE_360_VOTE_PRICE_XAF || "100",
   10
 );
 const PROCESSING_FEE_PER_VOTE_XAF = Number.parseInt(
   "0",
   10
 );
+const COMPETITION_VOTE_WEIGHT_PERCENT = Number.parseInt(
+  process.env.PANACHE_360_VOTE_WEIGHT_PERCENT || "25",
+  10
+);
 const CURRENCY = (
-  process.env.PANACHE_DOR_CURRENCY ||
+  process.env.PANACHE_360_CURRENCY ||
   process.env.CURRENCY ||
   "XAF"
 ).toUpperCase();
-const PANACHE_DOR_BASE_URL = (
-  process.env.PANACHE_DOR_BASE_URL ||
+const PANACHE_360_BASE_URL = (
+  process.env.PANACHE_360_BASE_URL ||
   process.env.PANACHE_FRONTEND_BASE_URL ||
   ""
 ).replace(/\/+$/, "");
 const AUTO_VERIFY_ENABLED =
-  String(process.env.PANACHE_DOR_AUTO_VERIFY_ENABLED ?? "true")
+  String(process.env.PANACHE_360_AUTO_VERIFY_ENABLED ?? "true")
     .trim()
     .toLowerCase() !== "false";
 const AUTO_VERIFY_STARTED_AT =
-  process.env.PANACHE_DOR_AUTO_VERIFY_STARTED_AT ||
+  process.env.PANACHE_360_AUTO_VERIFY_STARTED_AT ||
   "2026-05-30T02:43:13.900Z";
 const AUTO_VERIFY_LIMIT = Number.parseInt(
-  process.env.PANACHE_DOR_AUTO_VERIFY_LIMIT || "10",
+  process.env.PANACHE_360_AUTO_VERIFY_LIMIT || "10",
   10
 );
 const AUTO_VERIFY_COOLDOWN_MS = Number.parseInt(
-  process.env.PANACHE_DOR_AUTO_VERIFY_COOLDOWN_MS || "3600000",
+  process.env.PANACHE_360_AUTO_VERIFY_COOLDOWN_MS || "3600000",
   10
 );
 const AUTO_HISTORY_RECONCILE_ENABLED =
-  String(process.env.PANACHE_DOR_AUTO_HISTORY_RECONCILE_ENABLED ?? "true")
+  String(process.env.PANACHE_360_AUTO_HISTORY_RECONCILE_ENABLED ?? "true")
     .trim()
     .toLowerCase() !== "false";
 const AUTO_HISTORY_RECONCILE_COOLDOWN_MS = Number.parseInt(
-  process.env.PANACHE_DOR_AUTO_HISTORY_RECONCILE_COOLDOWN_MS || "86400000",
+  process.env.PANACHE_360_AUTO_HISTORY_RECONCILE_COOLDOWN_MS || "86400000",
   10
 );
 const AUTO_HISTORY_RECONCILE_LOOKBACK_DAYS = Number.parseInt(
-  process.env.PANACHE_DOR_AUTO_HISTORY_RECONCILE_LOOKBACK_DAYS || "7",
+  process.env.PANACHE_360_AUTO_HISTORY_RECONCILE_LOOKBACK_DAYS || "7",
   10
 );
 const paymentsConfigured = Boolean(
@@ -237,8 +241,8 @@ const slugify = (value) =>
 const moneyAmount = (amount) => Math.round(Number(amount));
 
 const resolveBaseUrl = (req) => {
-  if (PANACHE_DOR_BASE_URL) {
-    return PANACHE_DOR_BASE_URL;
+  if (PANACHE_360_BASE_URL) {
+    return PANACHE_360_BASE_URL;
   }
 
   const host = normalizeText(req.headers.host);
@@ -563,7 +567,7 @@ const syncCampayHistoryTransactions = async (supabase, historyRows = []) => {
   }
 
   const { error } = await supabase
-    .from("panache_dor_campay_transactions")
+    .from("panache_360_campay_transactions")
     .upsert(rows, { onConflict: "campay_reference" });
 
   if (error) {
@@ -702,6 +706,7 @@ const buildVotingPayload = (
     ayati_sync_configured: false,
     ayati_leaderboard_url: null,
     last_synced_at: null,
+    competition_weight_percent: COMPETITION_VOTE_WEIGHT_PERCENT,
     payment: paymentSettings(),
     admin: includeDrafts,
     ...(includeDrafts
@@ -731,7 +736,7 @@ const buildVotingPayload = (
 
 const fetchVoteCounts = async (supabase) => {
   const { data, error } = await supabase
-    .from("panache_dor_nominee_vote_counts")
+    .from("panache_360_nominee_vote_counts")
     .select("nominee_id,total_votes");
 
   if (error) {
@@ -756,9 +761,9 @@ const fetchPaymentAdminData = async (supabase, includeDrafts) => {
   }
 
   const { data: payments = [], error } = await supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .select(
-      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(name, slug), category:panache_dor_award_categories(name, slug)`
+      `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(name, slug), category:panache_360_award_categories(name, slug)`
     )
     .order("created_at", { ascending: false })
     .limit(120);
@@ -812,9 +817,9 @@ const fetchPaidPendingCampayVotes = async (supabase, { limit = 50 } = {}) => {
   const cutoffIso = normalizeIsoTimestamp(AUTO_VERIFY_STARTED_AT);
   const safeLimit = clampInteger(limit, 50, 1, 200);
   let paymentQuery = supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .select(
-      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(name, slug), category:panache_dor_award_categories(name, slug)`
+      `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(name, slug), category:panache_360_award_categories(name, slug)`
     )
     .eq("status", "pending")
     .order("created_at", { ascending: false })
@@ -833,7 +838,7 @@ const fetchPaidPendingCampayVotes = async (supabase, { limit = 50 } = {}) => {
   }
 
   const { data: transactions = [], error: transactionError } = await supabase
-    .from("panache_dor_campay_transactions")
+    .from("panache_360_campay_transactions")
     .select(
       "campay_reference, external_reference, amount_xaf, currency, status, transaction_date, updated_at"
     )
@@ -928,7 +933,7 @@ const fetchPaidPendingCampayVotes = async (supabase, { limit = 50 } = {}) => {
 
 const fetchVotingPayload = async (supabase, includeDrafts = false) => {
   let categoryQuery = supabase
-    .from("panache_dor_award_categories")
+    .from("panache_360_award_categories")
     .select(CATEGORY_COLUMNS)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -943,7 +948,7 @@ const fetchVotingPayload = async (supabase, includeDrafts = false) => {
   }
 
   let nomineeQuery = supabase
-    .from("panache_dor_award_nominees")
+    .from("panache_360_award_nominees")
     .select(NOMINEE_COLUMNS)
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
@@ -1002,7 +1007,7 @@ const decodeUpload = ({ fileName, contentType, base64 }) => {
   if (!buffer.length) {
     throw new Error("Image upload is empty.");
   }
-  if (buffer.length > PANACHE_DOR_PHOTO_MAX_BYTES) {
+  if (buffer.length > PANACHE_360_PHOTO_MAX_BYTES) {
     throw new Error("Nominee photo must be under 3 MB.");
   }
 
@@ -1118,7 +1123,7 @@ const findOrUpsertCategory = async (supabase, categoryCache, row) => {
   };
 
   const { data, error } = await supabase
-    .from("panache_dor_award_categories")
+    .from("panache_360_award_categories")
     .upsert(payload, { onConflict: "slug" })
     .select(CATEGORY_COLUMNS)
     .single();
@@ -1134,7 +1139,7 @@ const findOrUpsertCategory = async (supabase, categoryCache, row) => {
 const importCsv = async (supabase, csvText) => {
   const rows = rowsToObjects(csvText);
   const { data: existingCategories = [], error: categoriesError } = await supabase
-    .from("panache_dor_award_categories")
+    .from("panache_360_award_categories")
     .select(CATEGORY_COLUMNS);
 
   if (categoriesError) {
@@ -1177,7 +1182,7 @@ const importCsv = async (supabase, csvText) => {
       };
 
       const { error } = await supabase
-        .from("panache_dor_award_nominees")
+        .from("panache_360_award_nominees")
         .upsert(payload, { onConflict: "slug" });
 
       if (error) {
@@ -1207,7 +1212,7 @@ const loadActiveNominee = async (supabase, identifier) => {
   }
 
   const query = supabase
-    .from("panache_dor_award_nominees")
+    .from("panache_360_award_nominees")
     .select(NOMINEE_COLUMNS)
     .eq("status", "active");
   const { data: nominee, error } = await (/^[0-9a-f-]{30,}$/i.test(
@@ -1224,7 +1229,7 @@ const loadActiveNominee = async (supabase, identifier) => {
   }
 
   const { data: category, error: categoryError } = await supabase
-    .from("panache_dor_award_categories")
+    .from("panache_360_award_categories")
     .select(CATEGORY_COLUMNS)
     .eq("id", nominee.category_id)
     .eq("status", "active")
@@ -1247,7 +1252,7 @@ const buildReceipt = (payment, nominee, category) => ({
   nominee_name: nominee?.name || payment.nominee?.name || "Panache nominee",
   nominee_slug: nominee?.slug || payment.nominee?.slug || null,
   category_id: payment.category_id,
-  category_name: category?.name || payment.category?.name || "Panache D'or",
+  category_name: category?.name || payment.category?.name || "Panache 360",
   category_slug: category?.slug || payment.category?.slug || null,
   voter_email: payment.voter_email,
   voter_whatsapp: payment.voter_whatsapp,
@@ -1277,14 +1282,14 @@ const sendReceiptEmail = async ({ payment, nominee, category }) => {
     },
   });
   const nomineeName = nominee?.name || payment.nominee?.name || "your nominee";
-  const categoryName = category?.name || payment.category?.name || "Panache D'or";
+  const categoryName = category?.name || payment.category?.name || "Panache 360";
 
   await transporter.sendMail({
     from: SMTP_FROM,
     to: payment.voter_email,
-    subject: `Panache D'or vote receipt - ${nomineeName}`,
+    subject: `Panache 360 vote receipt - ${nomineeName}`,
     text: `
-Thank you for voting in the Panache D'or Awards.
+Thank you for voting in Panache 360.
 
 Nominee: ${nomineeName}
 Category: ${categoryName}
@@ -1296,8 +1301,8 @@ Only verified payments are counted on the leaderboard.
 `.trim(),
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#171411;">
-        <h2 style="margin:0 0 16px;">Panache D'or vote receipt</h2>
-        <p style="margin:0 0 12px;">Thank you for voting in the Panache D'or Awards.</p>
+        <h2 style="margin:0 0 16px;">Panache 360 vote receipt</h2>
+        <p style="margin:0 0 12px;">Thank you for voting in Panache 360.</p>
         <p style="margin:0 0 8px;">Nominee: <strong>${nomineeName}</strong></p>
         <p style="margin:0 0 8px;">Category: <strong>${categoryName}</strong></p>
         <p style="margin:0 0 8px;">Votes: <strong>${payment.vote_count}</strong></p>
@@ -1313,7 +1318,7 @@ Only verified payments are counted on the leaderboard.
 
 const updatePaymentReceiptStatus = async (supabase, paymentId, result) => {
   const { error } = await supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .update({
       receipt_email_sent_at: result.ok ? new Date().toISOString() : null,
       receipt_email_error: result.ok
@@ -1324,7 +1329,7 @@ const updatePaymentReceiptStatus = async (supabase, paymentId, result) => {
     .eq("id", paymentId);
 
   if (error) {
-    console.error("Could not update Panache D'or receipt email status", error);
+    console.error("Could not update Panache 360 receipt email status", error);
   }
 };
 
@@ -1378,13 +1383,13 @@ const initializeCampayVote = async (req, supabase, body) => {
   const amount = moneyAmount(
     (VOTE_PRICE_XAF + PROCESSING_FEE_PER_VOTE_XAF) * voteCount
   );
-  const txRef = `panache-dor-${Date.now()}-${crypto
+  const txRef = `panache-360-${Date.now()}-${crypto
     .randomBytes(6)
     .toString("hex")}`;
   const redirectUrl = `${resolveBaseUrl(
     req
-  )}/panache-expo/panache-dor/payment/verify?tx_ref=${encodeURIComponent(txRef)}`;
-  const description = `${voteCount} Panache D'or vote${
+  )}/panache-expo/panache-360/payment/verify?tx_ref=${encodeURIComponent(txRef)}`;
+  const description = `${voteCount} Panache 360 vote${
     voteCount === 1 ? "" : "s"
   } for ${nominee.name}`;
   const paymentLinkRequest = {
@@ -1420,7 +1425,7 @@ const initializeCampayVote = async (req, supabase, body) => {
   }
 
   const { data: pendingPayment, error: insertError } = await supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .insert({
       nominee_id: nominee.id,
       category_id: category.id,
@@ -1458,7 +1463,7 @@ const initializeCampayVote = async (req, supabase, body) => {
       /does not exist|could not find/i.test(insertError.message || "")
     ) {
       throw createHttpError(
-        "Panache D'or payment tables are not migrated yet.",
+        "Panache 360 payment tables are not migrated yet.",
         503
       );
     }
@@ -1492,16 +1497,16 @@ const loadPaymentForVerification = async (supabase, body) => {
   }
 
   let query = supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .select(
-      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+      `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
     );
 
   query = txRef ? query.eq("tx_ref", txRef) : query.eq("campay_reference", reference);
   const { data: payment, error } = await query.single();
 
   if (error || !payment) {
-    const notFound = new Error("This Panache D'or payment could not be found.");
+    const notFound = new Error("This Panache 360 payment could not be found.");
     notFound.statusCode = 404;
     throw notFound;
   }
@@ -1524,7 +1529,7 @@ const attachPaymentReference = async (supabase, payment, body) => {
 
   const now = new Date().toISOString();
   const { data: updatedPayment, error } = await supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .update({
       campay_reference: reference,
       provider_payload: {
@@ -1538,7 +1543,7 @@ const attachPaymentReference = async (supabase, payment, body) => {
     })
     .eq("id", payment.id)
     .select(
-      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+      `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
     )
     .single();
 
@@ -1582,7 +1587,7 @@ const verifyPaymentRow = async (supabase, payment) => {
 
   if (successful && sameReference && enoughPaid && sameCurrency) {
     const { data: completedPayment, error } = await supabase
-      .from("panache_dor_vote_payments")
+      .from("panache_360_vote_payments")
       .update({
         status: "completed",
         provider_status: providerStatus,
@@ -1596,7 +1601,7 @@ const verifyPaymentRow = async (supabase, payment) => {
       })
       .eq("id", payment.id)
       .select(
-        `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+        `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
       )
       .single();
 
@@ -1634,7 +1639,7 @@ const verifyPaymentRow = async (supabase, payment) => {
     : `Payment status is ${providerStatus || "pending"}.`;
 
   const { data: updatedPayment, error } = await supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .update({
       status: nextStatus,
       provider_status: providerStatus || null,
@@ -1647,7 +1652,7 @@ const verifyPaymentRow = async (supabase, payment) => {
     })
     .eq("id", payment.id)
     .select(
-      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+      `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
     )
     .single();
 
@@ -1680,9 +1685,9 @@ const verifyCampayVote = async (supabase, body) => {
 const verifyPendingCampayVotes = async (supabase, limit = 25) => {
   const safeLimit = Math.min(Math.max(normalizeInteger(limit, 25), 1), 100);
   const { data: payments = [], error } = await supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .select(
-      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+      `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
     )
     .eq("status", "pending")
     .order("created_at", { ascending: true })
@@ -1726,7 +1731,7 @@ const recordAutoVerifyError = async (supabase, payment, error) => {
 
   try {
     await supabase
-      .from("panache_dor_vote_payments")
+      .from("panache_360_vote_payments")
       .update({
         provider_status: providerStatus,
         provider_payload: {
@@ -1742,7 +1747,7 @@ const recordAutoVerifyError = async (supabase, payment, error) => {
       })
       .eq("id", payment.id);
   } catch (updateError) {
-    console.error("Could not record Panache D'or auto verification error", {
+    console.error("Could not record Panache 360 auto verification error", {
       payment_id: payment.id,
       message:
         updateError instanceof Error ? updateError.message : String(updateError),
@@ -1795,9 +1800,9 @@ const autoVerifyRecentCampayVotes = async (
   lastAutoVerifyAt = now;
   autoVerifyInFlight = (async () => {
     const { data: payments = [], error } = await supabase
-      .from("panache_dor_vote_payments")
+      .from("panache_360_vote_payments")
       .select(
-        `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+        `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
       )
       .eq("status", "pending")
       .gte("created_at", cutoffIso)
@@ -1888,9 +1893,9 @@ const reconcileCampayHistory = async (supabase, body = {}) => {
   );
 
   let paymentQuery = supabase
-    .from("panache_dor_vote_payments")
+    .from("panache_360_vote_payments")
     .select(
-      `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+      `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
     )
     .eq("status", "pending")
     .gte("created_at", `${startDate}T00:00:00+01:00`)
@@ -2007,7 +2012,7 @@ const reconcileCampayHistory = async (supabase, body = {}) => {
       if (!existingReference) {
         const now = new Date().toISOString();
         const { data: updatedPayment, error: updateError } = await supabase
-          .from("panache_dor_vote_payments")
+          .from("panache_360_vote_payments")
           .update({
             campay_reference: historyReference,
             provider_payload: {
@@ -2022,7 +2027,7 @@ const reconcileCampayHistory = async (supabase, body = {}) => {
           })
           .eq("id", payment.id)
           .select(
-            `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+            `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
           )
           .single();
 
@@ -2184,7 +2189,7 @@ const recoverPaidPendingCampayVotes = async (supabase, { limit = 100 } = {}) => 
       if (!existingReference && matchedReference) {
         const now = new Date().toISOString();
         const { data: updatedPayment, error: updateError } = await supabase
-          .from("panache_dor_vote_payments")
+          .from("panache_360_vote_payments")
           .update({
             campay_reference: matchedReference,
             provider_payload: {
@@ -2201,7 +2206,7 @@ const recoverPaidPendingCampayVotes = async (supabase, { limit = 100 } = {}) => 
           })
           .eq("id", payment.id)
           .select(
-            `${PAYMENT_COLUMNS}, nominee:panache_dor_award_nominees(${NOMINEE_COLUMNS}), category:panache_dor_award_categories(${CATEGORY_COLUMNS})`
+            `${PAYMENT_COLUMNS}, nominee:panache_360_award_nominees(${NOMINEE_COLUMNS}), category:panache_360_award_categories(${CATEGORY_COLUMNS})`
           )
           .single();
 
@@ -2269,7 +2274,7 @@ const handleGet = async (req, res, supabase) => {
   try {
     autoHistoryReconcileSummary = await autoReconcileCampayHistory(supabase);
   } catch (error) {
-    console.error("Panache D'or automatic history reconciliation failed", {
+    console.error("Panache 360 automatic history reconciliation failed", {
       message: error instanceof Error ? error.message : String(error),
       code: error?.code || "",
     });
@@ -2283,7 +2288,7 @@ const handleGet = async (req, res, supabase) => {
   try {
     autoVerifySummary = await autoVerifyRecentCampayVotes(supabase);
   } catch (error) {
-    console.error("Panache D'or auto verification failed", {
+    console.error("Panache 360 auto verification failed", {
       message: error instanceof Error ? error.message : String(error),
       code: error?.code || "",
     });
@@ -2368,7 +2373,7 @@ const handlePost = async (req, res, supabase) => {
     const category = sanitizeCategory(body.category);
     const result = await mutateAndReturnVoting(supabase, async () => {
       const { data, error } = await supabase
-        .from("panache_dor_award_categories")
+        .from("panache_360_award_categories")
         .insert(category)
         .select(CATEGORY_COLUMNS)
         .single();
@@ -2390,7 +2395,7 @@ const handlePost = async (req, res, supabase) => {
     const updates = sanitizeCategory(body.updates);
     const result = await mutateAndReturnVoting(supabase, async () => {
       const { data, error } = await supabase
-        .from("panache_dor_award_categories")
+        .from("panache_360_award_categories")
         .update(withUpdatedAt(updates))
         .eq("id", id)
         .select(CATEGORY_COLUMNS)
@@ -2412,7 +2417,7 @@ const handlePost = async (req, res, supabase) => {
 
     const result = await mutateAndReturnVoting(supabase, async () => {
       const { error } = await supabase
-        .from("panache_dor_award_categories")
+        .from("panache_360_award_categories")
         .delete()
         .eq("id", id);
       if (error) {
@@ -2428,7 +2433,7 @@ const handlePost = async (req, res, supabase) => {
     const nominee = sanitizeNominee(body.nominee);
     const result = await mutateAndReturnVoting(supabase, async () => {
       const { data, error } = await supabase
-        .from("panache_dor_award_nominees")
+        .from("panache_360_award_nominees")
         .insert(nominee)
         .select(NOMINEE_COLUMNS)
         .single();
@@ -2450,7 +2455,7 @@ const handlePost = async (req, res, supabase) => {
     const updates = sanitizeNominee(body.updates);
     const result = await mutateAndReturnVoting(supabase, async () => {
       const { data, error } = await supabase
-        .from("panache_dor_award_nominees")
+        .from("panache_360_award_nominees")
         .update(withUpdatedAt(updates))
         .eq("id", id)
         .select(NOMINEE_COLUMNS)
@@ -2472,7 +2477,7 @@ const handlePost = async (req, res, supabase) => {
 
     const result = await mutateAndReturnVoting(supabase, async () => {
       const { error } = await supabase
-        .from("panache_dor_award_nominees")
+        .from("panache_360_award_nominees")
         .delete()
         .eq("id", id);
       if (error) {
@@ -2487,7 +2492,7 @@ const handlePost = async (req, res, supabase) => {
   if (action === "uploadNomineePhoto") {
     const upload = decodeUpload(body);
     const { error } = await supabase.storage
-      .from(PANACHE_DOR_PHOTO_BUCKET)
+      .from(PANACHE_360_PHOTO_BUCKET)
       .upload(upload.path, upload.buffer, {
         contentType: upload.contentType,
         upsert: false,
@@ -2498,7 +2503,7 @@ const handlePost = async (req, res, supabase) => {
     }
 
     const { data } = supabase.storage
-      .from(PANACHE_DOR_PHOTO_BUCKET)
+      .from(PANACHE_360_PHOTO_BUCKET)
       .getPublicUrl(upload.path);
 
     sendJson(res, 200, {
@@ -2521,7 +2526,7 @@ const handlePost = async (req, res, supabase) => {
     return;
   }
 
-  sendJson(res, 400, { message: "Unsupported Panache D'or voting action." });
+  sendJson(res, 400, { message: "Unsupported Panache 360 voting action." });
 };
 
 export default async function handler(req, res) {
@@ -2541,7 +2546,7 @@ export default async function handler(req, res) {
     sendJson(res, 405, { message: "Method not allowed." });
   } catch (error) {
     const statusCode = error.statusCode || 500;
-    console.error("Panache D'or voting API error", {
+    console.error("Panache 360 voting API error", {
       message: error.message,
       details: error.details || error.stack,
       hint: error.hint || "",
@@ -2550,7 +2555,7 @@ export default async function handler(req, res) {
     sendJson(res, statusCode, {
       message:
         error.message ||
-        "Could not process the Panache D'or voting request.",
+        "Could not process the Panache 360 voting request.",
       details: error.details || "",
       hint: error.hint || "",
       code: error.code || "",

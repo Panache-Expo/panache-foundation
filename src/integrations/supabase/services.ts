@@ -111,6 +111,16 @@ export type PanacheDorVotePayment = {
   category?: Pick<PanacheDorAwardCategoryRow, 'name' | 'slug'> | null;
 };
 
+export type PanacheDorPaidPendingPayment = PanacheDorVotePayment & {
+  matched_reference?: string | null;
+  matched_external_reference?: string | null;
+  matched_status?: string | null;
+  matched_amount_xaf?: number | null;
+  matched_currency?: string | null;
+  matched_transaction_date?: string | null;
+  matched_updated_at?: string | null;
+};
+
 export type PanacheDorPaymentSummary = {
   pending: number;
   completed: number;
@@ -118,6 +128,16 @@ export type PanacheDorPaymentSummary = {
   cancelled: number;
   total_votes: number;
   total_amount_xaf: number;
+};
+
+export type PanacheDorPaidPendingSummary = {
+  count: number;
+  visible_count?: number;
+  total_votes: number;
+  total_amount_xaf: number;
+  sync_available?: boolean;
+  sync_error?: string | null;
+  cutoff?: string | null;
 };
 
 export type PanacheDorVotingPayload = {
@@ -135,6 +155,93 @@ export type PanacheDorVotingPayload = {
   payment?: PanacheDorPaymentSettings;
   payments?: PanacheDorVotePayment[];
   payment_summary?: PanacheDorPaymentSummary;
+  paid_pending_payments?: PanacheDorPaidPendingPayment[];
+  paid_pending_summary?: PanacheDorPaidPendingSummary;
+  admin?: boolean;
+};
+
+export type Panache360AwardCategoryRow = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  status: string;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Panache360AwardNomineeRow = {
+  id: string;
+  category_id: string;
+  slug: string;
+  name: string;
+  organization?: string | null;
+  bio?: string | null;
+  photo_url?: string | null;
+  status: string;
+  sort_order: number;
+  ayati_vote_url?: string | null;
+  ayati_sync_id?: string | null;
+  ayati_vote_count?: number;
+  ayati_last_synced_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Panache360AwardNominee = Panache360AwardNomineeRow & {
+  vote_url?: string | null;
+  vote_count?: number;
+  vote_provider_sync_id?: string | null;
+  vote_last_synced_at?: string | null;
+};
+
+export type Panache360AwardCategory = Panache360AwardCategoryRow & {
+  vote_count?: number;
+  nominees: Panache360AwardNominee[];
+};
+
+export type Panache360PaymentSettings = PanacheDorPaymentSettings;
+
+export type Panache360VotePayment = Omit<
+  PanacheDorVotePayment,
+  'nominee' | 'category'
+> & {
+  nominee?: Pick<Panache360AwardNomineeRow, 'name' | 'slug'> | null;
+  category?: Pick<Panache360AwardCategoryRow, 'name' | 'slug'> | null;
+};
+
+export type Panache360PaidPendingPayment = Panache360VotePayment & {
+  matched_reference?: string | null;
+  matched_external_reference?: string | null;
+  matched_status?: string | null;
+  matched_amount_xaf?: number | null;
+  matched_currency?: string | null;
+  matched_transaction_date?: string | null;
+  matched_updated_at?: string | null;
+};
+
+export type Panache360PaymentSummary = PanacheDorPaymentSummary;
+export type Panache360PaidPendingSummary = PanacheDorPaidPendingSummary;
+
+export type Panache360VotingPayload = {
+  categories: Panache360AwardCategory[];
+  total_nominees: number;
+  total_votes?: number;
+  counts_available: boolean;
+  competition_weight_percent?: number;
+  vote_provider?: string;
+  vote_provider_name?: string;
+  vote_provider_sync_configured?: boolean;
+  vote_provider_leaderboard_url?: string | null;
+  ayati_sync_configured: boolean;
+  ayati_leaderboard_url?: string | null;
+  last_synced_at?: string | null;
+  payment?: Panache360PaymentSettings;
+  payments?: Panache360VotePayment[];
+  payment_summary?: Panache360PaymentSummary;
+  paid_pending_payments?: Panache360PaidPendingPayment[];
+  paid_pending_summary?: Panache360PaidPendingSummary;
   admin?: boolean;
 };
 
@@ -143,6 +250,8 @@ export type PanacheDorVoteInitializePayload = {
   voterEmail?: string;
   voteCount: number;
 };
+
+export type Panache360VoteInitializePayload = PanacheDorVoteInitializePayload;
 
 export type PanacheDorVoteReceipt = {
   id: string;
@@ -178,11 +287,22 @@ export type PanacheDorVoteInitializeResponse = {
   };
 };
 
+export type Panache360VoteInitializeResponse = PanacheDorVoteInitializeResponse;
+
 export type PanacheDorVoteVerifyResponse = {
   status: 'success' | 'pending' | 'failed' | 'already-counted' | string;
   message?: string;
   receipt?: PanacheDorVoteReceipt;
   voting?: PanacheDorVotingPayload;
+};
+
+export type Panache360VoteReceipt = PanacheDorVoteReceipt;
+
+export type Panache360VoteVerifyResponse = {
+  status: 'success' | 'pending' | 'failed' | 'already-counted' | string;
+  message?: string;
+  receipt?: Panache360VoteReceipt;
+  voting?: Panache360VotingPayload;
 };
 
 export type EventTicketPackage = {
@@ -550,6 +670,79 @@ export const panacheDorVotingService = {
     }
 
     return payload as PanacheDorVoteVerifyResponse;
+  },
+};
+
+// Panache 360 voting service
+const PANACHE_360_VOTING_API_URL =
+  import.meta.env.VITE_PANACHE_360_VOTING_API_URL ||
+  '/api/panache-360-voting';
+
+const readPanache360VotingResponse = async (response: Response) => {
+  return (await response.json().catch(() => null)) as
+    | {
+        message?: string;
+        voting?: Panache360VotingPayload;
+        payment?: Panache360VoteInitializeResponse['payment'];
+        status?: string;
+        receipt?: Panache360VoteReceipt;
+      }
+    | null;
+};
+
+export const panache360VotingService = {
+  async getVoting() {
+    const response = await fetch(PANACHE_360_VOTING_API_URL);
+    const payload = await readPanache360VotingResponse(response);
+
+    if (!response.ok || !payload?.voting) {
+      throw new Error(payload?.message || 'Could not load Panache 360 contestants.');
+    }
+
+    return payload.voting;
+  },
+
+  async initializeCampayVote(data: Panache360VoteInitializePayload) {
+    const response = await fetch(PANACHE_360_VOTING_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'initializeCampayVote',
+        nomineeId: data.nomineeId,
+        voterEmail: data.voterEmail,
+        voteCount: data.voteCount,
+      }),
+    });
+    const payload = await readPanache360VotingResponse(response);
+
+    if (!response.ok || !payload?.payment) {
+      throw new Error(payload?.message || 'Could not start the secure payment.');
+    }
+
+    return payload as Panache360VoteInitializeResponse;
+  },
+
+  async verifyCampayVote(data: { txRef?: string; reference?: string }) {
+    const response = await fetch(PANACHE_360_VOTING_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'verifyCampayVote',
+        tx_ref: data.txRef,
+        reference: data.reference,
+      }),
+    });
+    const payload = await readPanache360VotingResponse(response);
+
+    if (!response.ok || !payload?.status) {
+      throw new Error(payload?.message || 'Could not verify the payment.');
+    }
+
+    return payload as Panache360VoteVerifyResponse;
   },
 };
 

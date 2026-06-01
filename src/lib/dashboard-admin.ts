@@ -6,6 +6,9 @@ import type {
   PanacheDorAwardCategory,
   PanacheDorAwardNominee,
   PanacheDorVotingPayload,
+  Panache360AwardCategory,
+  Panache360AwardNominee,
+  Panache360VotingPayload,
 } from "@/integrations/supabase/services";
 
 const DASHBOARD_ACCESS_KEY_STORAGE = "panache-dashboard-access-key";
@@ -16,6 +19,9 @@ const CYES_VOTING_API_URL =
 const PANACHE_DOR_VOTING_API_URL =
   import.meta.env.VITE_PANACHE_DOR_VOTING_API_URL ||
   "/api/panache-dor-voting";
+const PANACHE_360_VOTING_API_URL =
+  import.meta.env.VITE_PANACHE_360_VOTING_API_URL ||
+  "/api/panache-360-voting";
 
 export interface CompetitionApplicationUpdatePayload {
   payment_status?: string;
@@ -76,6 +82,11 @@ export type PanacheDorVotingNomineePhotoUploadPayload = {
   base64: string;
 };
 
+export type Panache360VotingCategoryPayload = PanacheDorVotingCategoryPayload;
+export type Panache360VotingNomineePayload = PanacheDorVotingNomineePayload;
+export type Panache360VotingNomineePhotoUploadPayload =
+  PanacheDorVotingNomineePhotoUploadPayload;
+
 export type PanacheDorCsvImportSummary = {
   imported: number;
   failed: number;
@@ -106,40 +117,47 @@ const readResponsePayload = async (response: Response) => {
         application?: CompetitionApplication;
         voting?: CYESVotingPayload;
         panacheDorVoting?: PanacheDorVotingPayload;
+        panache360Voting?: Panache360VotingPayload;
         category?: CYESAwardCategory;
         panacheDorCategory?: PanacheDorAwardCategory;
+        panache360Category?: Panache360AwardCategory;
         nominee?: CYESAwardNominee;
         panacheDorNominee?: PanacheDorAwardNominee;
+        panache360Nominee?: Panache360AwardNominee;
         photoUrl?: string;
         photo_url?: string;
-  path?: string;
-  importSummary?: PanacheDorCsvImportSummary;
-  syncSummary?: PanacheDorVoteProviderSyncSummary;
-  verifySummary?: {
-    checked: number;
-    completed: number;
-    pending: number;
-    failed: number;
-    errors: number;
-  };
-  reconcileSummary?: {
-    start_date: string;
-    end_date: string;
-    dry_run: boolean;
-    pending_checked: number;
-    history_rows_checked: number;
-    matched: number;
-    recoverable: number;
-    recovered: number;
-    failed: number;
-    skipped: number;
-    no_match: number;
-    errors: number;
-    votes_recoverable: number;
-    amount_recoverable_xaf: number;
-    votes_recovered: number;
-    amount_recovered_xaf: number;
-  };
+        path?: string;
+        importSummary?: PanacheDorCsvImportSummary;
+        syncSummary?: PanacheDorVoteProviderSyncSummary;
+        verifySummary?: {
+          checked: number;
+          completed: number;
+          pending: number;
+          failed: number;
+          errors: number;
+        };
+        reconcileSummary?: {
+          start_date: string;
+          end_date: string;
+          dry_run: boolean;
+          pending_checked: number;
+          history_rows_checked: number;
+          matched: number;
+          recoverable: number;
+          recovered: number;
+          failed: number;
+          skipped: number;
+          no_match: number;
+          errors: number;
+          votes_recoverable: number;
+          amount_recoverable_xaf: number;
+          votes_recovered: number;
+          amount_recovered_xaf: number;
+        };
+        autoHistoryReconcileSummary?: Record<string, unknown>;
+        autoVerifySummary?: Record<string, unknown>;
+        paidPendingScanSummary?: Record<string, unknown>;
+        recoverPaidPendingSummary?: Record<string, unknown>;
       }
     | null;
 };
@@ -364,6 +382,10 @@ const mutatePanacheDorVotingDashboard = async (
     syncSummary: payload.syncSummary,
     verifySummary: payload.verifySummary,
     reconcileSummary: payload.reconcileSummary,
+    autoHistoryReconcileSummary: payload.autoHistoryReconcileSummary,
+    autoVerifySummary: payload.autoVerifySummary,
+    paidPendingScanSummary: payload.paidPendingScanSummary,
+    recoverPaidPendingSummary: payload.recoverPaidPendingSummary,
   };
 };
 
@@ -484,6 +506,204 @@ export const reconcilePanacheDorCampayHistory = async (
     startDate: data.startDate,
     endDate: data.endDate,
     dryRun: data.dryRun,
+  });
+};
+
+export const scanPanacheDorPaidPendingVotes = async (accessKey: string) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "scanPaidPendingCampayVotes",
+  });
+};
+
+export const recoverPanacheDorPaidPendingVotes = async (
+  accessKey: string,
+  limit = 100
+) => {
+  return mutatePanacheDorVotingDashboard(accessKey, {
+    action: "recoverPaidPendingCampayVotes",
+    limit,
+  });
+};
+
+export const fetchPanache360VotingDashboard = async (accessKey: string) => {
+  const response = await fetch(PANACHE_360_VOTING_API_URL, {
+    headers: {
+      "x-dashboard-key": accessKey,
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok || !payload?.voting) {
+    throw new Error(payload?.message || "Could not load Panache 360 voting.");
+  }
+
+  return payload.voting as unknown as Panache360VotingPayload;
+};
+
+const mutatePanache360VotingDashboard = async (
+  accessKey: string,
+  body: Record<string, unknown>
+) => {
+  const response = await fetch(PANACHE_360_VOTING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok || !payload?.voting) {
+    throw new Error(payload?.message || "Could not update Panache 360 voting.");
+  }
+
+  return {
+    voting: payload.voting as unknown as Panache360VotingPayload,
+    importSummary: payload.importSummary,
+    syncSummary: payload.syncSummary,
+    verifySummary: payload.verifySummary,
+    reconcileSummary: payload.reconcileSummary,
+    autoHistoryReconcileSummary: payload.autoHistoryReconcileSummary,
+    autoVerifySummary: payload.autoVerifySummary,
+    paidPendingScanSummary: payload.paidPendingScanSummary,
+    recoverPaidPendingSummary: payload.recoverPaidPendingSummary,
+  };
+};
+
+export const createPanache360VotingCategory = async (
+  accessKey: string,
+  category: Panache360VotingCategoryPayload
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "createCategory",
+    category,
+  });
+};
+
+export const updatePanache360VotingCategory = async (
+  accessKey: string,
+  id: string,
+  updates: Panache360VotingCategoryPayload
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "updateCategory",
+    id,
+    updates,
+  });
+};
+
+export const deletePanache360VotingCategory = async (
+  accessKey: string,
+  id: string
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "deleteCategory",
+    id,
+  });
+};
+
+export const createPanache360VotingNominee = async (
+  accessKey: string,
+  nominee: Panache360VotingNomineePayload
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "createNominee",
+    nominee,
+  });
+};
+
+export const updatePanache360VotingNominee = async (
+  accessKey: string,
+  id: string,
+  updates: Panache360VotingNomineePayload
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "updateNominee",
+    id,
+    updates,
+  });
+};
+
+export const deletePanache360VotingNominee = async (
+  accessKey: string,
+  id: string
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "deleteNominee",
+    id,
+  });
+};
+
+export const uploadPanache360VotingNomineePhoto = async (
+  accessKey: string,
+  upload: Panache360VotingNomineePhotoUploadPayload
+) => {
+  const response = await fetch(PANACHE_360_VOTING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify({
+      action: "uploadNomineePhoto",
+      ...upload,
+    }),
+  });
+  const payload = await readResponsePayload(response);
+  const photoUrl = payload?.photoUrl || payload?.photo_url || "";
+
+  if (!response.ok || !photoUrl) {
+    throw new Error(payload?.message || "Could not upload nominee photo.");
+  }
+
+  return {
+    photoUrl,
+    path: payload?.path || "",
+  };
+};
+
+export const importPanache360NomineesCsv = async (
+  accessKey: string,
+  csv: string
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "importNomineesCsv",
+    csv,
+  });
+};
+
+export const verifyPendingPanache360CampayVotes = async (accessKey: string) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "verifyPendingCampayVotes",
+  });
+};
+
+export const reconcilePanache360CampayHistory = async (
+  accessKey: string,
+  data: { startDate: string; endDate: string; dryRun: boolean }
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "reconcileCampayHistory",
+    startDate: data.startDate,
+    endDate: data.endDate,
+    dryRun: data.dryRun,
+  });
+};
+
+export const scanPanache360PaidPendingVotes = async (accessKey: string) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "scanPaidPendingCampayVotes",
+  });
+};
+
+export const recoverPanache360PaidPendingVotes = async (
+  accessKey: string,
+  limit = 100
+) => {
+  return mutatePanache360VotingDashboard(accessKey, {
+    action: "recoverPaidPendingCampayVotes",
+    limit,
   });
 };
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { contactService, profileService, authService, competitionApplicationService, cyesVotingService, panacheDorVotingService } from '@/integrations/supabase/services';
+import { contactService, profileService, authService, competitionApplicationService, cyesVotingService, panacheDorVotingService, panache360VotingService } from '@/integrations/supabase/services';
 
 // Query Keys (for cache management)
 export const queryKeys = {
@@ -20,6 +20,10 @@ export const queryKeys = {
   panacheDorVoting: {
     all: ['panacheDorVoting'] as const,
     public: ['panacheDorVoting', 'public'] as const,
+  },
+  panache360Voting: {
+    all: ['panache360Voting'] as const,
+    public: ['panache360Voting', 'public'] as const,
   },
   profile: {
     all: ['profile'] as const,
@@ -104,6 +108,18 @@ export const usePanacheDorVoting = () => {
   return useQuery({
     queryKey: queryKeys.panacheDorVoting.public,
     queryFn: panacheDorVotingService.getVoting,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
+  });
+};
+
+// Panache 360 Voting Directory Hooks
+export const usePanache360Voting = () => {
+  return useQuery({
+    queryKey: queryKeys.panache360Voting.public,
+    queryFn: panache360VotingService.getVoting,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
