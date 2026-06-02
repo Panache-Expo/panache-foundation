@@ -7,10 +7,7 @@ import type { Panache360AwardCategory } from "@/integrations/supabase/services";
 import { usePanache360Voting } from "@/hooks/useSupabase";
 import {
   getPanache360CategoryVoteUrl,
-  getPanache360Motivation,
   getPanache360VoteCount,
-  hasPanache360CloseRace,
-  rankPanache360CategoryNominees,
   type Panache360NomineeWithCategory,
 } from "@/lib/panache-360-ranking";
 import Panache360Hero from "@/assets/panache360-1.jpeg";
@@ -39,6 +36,25 @@ const matchesSearch = (nominee: Panache360NomineeWithCategory, query: string) =>
   return haystack.includes(query.trim().toLowerCase());
 };
 
+const alphabetizeCategories = (categories: Panache360AwardCategory[]) =>
+  [...categories].sort((left, right) => left.name.localeCompare(right.name));
+
+const alphabetizeCategoryNominees = (
+  category: Panache360AwardCategory
+): Panache360NomineeWithCategory[] =>
+  category.nominees
+    .map((nominee) => ({
+      ...nominee,
+      category,
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+
+const getCategoryVoteTotal = (category: Panache360AwardCategory) =>
+  category.nominees.reduce(
+    (total, nominee) => total + getPanache360VoteCount(nominee),
+    0
+  );
+
 const CategoryCard = ({
   category,
   showCounts,
@@ -47,7 +63,7 @@ const CategoryCard = ({
   showCounts: boolean;
 }) => {
   const nomineeCount = category.nominees.length;
-  const hasCloseRace = showCounts && hasPanache360CloseRace(category);
+  const voteTotal = getCategoryVoteTotal(category);
 
   return (
     <article className="flex h-full flex-col rounded-[1.8rem] border border-black/8 bg-white p-5 shadow-[0_18px_44px_rgba(17,16,14,0.07)]">
@@ -56,11 +72,6 @@ const CategoryCard = ({
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f8f2e8] text-[#8241B6]">
             <Users className="h-5 w-5" />
           </div>
-          {hasCloseRace ? (
-            <Badge className="rounded-full bg-[#8241B6] text-white hover:bg-[#8241B6]">
-              Close race
-            </Badge>
-          ) : null}
         </div>
         <h2 className="mt-5 font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-[#171411]">
           {category.name}
@@ -71,10 +82,9 @@ const CategoryCard = ({
           </p>
         ) : (
           <p className="mt-3 font-sans text-sm leading-relaxed text-[#171411]/62">
-            Choose this category to see the contestants and support your favorite.
+            Choose this category to see contestants listed alphabetically and support your favorite.
           </p>
         )}
-
       </div>
 
       <div className="mt-auto pt-5">
@@ -89,10 +99,10 @@ const CategoryCard = ({
           </div>
           <div className="rounded-[1rem] bg-[#f8f2e8] px-4 py-3">
             <p className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#171411]/48">
-              Race
+              Votes
             </p>
             <p className="mt-1 font-sans text-xl font-semibold text-[#171411]">
-              {hasCloseRace ? "Close" : "Open"}
+              {showCounts ? voteTotal.toLocaleString() : "—"}
             </p>
           </div>
         </div>
@@ -101,7 +111,7 @@ const CategoryCard = ({
           className="mt-5 h-11 w-full rounded-full bg-[#171411] font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
         >
           <Link to={getPanache360CategoryVoteUrl(category.slug)}>
-            View category race
+            View category
           </Link>
         </Button>
       </div>
@@ -115,30 +125,35 @@ const Panache360VotingPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const categorySlug = searchParams.get("category") || "";
-  const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
+  const categories = useMemo(
+    () => alphabetizeCategories(voting?.categories || []),
+    [voting?.categories]
+  );
   const selectedCategory = useMemo(
     () => categories.find((category) => category.slug === categorySlug) || null,
     [categories, categorySlug]
   );
   const showCounts = Boolean(voting?.counts_available);
   const categoryIsMissing = Boolean(categorySlug && !selectedCategory && categories.length);
+  const selectedCategoryVoteTotal = selectedCategory
+    ? getCategoryVoteTotal(selectedCategory)
+    : 0;
 
-  const rankedCategoryNominees = useMemo(
-    () =>
-      selectedCategory ? rankPanache360CategoryNominees(selectedCategory) : [],
+  const alphabeticalCategoryNominees = useMemo(
+    () => (selectedCategory ? alphabetizeCategoryNominees(selectedCategory) : []),
     [selectedCategory]
   );
   const visibleNominees = useMemo(() => {
     const normalizedSearch = searchQuery.trim();
 
     if (!normalizedSearch) {
-      return rankedCategoryNominees;
+      return alphabeticalCategoryNominees;
     }
 
-    return rankedCategoryNominees.filter((nominee) =>
+    return alphabeticalCategoryNominees.filter((nominee) =>
       matchesSearch(nominee, normalizedSearch)
     );
-  }, [rankedCategoryNominees, searchQuery]);
+  }, [alphabeticalCategoryNominees, searchQuery]);
 
   return (
     <div className="min-h-screen bg-[#f4f3ef]">
@@ -193,7 +208,7 @@ const Panache360VotingPage = () => {
                 25% public voting
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
-                Support your favorite contestant and help them climb inside their category.
+                Support your favorite contestant and help their verified votes count.
               </p>
             </div>
           </div>
@@ -233,15 +248,13 @@ const Panache360VotingPage = () => {
                       All categories
                     </Link>
                     <p className="mt-5 font-sans text-sm font-semibold uppercase tracking-[0.18em] text-[#8241B6]">
-                      Category race
+                      Category contestants
                     </p>
                     <h2 className="mt-2 font-sans text-[clamp(2.2rem,4vw,3.7rem)] font-semibold leading-[0.92] tracking-[-0.07em] text-[#171411]">
                       {selectedCategory.name}
                     </h2>
                     <p className="mt-4 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      Support your favorite contestant and help them climb this category.
-                      Close races show the exact votes needed; wider races focus on
-                      the next positive milestone.
+                      Contestants in this category are listed alphabetically. Rankings are shown only on the leaderboard.
                     </p>
                   </div>
 
@@ -257,12 +270,10 @@ const Panache360VotingPage = () => {
                       </div>
                       <div className="rounded-[1.2rem] bg-[#f8f2e8] px-4 py-3">
                         <p className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#171411]/48">
-                          Race
+                          Votes
                         </p>
                         <p className="mt-1 font-sans text-xl font-semibold text-[#171411]">
-                          {showCounts && hasPanache360CloseRace(selectedCategory)
-                            ? "Close"
-                            : "Open"}
+                          {showCounts ? selectedCategoryVoteTotal.toLocaleString() : "—"}
                         </p>
                       </div>
                       <Button
@@ -307,109 +318,82 @@ const Panache360VotingPage = () => {
 
               {visibleNominees.length ? (
                 <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleNominees.map((nominee) => {
-                    const rank =
-                      rankedCategoryNominees.findIndex(
-                        (entry) => entry.id === nominee.id
-                      ) + 1;
-                    const motivation = showCounts
-                      ? getPanache360Motivation(
-                          rankedCategoryNominees,
-                          nominee.id
-                        )
-                      : null;
-
-                    return (
-                      <article
-                        key={nominee.id}
-                        className="group overflow-hidden rounded-[1.8rem] border border-black/8 bg-white shadow-[0_18px_44px_rgba(17,16,14,0.08)]"
+                  {visibleNominees.map((nominee) => (
+                    <article
+                      key={nominee.id}
+                      className="group overflow-hidden rounded-[1.8rem] border border-black/8 bg-white shadow-[0_18px_44px_rgba(17,16,14,0.08)]"
+                    >
+                      <Link
+                        to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                        className="block"
                       >
-                        <Link
-                          to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
-                          className="block"
-                        >
-                          <div className="relative aspect-[4/3] bg-[#f8f2e8]">
-                            {nominee.photo_url ? (
-                              <img
-                                src={nominee.photo_url}
-                                alt={nominee.name}
-                                loading="lazy"
-                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <Award className="h-12 w-12 text-[#171411]/28" />
-                              </div>
-                            )}
-                            <Badge className="absolute left-4 top-4 rounded-full bg-white text-[#171411] hover:bg-white">
-                              #{rank} in category
-                            </Badge>
-                          </div>
-                        </Link>
-
-                        <div className="p-5">
-                          <h3 className="font-sans text-[1.35rem] font-semibold leading-tight tracking-[-0.04em] text-[#171411]">
-                            {nominee.name}
-                          </h3>
-                          {nominee.organization ? (
-                            <p className="mt-1 font-sans text-sm font-medium text-[#8241B6]">
-                              {nominee.organization}
-                            </p>
-                          ) : null}
-                          {nominee.bio ? (
-                            <p className="mt-3 line-clamp-3 font-sans text-sm leading-relaxed text-[#171411]/64">
-                              {nominee.bio}
-                            </p>
-                          ) : null}
-
-                          <div className="mt-4 rounded-[1.15rem] bg-[#f8f2e8] px-4 py-3">
-                            <p className="font-sans text-sm font-semibold text-[#171411]">
-                              {showCounts
-                                ? `${getPanache360VoteCount(
-                                    nominee
-                                  ).toLocaleString()} verified votes`
-                                : "Verified votes are being prepared."}
-                            </p>
-                            {motivation ? (
-                              <p
-                                className={`mt-1 font-sans text-sm ${
-                                  motivation.isCloseRace
-                                    ? "font-semibold text-[#8241B6]"
-                                    : "text-[#171411]/62"
-                                }`}
-                              >
-                                {motivation.text}
-                              </p>
-                            ) : null}
-                          </div>
-
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            <Button
-                              asChild
-                              variant="outline"
-                              className="rounded-full border-black/10 bg-white"
-                            >
-                              <Link
-                                to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
-                              >
-                                View profile
-                              </Link>
-                            </Button>
-                            <Button
-                              asChild
-                              className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
-                            >
-                              <Link
-                                to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
-                              >
-                                Vote securely
-                              </Link>
-                            </Button>
-                          </div>
+                        <div className="relative aspect-[4/3] bg-[#f8f2e8]">
+                          {nominee.photo_url ? (
+                            <img
+                              src={nominee.photo_url}
+                              alt={nominee.name}
+                              loading="lazy"
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <Award className="h-12 w-12 text-[#171411]/28" />
+                            </div>
+                          )}
                         </div>
-                      </article>
-                    );
-                  })}
+                      </Link>
+
+                      <div className="p-5">
+                        <h3 className="font-sans text-[1.35rem] font-semibold leading-tight tracking-[-0.04em] text-[#171411]">
+                          {nominee.name}
+                        </h3>
+                        {nominee.organization ? (
+                          <p className="mt-1 font-sans text-sm font-medium text-[#8241B6]">
+                            {nominee.organization}
+                          </p>
+                        ) : null}
+                        {nominee.bio ? (
+                          <p className="mt-3 line-clamp-3 font-sans text-sm leading-relaxed text-[#171411]/64">
+                            {nominee.bio}
+                          </p>
+                        ) : null}
+
+                        <div className="mt-4 rounded-[1.15rem] bg-[#f8f2e8] px-4 py-3">
+                          <p className="font-sans text-sm font-semibold text-[#171411]">
+                            {showCounts
+                              ? `${getPanache360VoteCount(
+                                  nominee
+                                ).toLocaleString()} verified votes`
+                              : "Verified votes are being prepared."}
+                          </p>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="rounded-full border-black/10 bg-white"
+                          >
+                            <Link
+                              to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                            >
+                              View profile
+                            </Link>
+                          </Button>
+                          <Button
+                            asChild
+                            className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
+                          >
+                            <Link
+                              to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                            >
+                              Vote securely
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               ) : (
                 <div className="mt-8 rounded-[2rem] border border-dashed border-black/12 bg-white px-6 py-10 text-center">
@@ -428,11 +412,10 @@ const Panache360VotingPage = () => {
                       Choose a category
                     </p>
                     <h2 className="mt-2 font-sans text-[clamp(2.2rem,4vw,3.7rem)] font-semibold leading-[0.92] tracking-[-0.07em] text-[#171411]">
-                      Pick the race you want to enter.
+                      Pick the category you want to enter.
                     </h2>
                     <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      Each category shows its contestants, current positions, and
-                      encouraging vote goals before you open a profile to vote.
+                      Each category shows contestants alphabetically with current verified vote counts. Rankings are available only on the leaderboard.
                     </p>
                     {categoryIsMissing ? (
                       <p className="mt-3 font-sans text-sm font-semibold text-destructive">
