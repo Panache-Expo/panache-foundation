@@ -49,6 +49,28 @@ const alphabetizeCategoryNominees = (
     }))
     .sort((left, right) => left.name.localeCompare(right.name));
 
+const buildOverallRankMap = (categories: Panache360AwardCategory[]) => {
+  const rankedNominees = categories
+    .flatMap((category) =>
+      category.nominees.map((nominee) => ({
+        ...nominee,
+        category,
+      }))
+    )
+    .sort((left, right) => {
+      const voteDifference =
+        getPanache360VoteCount(right) - getPanache360VoteCount(left);
+
+      if (voteDifference !== 0) {
+        return voteDifference;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+
+  return new Map(rankedNominees.map((nominee, index) => [nominee.id, index + 1]));
+};
+
 const getCategoryVoteTotal = (category: Panache360AwardCategory) =>
   category.nominees.reduce(
     (total, nominee) => total + getPanache360VoteCount(nominee),
@@ -128,6 +150,10 @@ const Panache360VotingPage = () => {
   const categories = useMemo(
     () => alphabetizeCategories(voting?.categories || []),
     [voting?.categories]
+  );
+  const overallRankByNomineeId = useMemo(
+    () => buildOverallRankMap(categories),
+    [categories]
   );
   const selectedCategory = useMemo(
     () => categories.find((category) => category.slug === categorySlug) || null,
@@ -254,7 +280,7 @@ const Panache360VotingPage = () => {
                       {selectedCategory.name}
                     </h2>
                     <p className="mt-4 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      Contestants in this category are listed alphabetically. Rankings are shown only on the leaderboard.
+                      Contestants in this category are listed alphabetically. The only position shown here is their overall Panache 360 position.
                     </p>
                   </div>
 
@@ -318,82 +344,91 @@ const Panache360VotingPage = () => {
 
               {visibleNominees.length ? (
                 <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleNominees.map((nominee) => (
-                    <article
-                      key={nominee.id}
-                      className="group overflow-hidden rounded-[1.8rem] border border-black/8 bg-white shadow-[0_18px_44px_rgba(17,16,14,0.08)]"
-                    >
-                      <Link
-                        to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
-                        className="block"
+                  {visibleNominees.map((nominee) => {
+                    const overallRank = overallRankByNomineeId.get(nominee.id);
+
+                    return (
+                      <article
+                        key={nominee.id}
+                        className="group overflow-hidden rounded-[1.8rem] border border-black/8 bg-white shadow-[0_18px_44px_rgba(17,16,14,0.08)]"
                       >
-                        <div className="relative aspect-[4/3] bg-[#f8f2e8]">
-                          {nominee.photo_url ? (
-                            <img
-                              src={nominee.photo_url}
-                              alt={nominee.name}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <Award className="h-12 w-12 text-[#171411]/28" />
-                            </div>
-                          )}
-                        </div>
-                      </Link>
+                        <Link
+                          to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                          className="block"
+                        >
+                          <div className="relative aspect-[4/3] bg-[#f8f2e8]">
+                            {nominee.photo_url ? (
+                              <img
+                                src={nominee.photo_url}
+                                alt={nominee.name}
+                                loading="lazy"
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <Award className="h-12 w-12 text-[#171411]/28" />
+                              </div>
+                            )}
+                            {showCounts && overallRank ? (
+                              <Badge className="absolute left-4 top-4 rounded-full bg-white text-[#171411] hover:bg-white">
+                                Overall #{overallRank}
+                              </Badge>
+                            ) : null}
+                          </div>
+                        </Link>
 
-                      <div className="p-5">
-                        <h3 className="font-sans text-[1.35rem] font-semibold leading-tight tracking-[-0.04em] text-[#171411]">
-                          {nominee.name}
-                        </h3>
-                        {nominee.organization ? (
-                          <p className="mt-1 font-sans text-sm font-medium text-[#8241B6]">
-                            {nominee.organization}
-                          </p>
-                        ) : null}
-                        {nominee.bio ? (
-                          <p className="mt-3 line-clamp-3 font-sans text-sm leading-relaxed text-[#171411]/64">
-                            {nominee.bio}
-                          </p>
-                        ) : null}
+                        <div className="p-5">
+                          <h3 className="font-sans text-[1.35rem] font-semibold leading-tight tracking-[-0.04em] text-[#171411]">
+                            {nominee.name}
+                          </h3>
+                          {nominee.organization ? (
+                            <p className="mt-1 font-sans text-sm font-medium text-[#8241B6]">
+                              {nominee.organization}
+                            </p>
+                          ) : null}
+                          {nominee.bio ? (
+                            <p className="mt-3 line-clamp-3 font-sans text-sm leading-relaxed text-[#171411]/64">
+                              {nominee.bio}
+                            </p>
+                          ) : null}
 
-                        <div className="mt-4 rounded-[1.15rem] bg-[#f8f2e8] px-4 py-3">
-                          <p className="font-sans text-sm font-semibold text-[#171411]">
-                            {showCounts
-                              ? `${getPanache360VoteCount(
-                                  nominee
-                                ).toLocaleString()} verified votes`
-                              : "Verified votes are being prepared."}
-                          </p>
-                        </div>
+                          <div className="mt-4 rounded-[1.15rem] bg-[#f8f2e8] px-4 py-3">
+                            <p className="font-sans text-sm font-semibold text-[#171411]">
+                              {showCounts
+                                ? `${getPanache360VoteCount(
+                                    nominee
+                                  ).toLocaleString()} verified votes`
+                                : "Verified votes are being prepared."}
+                            </p>
+                          </div>
 
-                        <div className="mt-5 flex flex-wrap gap-2">
-                          <Button
-                            asChild
-                            variant="outline"
-                            className="rounded-full border-black/10 bg-white"
-                          >
-                            <Link
-                              to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                          <div className="mt-5 flex flex-wrap gap-2">
+                            <Button
+                              asChild
+                              variant="outline"
+                              className="rounded-full border-black/10 bg-white"
                             >
-                              View profile
-                            </Link>
-                          </Button>
-                          <Button
-                            asChild
-                            className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
-                          >
-                            <Link
-                              to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                              <Link
+                                to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                              >
+                                View profile
+                              </Link>
+                            </Button>
+                            <Button
+                              asChild
+                              className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
                             >
-                              Vote securely
-                            </Link>
-                          </Button>
+                              <Link
+                                to={`/panache-expo/panache-360/nominees/${nominee.slug}`}
+                              >
+                                Vote securely
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="mt-8 rounded-[2rem] border border-dashed border-black/12 bg-white px-6 py-10 text-center">
