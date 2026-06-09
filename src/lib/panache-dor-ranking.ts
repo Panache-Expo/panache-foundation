@@ -2,6 +2,7 @@ import type {
   PanacheDorAwardCategory,
   PanacheDorAwardNominee,
 } from "@/integrations/supabase/services";
+import { compareByName, sortByName } from "@/lib/blind-voting";
 
 export type PanacheDorNomineeWithCategory = PanacheDorAwardNominee & {
   category: PanacheDorAwardCategory;
@@ -45,6 +46,10 @@ export const rankPanacheDorNominees = (
   nominees: PanacheDorNomineeWithCategory[]
 ) => [...nominees].sort(comparePanacheDorNominees);
 
+export const sortPanacheDorNomineesAlphabetically = (
+  nominees: PanacheDorNomineeWithCategory[]
+) => sortByName(nominees);
+
 export const rankPanacheDorCategoryNominees = (
   category: PanacheDorAwardCategory
 ): PanacheDorNomineeWithCategory[] =>
@@ -54,6 +59,16 @@ export const rankPanacheDorCategoryNominees = (
       category,
     }))
   );
+
+export const sortPanacheDorCategoryNomineesAlphabetically = (
+  category: PanacheDorAwardCategory
+): PanacheDorNomineeWithCategory[] =>
+  category.nominees
+    .map((nominee) => ({
+      ...nominee,
+      category,
+    }))
+    .sort(compareByName);
 
 const getCloseGapThreshold = (previousVotes: number) =>
   Math.max(10, Math.min(75, Math.ceil(previousVotes * 0.12)));

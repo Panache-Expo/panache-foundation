@@ -1,16 +1,19 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { BlindVotingCountdown } from "@/components/BlindVotingCountdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PanacheDorAwardCategory } from "@/integrations/supabase/services";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
+import { isBlindVotingActive } from "@/lib/blind-voting";
 import {
   getPanacheDorCategoryVoteUrl,
   getPanacheDorMotivation,
   getPanacheDorVoteCount,
   hasPanacheDorCloseRace,
   rankPanacheDorCategoryNominees,
+  sortPanacheDorCategoryNomineesAlphabetically,
   type PanacheDorNomineeWithCategory,
 } from "@/lib/panache-dor-ranking";
 import PanacheAwards from "@/assets/PanacheAwards.jpeg";
@@ -42,12 +45,14 @@ const matchesSearch = (nominee: PanacheDorNomineeWithCategory, query: string) =>
 const CategoryCard = ({
   category,
   showCounts,
+  blindVoting,
 }: {
   category: PanacheDorAwardCategory;
   showCounts: boolean;
+  blindVoting: boolean;
 }) => {
   const nomineeCount = category.nominees.length;
-  const hasCloseRace = showCounts && hasPanacheDorCloseRace(category);
+  const hasCloseRace = showCounts && !blindVoting && hasPanacheDorCloseRace(category);
 
   return (
     <article className="flex h-full flex-col rounded-[1.8rem] border border-black/8 bg-white p-5 shadow-[0_18px_44px_rgba(17,16,14,0.07)]">
@@ -89,10 +94,10 @@ const CategoryCard = ({
           </div>
           <div className="rounded-[1rem] bg-[#f8f2e8] px-4 py-3">
             <p className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#171411]/48">
-              Race
+              {blindVoting ? "Mode" : "Race"}
             </p>
             <p className="mt-1 font-sans text-xl font-semibold text-[#171411]">
-              {hasCloseRace ? "Close" : "Open"}
+              {blindVoting ? "Blind" : hasCloseRace ? "Close" : "Open"}
             </p>
           </div>
         </div>
@@ -120,13 +125,18 @@ const PanacheDorVotingPage = () => {
     () => categories.find((category) => category.slug === categorySlug) || null,
     [categories, categorySlug]
   );
+  const blindVoting = isBlindVotingActive(voting);
   const showCounts = Boolean(voting?.counts_available);
   const categoryIsMissing = Boolean(categorySlug && !selectedCategory && categories.length);
 
   const rankedCategoryNominees = useMemo(
     () =>
-      selectedCategory ? rankPanacheDorCategoryNominees(selectedCategory) : [],
-    [selectedCategory]
+      selectedCategory
+        ? blindVoting
+          ? sortPanacheDorCategoryNomineesAlphabetically(selectedCategory)
+          : rankPanacheDorCategoryNominees(selectedCategory)
+        : [],
+    [blindVoting, selectedCategory]
   );
   const visibleNominees = useMemo(() => {
     const normalizedSearch = searchQuery.trim();
@@ -156,8 +166,8 @@ const PanacheDorVotingPage = () => {
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
               Start by choosing an award category, then open a nominee profile
-              to vote securely. Category pages show where each nominee stands
-              without turning big gaps into discouragement.
+              to vote securely. Public results are blind until the official
+              announcement time, so every category stays competitive.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -173,7 +183,7 @@ const PanacheDorVotingPage = () => {
                 className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
               >
                 <Link to="/panache-expo/panache-dor/leaderboard">
-                  View overall leaderboard
+                  Results countdown
                   <Trophy className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -196,6 +206,10 @@ const PanacheDorVotingPage = () => {
               </p>
             </div>
           </div>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-7xl px-6 md:px-10">
+          <BlindVotingCountdown voting={voting} />
         </section>
 
         <section id="nominees" className="mx-auto mt-14 max-w-7xl px-6 md:px-10">
@@ -238,9 +252,9 @@ const PanacheDorVotingPage = () => {
                       {selectedCategory.name}
                     </h2>
                     <p className="mt-4 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      Support your favorite nominee and help them climb this category.
-                      Close races show the exact votes needed; wider races focus on
-                      the next positive milestone.
+                      {blindVoting
+                        ? "Support your favorite nominee. Vote totals and ranking hints stay hidden until results are published."
+                        : "Support your favorite nominee and help them climb this category. Close races show the exact votes needed; wider races focus on the next positive milestone."}
                     </p>
                   </div>
 
@@ -256,10 +270,12 @@ const PanacheDorVotingPage = () => {
                       </div>
                       <div className="rounded-[1.2rem] bg-[#f8f2e8] px-4 py-3">
                         <p className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#171411]/48">
-                          Race
+                          {blindVoting ? "Mode" : "Race"}
                         </p>
                         <p className="mt-1 font-sans text-xl font-semibold text-[#171411]">
-                          {showCounts && hasPanacheDorCloseRace(selectedCategory)
+                          {blindVoting
+                            ? "Blind"
+                            : showCounts && hasPanacheDorCloseRace(selectedCategory)
                             ? "Close"
                             : "Open"}
                         </p>
@@ -270,7 +286,7 @@ const PanacheDorVotingPage = () => {
                         className="h-full min-h-[4.25rem] rounded-[1.2rem] border-black/10 bg-white px-4"
                       >
                         <Link to="/panache-expo/panache-dor/leaderboard">
-                          Overall leaderboard
+                          Results countdown
                         </Link>
                       </Button>
                     </div>
@@ -341,7 +357,7 @@ const PanacheDorVotingPage = () => {
                               </div>
                             )}
                             <Badge className="absolute left-4 top-4 rounded-full bg-white text-[#171411] hover:bg-white">
-                              #{rank} in category
+                              {blindVoting ? "Alphabetical listing" : `#${rank} in category`}
                             </Badge>
                           </div>
                         </Link>
@@ -367,7 +383,7 @@ const PanacheDorVotingPage = () => {
                                 ? `${getPanacheDorVoteCount(
                                     nominee
                                   ).toLocaleString()} verified votes`
-                                : "Verified votes are being prepared."}
+                                : `Results publish ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`}
                             </p>
                             {motivation ? (
                               <p
@@ -430,8 +446,9 @@ const PanacheDorVotingPage = () => {
                       Pick the race you want to enter.
                     </h2>
                     <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      Each category shows its nominees, current positions, and
-                      encouraging vote goals before you open a profile to vote.
+                      {blindVoting
+                        ? "Each category lists nominees alphabetically while voting is blind."
+                        : "Each category shows its nominees, current positions, and encouraging vote goals before you open a profile to vote."}
                     </p>
                     {categoryIsMissing ? (
                       <p className="mt-3 font-sans text-sm font-semibold text-destructive">
@@ -446,7 +463,7 @@ const PanacheDorVotingPage = () => {
                     className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                   >
                     <Link to="/panache-expo/panache-dor/leaderboard">
-                      View overall leaderboard
+                      Results countdown
                       <Trophy className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -460,6 +477,7 @@ const PanacheDorVotingPage = () => {
                       key={category.id}
                       category={category}
                       showCounts={showCounts}
+                      blindVoting={blindVoting}
                     />
                   ))}
                 </div>

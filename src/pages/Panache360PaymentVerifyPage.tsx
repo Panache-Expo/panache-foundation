@@ -1,9 +1,11 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { BlindVotingCountdown } from "@/components/BlindVotingCountdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { panache360VotingService } from "@/integrations/supabase/services";
 import type { Panache360VoteVerifyResponse } from "@/integrations/supabase/services";
+import { isBlindVotingActive } from "@/lib/blind-voting";
 import {
   getPanache360Motivation,
   rankPanache360CategoryNominees,
@@ -183,8 +185,9 @@ const Panache360PaymentVerifyPage = () => {
   const receiptNominee = receiptCategory?.nominees.find(
     (nominee) => nominee.id === receipt?.nominee_id,
   );
+  const blindVoting = isBlindVotingActive(result?.voting);
   const receiptMotivation =
-    receipt && receiptCategory
+    !blindVoting && receipt && receiptCategory
       ? getPanache360Motivation(
           rankPanache360CategoryNominees(receiptCategory),
           receipt.nominee_id,
@@ -290,6 +293,14 @@ const Panache360PaymentVerifyPage = () => {
                 {result?.message ||
                   "If your payment is still pending, refresh this page after it completes."}
               </p>
+
+              <div className="mt-6 text-left">
+                <BlindVotingCountdown
+                  voting={result?.voting}
+                  title="Your vote is counted, results stay blind"
+                  description="Your payment can be verified while public totals and ranking hints remain hidden until the official announcement time."
+                />
+              </div>
 
               {result?.receipt ? (
                 <div className="mx-auto mt-7 max-w-md rounded-[1.4rem] border border-black/8 bg-[#f8f2e8] p-5 text-left">

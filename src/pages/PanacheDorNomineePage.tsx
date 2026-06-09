@@ -1,15 +1,18 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { BlindVotingCountdown } from "@/components/BlindVotingCountdown";
 import { PanacheDorVoteForm } from "@/components/PanacheDorVoteForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
+import { isBlindVotingActive } from "@/lib/blind-voting";
 import {
   flattenPanacheDorNominees,
   getPanacheDorCategoryVoteUrl,
   getPanacheDorMotivation,
   getPanacheDorVoteCount,
   rankPanacheDorNominees,
+  sortPanacheDorNomineesAlphabetically,
   type PanacheDorNomineeWithCategory,
 } from "@/lib/panache-dor-ranking";
 import { Award, ArrowLeft, Loader2, Trophy } from "lucide-react";
@@ -24,20 +27,28 @@ const PanacheDorNomineePage = () => {
     () => flattenPanacheDorNominees(voting?.categories || []),
     [voting?.categories]
   );
+  const blindVoting = isBlindVotingActive(voting);
 
   const rankedNominees = useMemo(
-    () => rankPanacheDorNominees(nominees),
-    [nominees]
+    () =>
+      blindVoting
+        ? sortPanacheDorNomineesAlphabetically(nominees)
+        : rankPanacheDorNominees(nominees),
+    [blindVoting, nominees]
   );
   const nominee = nominees.find((entry) => entry.slug === slug);
   const rankedCategoryNominees = useMemo(
     () =>
       nominee
-        ? rankPanacheDorNominees(
-            nominees.filter((entry) => entry.category_id === nominee.category_id)
-          )
+        ? blindVoting
+          ? sortPanacheDorNomineesAlphabetically(
+              nominees.filter((entry) => entry.category_id === nominee.category_id)
+            )
+          : rankPanacheDorNominees(
+              nominees.filter((entry) => entry.category_id === nominee.category_id)
+            )
         : [],
-    [nominee, nominees]
+    [blindVoting, nominee, nominees]
   );
   const nomineeOverallRank = nominee
     ? rankedNominees.findIndex((entry) => entry.id === nominee.id) + 1
@@ -86,6 +97,10 @@ const PanacheDorNomineePage = () => {
             </div>
           ) : nominee ? (
             <>
+              <div className="mt-8">
+                <BlindVotingCountdown voting={voting} />
+              </div>
+
               <div className="mt-8 grid gap-8 lg:grid-cols-[0.48fr_0.52fr] lg:items-start">
                 <div className="overflow-hidden rounded-[2rem] border border-black/8 bg-white shadow-[0_24px_64px_rgba(17,16,14,0.10)]">
                   <div className="aspect-[4/5] bg-[#f8f2e8]">
@@ -129,20 +144,24 @@ const PanacheDorNomineePage = () => {
                   <div className="mt-7 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
                       <p className="font-sans text-sm font-semibold text-[#171411]">
-                        Overall rank
+                        {blindVoting ? "Results status" : "Overall rank"}
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
-                        {showCounts && nomineeOverallRank
+                        {blindVoting
+                          ? `Hidden until ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`
+                          : showCounts && nomineeOverallRank
                           ? `#${nomineeOverallRank} of ${rankedNominees.length}`
                           : "Rank appears after verified votes are available."}
                       </p>
                     </div>
                     <div className="rounded-[1.35rem] border border-black/8 bg-[#f8f2e8] px-5 py-4">
                       <p className="font-sans text-sm font-semibold text-[#171411]">
-                        Category rank
+                        {blindVoting ? "Listing mode" : "Category rank"}
                       </p>
                       <p className="mt-2 font-sans text-sm leading-relaxed text-[#171411]/64">
-                        {showCounts && nomineeCategoryRank
+                        {blindVoting
+                          ? "Alphabetical while voting is blind."
+                          : showCounts && nomineeCategoryRank
                           ? `#${nomineeCategoryRank} in ${nominee.category.name}`
                           : "Category rank appears after verified votes are available."}
                       </p>
@@ -164,7 +183,7 @@ const PanacheDorNomineePage = () => {
                           ? `${getPanacheDorVoteCount(
                               nominee
                             ).toLocaleString()} verified votes`
-                          : "Verified votes are not public yet."}
+                          : `Not public until ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`}
                       </p>
                     </div>
                   </div>
@@ -202,7 +221,7 @@ const PanacheDorNomineePage = () => {
                       className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                     >
                       <Link to="/panache-expo/panache-dor/leaderboard">
-                        View overall leaderboard
+                        Results countdown
                         <Trophy className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
@@ -236,7 +255,7 @@ const PanacheDorNomineePage = () => {
                       >
                         <div className="flex items-start gap-3">
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#171411] font-sans text-xs font-semibold text-white">
-                            #{categoryRank}
+                            {blindVoting ? "A-Z" : `#${categoryRank}`}
                           </span>
                           <div>
                             <p className="font-sans text-base font-semibold text-[#171411]">

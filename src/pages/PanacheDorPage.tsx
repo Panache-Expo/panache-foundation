@@ -373,7 +373,7 @@ const PanacheDorPage = () => {
                   Public nominations are closed for this Panache D&apos;or cycle.
                   The nominee directory now lets supporters vote through a
                   Panache-owned secure payment flow. Only verified payments count
-                  toward the public leaderboard.
+                  toward the official public results.
                 </p>
 
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -393,7 +393,7 @@ const PanacheDorPage = () => {
                     className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                   >
                     <Link to="/panache-expo/panache-dor/leaderboard">
-                      Leaderboard
+                      Results countdown
                     </Link>
                   </Button>
                 </div>

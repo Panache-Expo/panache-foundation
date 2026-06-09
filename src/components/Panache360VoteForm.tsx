@@ -45,7 +45,7 @@ export const Panache360VoteForm = ({
   const isBusy = isPreparingPayment;
 
   const configurationMessage = !backendPaymentsConfigured
-    ? "Secure payment is being connected. Contestants and leaderboards remain visible."
+    ? "Secure payment is being connected. Contestants and results pages remain visible."
     : "";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

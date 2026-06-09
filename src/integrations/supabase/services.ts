@@ -145,6 +145,9 @@ export type PanacheDorVotingPayload = {
   total_nominees: number;
   total_votes?: number;
   counts_available: boolean;
+  blind_voting?: boolean;
+  results_publish_at?: string;
+  results_publish_label?: string;
   vote_provider?: string;
   vote_provider_name?: string;
   vote_provider_sync_configured?: boolean;
@@ -229,6 +232,9 @@ export type Panache360VotingPayload = {
   total_nominees: number;
   total_votes?: number;
   counts_available: boolean;
+  blind_voting?: boolean;
+  results_publish_at?: string;
+  results_publish_label?: string;
   competition_weight_percent?: number;
   vote_provider?: string;
   vote_provider_name?: string;

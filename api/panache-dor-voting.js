@@ -59,6 +59,12 @@ const PANACHE_DOR_BASE_URL = (
   process.env.PANACHE_FRONTEND_BASE_URL ||
   ""
 ).replace(/\/+$/, "");
+const RESULTS_PUBLISH_AT =
+  process.env.PANACHE_DOR_RESULTS_PUBLISH_AT ||
+  "2026-07-12T02:00:00+01:00";
+const RESULTS_PUBLISH_LABEL =
+  process.env.PANACHE_DOR_RESULTS_PUBLISH_LABEL ||
+  "12 July 2026 at 2:00 AM WAT";
 const AUTO_VERIFY_ENABLED =
   String(process.env.PANACHE_DOR_AUTO_VERIFY_ENABLED ?? "true")
     .trim()
@@ -639,14 +645,27 @@ const withUpdatedAt = (payload) => ({
   updated_at: new Date().toISOString(),
 });
 
-const decorateNominee = (nominee) => ({
+const resultsPublishTimestamp = Date.parse(RESULTS_PUBLISH_AT);
+
+const isBlindVotingActive = () =>
+  Number.isFinite(resultsPublishTimestamp) && Date.now() < resultsPublishTimestamp;
+
+const getBlindVotingMetadata = (includeDrafts = false) => ({
+  blind_voting: !includeDrafts && isBlindVotingActive(),
+  results_publish_at: RESULTS_PUBLISH_AT,
+  results_publish_label: RESULTS_PUBLISH_LABEL,
+});
+
+const decorateNominee = (nominee, { exposeCounts = true } = {}) => ({
   ...nominee,
   ayati_vote_url: null,
   ayati_sync_id: null,
-  ayati_vote_count: normalizeInteger(nominee.local_vote_count, 0),
+  ayati_vote_count: exposeCounts
+    ? normalizeInteger(nominee.local_vote_count, 0)
+    : 0,
   ayati_last_synced_at: null,
   vote_url: null,
-  vote_count: normalizeInteger(nominee.local_vote_count, 0),
+  vote_count: exposeCounts ? normalizeInteger(nominee.local_vote_count, 0) : 0,
   vote_provider_sync_id: null,
   vote_last_synced_at: null,
 });
@@ -669,11 +688,13 @@ const buildVotingPayload = (
   paymentSummary = null,
   paidPending = null
 ) => {
+  const blindVoting = !includeDrafts && isBlindVotingActive();
+  const exposeCounts = !blindVoting;
   const nomineesByCategory = nominees.reduce((accumulator, nominee) => {
     if (!accumulator[nominee.category_id]) {
       accumulator[nominee.category_id] = [];
     }
-    accumulator[nominee.category_id].push(decorateNominee(nominee));
+    accumulator[nominee.category_id].push(decorateNominee(nominee, { exposeCounts }));
     return accumulator;
   }, {});
   const totalVotes = nominees.reduce(
@@ -687,14 +708,16 @@ const buildVotingPayload = (
       vote_count: nominees
         .filter((nominee) => nominee.category_id === category.id)
         .reduce(
-          (sum, nominee) => sum + normalizeInteger(nominee.local_vote_count, 0),
+          (sum, nominee) =>
+            sum + (exposeCounts ? normalizeInteger(nominee.local_vote_count, 0) : 0),
           0
         ),
       nominees: nomineesByCategory[category.id] || [],
     })),
     total_nominees: nominees.length,
-    total_votes: totalVotes,
-    counts_available: true,
+    total_votes: exposeCounts ? totalVotes : 0,
+    counts_available: exposeCounts,
+    ...getBlindVotingMetadata(includeDrafts),
     vote_provider: PAYMENT_PROVIDER,
     vote_provider_name: VOTE_PROVIDER_NAME,
     vote_provider_sync_configured: paymentsConfigured,

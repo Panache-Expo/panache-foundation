@@ -1,5 +1,6 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { BlindVotingCountdown } from "@/components/BlindVotingCountdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type {
@@ -7,6 +8,7 @@ import type {
   PanacheDorAwardNominee,
 } from "@/integrations/supabase/services";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
+import { isBlindVotingActive, sortByName } from "@/lib/blind-voting";
 import PanacheAwards from "@/assets/PanacheAwards.jpeg";
 import {
   Award,
@@ -64,14 +66,20 @@ const NomineeLeaderboardRow = ({
   nominee,
   rank,
   showCounts,
+  blindVoting,
 }: {
   nominee: RankedNominee;
   rank: number;
   showCounts: boolean;
+  blindVoting: boolean;
 }) => (
   <article className="grid gap-4 rounded-[1.35rem] border border-black/8 bg-white/78 p-4 md:grid-cols-[auto_74px_1fr_auto] md:items-center">
     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#171411] font-sans text-sm font-semibold text-white">
-      {rank <= 3 ? <Medal className="h-5 w-5" /> : `#${rank}`}
+      {blindVoting
+        ? "A-Z"
+        : rank <= 3
+        ? <Medal className="h-5 w-5" />
+        : `#${rank}`}
     </div>
     <div className="h-[4.6rem] w-[4.6rem] overflow-hidden rounded-[1rem] bg-[#f8f2e8]">
       {nominee.photo_url ? (
@@ -124,16 +132,37 @@ const NomineeLeaderboardRow = ({
 const PanacheDorLeaderboardPage = () => {
   const { data: voting, isLoading, error, refetch } = usePanacheDorVoting();
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
-  const rankedNominees = useMemo(() => rankNominees(categories), [categories]);
+  const blindVoting = isBlindVotingActive(voting);
+  const rankedNominees = useMemo(
+    () =>
+      blindVoting
+        ? sortByName(
+            categories.flatMap((category) =>
+              category.nominees.map((nominee) => ({
+                ...nominee,
+                category,
+              }))
+            )
+          )
+        : rankNominees(categories),
+    [blindVoting, categories]
+  );
   const rankedCategories = useMemo<RankedCategory[]>(
     () =>
       categories
         .map((category) => ({
           ...category,
-          rankedNominees: rankNomineesInCategory(category),
+          rankedNominees: blindVoting
+            ? sortByName(
+                category.nominees.map((nominee) => ({
+                  ...nominee,
+                  category,
+                }))
+              )
+            : rankNomineesInCategory(category),
         }))
         .filter((category) => category.rankedNominees.length > 0),
-    [categories]
+    [blindVoting, categories]
   );
   const showCounts = Boolean(voting?.counts_available);
 
@@ -152,9 +181,9 @@ const PanacheDorLeaderboardPage = () => {
               <span className="block font-display text-[#8241B6]">Ranking</span>
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
-              This overall ranking is the public People&apos;s Choice view. Votes
-              are counted from completed verified payments only; category pages
-              show the category-specific race before voters open a nominee profile.
+              {blindVoting
+                ? "Public results are blind while voting continues. Nominees are shown alphabetically until the official announcement time."
+                : "This overall ranking is the public People's Choice view. Votes are counted from completed verified payments only; category pages show the category-specific race before voters open a nominee profile."}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -178,10 +207,16 @@ const PanacheDorLeaderboardPage = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-[#171411]/84 via-[#171411]/20 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-6">
               <Badge className="rounded-full bg-white text-[#171411] hover:bg-white">
-                {showCounts ? "Overall ranking synced" : "Ranking preparing"}
+                {blindVoting
+                  ? "Results countdown"
+                  : showCounts
+                  ? "Overall ranking synced"
+                  : "Ranking preparing"}
               </Badge>
               <p className="mt-4 max-w-md font-sans text-2xl font-semibold leading-tight tracking-[-0.05em] text-white">
-                {showCounts
+                {blindVoting
+                  ? `Results publish ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`
+                  : showCounts
                   ? "The People's Choice ranking updates from completed verified payments."
                   : "Rankings appear once completed verified payments are recorded."}
               </p>
@@ -190,7 +225,9 @@ const PanacheDorLeaderboardPage = () => {
         </section>
 
         <section className="mx-auto mt-14 max-w-6xl px-6 md:px-10">
-          {!showCounts ? (
+          <BlindVotingCountdown voting={voting} />
+
+          {!showCounts && !blindVoting ? (
             <div className="rounded-[2rem] border border-[#8241B6]/18 bg-white p-6 md:p-8">
               <div className="grid gap-6 lg:grid-cols-[0.7fr_0.3fr] lg:items-center">
                 <div>
@@ -250,16 +287,17 @@ const PanacheDorLeaderboardPage = () => {
                     nominee={nominee}
                     rank={index + 1}
                     showCounts={showCounts}
+                    blindVoting={blindVoting}
                   />
                 ))}
               </div>
 
               <div className="mt-12">
                 <p className="font-sans text-[0.74rem] font-semibold uppercase tracking-[0.24em] text-[#8241B6]">
-                  Rankings by category
+                  {blindVoting ? "Alphabetical by category" : "Rankings by category"}
                 </p>
                 <h2 className="mt-3 font-sans text-[clamp(2.1rem,4vw,3.4rem)] font-semibold leading-[0.94] tracking-[-0.07em] text-[#171411]">
-                  Category leaderboards
+                  {blindVoting ? "Category directories" : "Category leaderboards"}
                 </h2>
                 <div className="mt-6 space-y-6">
                   {rankedCategories.map((category) => (
@@ -273,11 +311,13 @@ const PanacheDorLeaderboardPage = () => {
                             {category.name}
                           </h3>
                           <p className="mt-1 font-sans text-sm text-[#171411]/58">
-                            Ranks restart inside this category.
+                            {blindVoting
+                              ? "Names are listed alphabetically until results are published."
+                              : "Ranks restart inside this category."}
                           </p>
                         </div>
                         <Badge className="rounded-full bg-white px-4 py-2 text-[#171411] hover:bg-white">
-                          Category ranking
+                          {blindVoting ? "Alphabetical listing" : "Category ranking"}
                         </Badge>
                       </div>
                       <div className="mt-4 space-y-3">
@@ -287,6 +327,7 @@ const PanacheDorLeaderboardPage = () => {
                             nominee={nominee}
                             rank={index + 1}
                             showCounts={showCounts}
+                            blindVoting={blindVoting}
                           />
                         ))}
                       </div>

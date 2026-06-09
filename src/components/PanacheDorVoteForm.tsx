@@ -45,7 +45,7 @@ export const PanacheDorVoteForm = ({
   const isBusy = isPreparingPayment;
 
   const configurationMessage = !backendPaymentsConfigured
-    ? "Secure payment is being connected. Nominees and leaderboards remain visible."
+    ? "Secure payment is being connected. Nominees and results pages remain visible."
     : "";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

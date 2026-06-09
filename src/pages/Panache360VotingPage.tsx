@@ -1,10 +1,12 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { BlindVotingCountdown } from "@/components/BlindVotingCountdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Panache360AwardCategory } from "@/integrations/supabase/services";
 import { usePanache360Voting } from "@/hooks/useSupabase";
+import { isBlindVotingActive } from "@/lib/blind-voting";
 import {
   getPanache360CategoryVoteUrl,
   getPanache360VoteCount,
@@ -80,9 +82,11 @@ const getCategoryVoteTotal = (category: Panache360AwardCategory) =>
 const CategoryCard = ({
   category,
   showCounts,
+  blindVoting,
 }: {
   category: Panache360AwardCategory;
   showCounts: boolean;
+  blindVoting: boolean;
 }) => {
   const nomineeCount = category.nominees.length;
   const voteTotal = getCategoryVoteTotal(category);
@@ -121,10 +125,10 @@ const CategoryCard = ({
           </div>
           <div className="rounded-[1rem] bg-[#f8f2e8] px-4 py-3">
             <p className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#171411]/48">
-              Votes
+              {blindVoting ? "Mode" : "Votes"}
             </p>
             <p className="mt-1 font-sans text-xl font-semibold text-[#171411]">
-              {showCounts ? voteTotal.toLocaleString() : "—"}
+              {blindVoting ? "Blind" : showCounts ? voteTotal.toLocaleString() : "-"}
             </p>
           </div>
         </div>
@@ -159,6 +163,7 @@ const Panache360VotingPage = () => {
     () => categories.find((category) => category.slug === categorySlug) || null,
     [categories, categorySlug]
   );
+  const blindVoting = isBlindVotingActive(voting);
   const showCounts = Boolean(voting?.counts_available);
   const categoryIsMissing = Boolean(categorySlug && !selectedCategory && categories.length);
   const selectedCategoryVoteTotal = selectedCategory
@@ -199,7 +204,7 @@ const Panache360VotingPage = () => {
               Start by choosing a contest category, then open a contestant
               profile to vote securely. Public voting counts for{" "}
               {voting?.competition_weight_percent || 25}% of the final
-              competition score.
+              competition score, with results hidden until announcement time.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -215,7 +220,7 @@ const Panache360VotingPage = () => {
                 className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
               >
                 <Link to="/panache-expo/panache-360/leaderboard">
-                  View overall leaderboard
+                  Results countdown
                   <Trophy className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -238,6 +243,10 @@ const Panache360VotingPage = () => {
               </p>
             </div>
           </div>
+        </section>
+
+        <section className="mx-auto mt-10 max-w-7xl px-6 md:px-10">
+          <BlindVotingCountdown voting={voting} />
         </section>
 
         <section id="nominees" className="mx-auto mt-14 max-w-7xl px-6 md:px-10">
@@ -280,7 +289,9 @@ const Panache360VotingPage = () => {
                       {selectedCategory.name}
                     </h2>
                     <p className="mt-4 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      Contestants in this category are listed alphabetically. The only position shown here is their overall Panache 360 position.
+                      {blindVoting
+                        ? "Support your favorite contestant. Vote totals and ranking hints stay hidden until results are published."
+                        : "Contestants in this category are listed alphabetically. Overall ranking is shown when public results are available."}
                     </p>
                   </div>
 
@@ -296,10 +307,14 @@ const Panache360VotingPage = () => {
                       </div>
                       <div className="rounded-[1.2rem] bg-[#f8f2e8] px-4 py-3">
                         <p className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#171411]/48">
-                          Votes
+                          {blindVoting ? "Mode" : "Votes"}
                         </p>
                         <p className="mt-1 font-sans text-xl font-semibold text-[#171411]">
-                          {showCounts ? selectedCategoryVoteTotal.toLocaleString() : "—"}
+                          {blindVoting
+                            ? "Blind"
+                            : showCounts
+                            ? selectedCategoryVoteTotal.toLocaleString()
+                            : "-"}
                         </p>
                       </div>
                       <Button
@@ -308,7 +323,7 @@ const Panache360VotingPage = () => {
                         className="h-full min-h-[4.25rem] rounded-[1.2rem] border-black/10 bg-white px-4"
                       >
                         <Link to="/panache-expo/panache-360/leaderboard">
-                          Overall leaderboard
+                          Results countdown
                         </Link>
                       </Button>
                     </div>
@@ -369,7 +384,11 @@ const Panache360VotingPage = () => {
                                 <Award className="h-12 w-12 text-[#171411]/28" />
                               </div>
                             )}
-                            {showCounts && overallRank ? (
+                            {blindVoting ? (
+                              <Badge className="absolute left-4 top-4 rounded-full bg-white text-[#171411] hover:bg-white">
+                                Alphabetical listing
+                              </Badge>
+                            ) : showCounts && overallRank ? (
                               <Badge className="absolute left-4 top-4 rounded-full bg-white text-[#171411] hover:bg-white">
                                 Overall #{overallRank}
                               </Badge>
@@ -398,7 +417,7 @@ const Panache360VotingPage = () => {
                                 ? `${getPanache360VoteCount(
                                     nominee
                                   ).toLocaleString()} verified votes`
-                                : "Verified votes are being prepared."}
+                                : `Results publish ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`}
                             </p>
                           </div>
 
@@ -450,7 +469,9 @@ const Panache360VotingPage = () => {
                       Pick the category you want to enter.
                     </h2>
                     <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      Each category shows contestants alphabetically with current verified vote counts. Rankings are available only on the leaderboard.
+                      {blindVoting
+                        ? "Each category lists contestants alphabetically while voting is blind."
+                        : "Each category shows contestants alphabetically with current verified vote counts. Rankings are available on the results page."}
                     </p>
                     {categoryIsMissing ? (
                       <p className="mt-3 font-sans text-sm font-semibold text-destructive">
@@ -465,7 +486,7 @@ const Panache360VotingPage = () => {
                     className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                   >
                     <Link to="/panache-expo/panache-360/leaderboard">
-                      View overall leaderboard
+                      Results countdown
                       <Trophy className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -479,6 +500,7 @@ const Panache360VotingPage = () => {
                       key={category.id}
                       category={category}
                       showCounts={showCounts}
+                      blindVoting={blindVoting}
                     />
                   ))}
                 </div>
