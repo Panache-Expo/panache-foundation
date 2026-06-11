@@ -40,6 +40,7 @@ import MissPanachePage from "./pages/MissPanachePage";
 import MissPanacheRegisterPage from "./pages/MissPanacheRegisterPage";
 import MissPanacheVotingPage from "./pages/MissPanacheVotingPage";
 import MissPanacheNomineePage from "./pages/MissPanacheNomineePage";
+import MissPanacheContestantVotesPage from "./pages/MissPanacheContestantVotesPage";
 import MissPanachePaymentVerifyPage from "./pages/MissPanachePaymentVerifyPage";
 import MissPanacheLeaderboardPage from "./pages/MissPanacheLeaderboardPage";
 import ParticipantsDashboardPage from "./pages/ParticipantsDashboardPage";
@@ -144,6 +145,7 @@ const App = () => (
               <Route path="/panache-expo/miss-panache/register" element={<MissPanacheRegisterPage />} />
               <Route path="/panache-expo/miss-panache/vote" element={<MissPanacheVotingPage />} />
               <Route path="/panache-expo/miss-panache/contestants/:slug" element={<MissPanacheNomineePage />} />
+              <Route path="/panache-expo/miss-panache/contestants/:slug/vote-count" element={<MissPanacheContestantVotesPage />} />
               <Route path="/panache-expo/miss-panache/payment/verify" element={<MissPanachePaymentVerifyPage />} />
               <Route path="/panache-expo/miss-panache/leaderboard" element={<MissPanacheLeaderboardPage />} />
               <Route path="/panache-expo/panache-dor" element={<PanacheDorPage />} />
