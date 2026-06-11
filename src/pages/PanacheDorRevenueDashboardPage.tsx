@@ -63,6 +63,7 @@ type DailyRevenueRow = {
   date: string;
   panache_dor_xaf: number;
   panache_360_xaf: number;
+  miss_panache_xaf: number;
   tickets_xaf: number;
   total_xaf: number;
 };
@@ -136,6 +137,7 @@ type RevenueSummary = {
   vote_category_breakdown: {
     panache_dor: NamedBreakdownRow[];
     panache_360: NamedBreakdownRow[];
+    miss_panache: NamedBreakdownRow[];
   };
   ticket_package_breakdown: NamedBreakdownRow[];
   ticket_event_breakdown: NamedBreakdownRow[];
@@ -258,6 +260,8 @@ const SourceBadge = ({ sourceKey }: { sourceKey: string }) => {
       ? "D'or"
       : sourceKey === "panache_360"
       ? "360"
+      : sourceKey === "miss_panache"
+      ? "Miss"
       : "Tickets";
 
   return <Badge variant="outline">{label}</Badge>;
@@ -355,8 +359,8 @@ const PanacheDorRevenueDashboardPage = () => {
               Revenue dashboard
             </h1>
             <p className="mt-4 max-w-2xl text-muted-foreground">
-              Track Panache D&apos;or vote revenue, Panache 360 vote revenue, all
-              ticket sales, provider-fee estimates, and synced withdrawal impact.
+              Track Panache D&apos;or, Panache 360, Miss Panache, ticket sales,
+              provider-fee estimates, and synced withdrawal impact.
             </p>
           </div>
 
@@ -545,6 +549,15 @@ const PanacheDorRevenueDashboardPage = () => {
                           />
                           <Area
                             type="monotone"
+                            dataKey="miss_panache_xaf"
+                            name="Miss Panache"
+                            stroke="#E83E8C"
+                            fill="#E83E8C"
+                            fillOpacity={0.08}
+                            strokeWidth={2}
+                          />
+                          <Area
+                            type="monotone"
                             dataKey="tickets_xaf"
                             name="Tickets"
                             stroke="#1F76D2"
@@ -564,7 +577,7 @@ const PanacheDorRevenueDashboardPage = () => {
               <Card className="border-border/60 shadow-soft">
                 <CardHeader>
                   <CardTitle>Revenue by source</CardTitle>
-                  <CardDescription>D'or, 360, and ticket sales.</CardDescription>
+                  <CardDescription>D'or, 360, Miss Panache, and ticket sales.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {sourceChartData.some((entry) => entry.value > 0) ? (
@@ -680,6 +693,7 @@ const PanacheDorRevenueDashboardPage = () => {
               {[
                 ["Panache D'or categories", revenue.vote_category_breakdown.panache_dor],
                 ["Panache 360 categories", revenue.vote_category_breakdown.panache_360],
+                ["Miss Panache categories", revenue.vote_category_breakdown.miss_panache],
               ].map(([title, rows]) => (
                 <Card key={String(title)} className="border-border/60 shadow-soft">
                   <CardHeader>
@@ -707,7 +721,13 @@ const PanacheDorRevenueDashboardPage = () => {
                             <Bar
                               dataKey="gross_revenue_xaf"
                               name="Revenue"
-                              fill={String(title).includes("360") ? "#0F8A5F" : "#8241B6"}
+                              fill={
+                                String(title).includes("360")
+                                  ? "#0F8A5F"
+                                  : String(title).includes("Miss")
+                                  ? "#E83E8C"
+                                  : "#8241B6"
+                              }
                               radius={[6, 6, 0, 0]}
                             />
                           </BarChart>

@@ -9,6 +9,9 @@ import type {
   Panache360AwardCategory,
   Panache360AwardNominee,
   Panache360VotingPayload,
+  MissPanacheAwardCategory,
+  MissPanacheAwardNominee,
+  MissPanacheVotingPayload,
 } from "@/integrations/supabase/services";
 
 const DASHBOARD_ACCESS_KEY_STORAGE = "panache-dashboard-access-key";
@@ -22,6 +25,9 @@ const PANACHE_DOR_VOTING_API_URL =
 const PANACHE_360_VOTING_API_URL =
   import.meta.env.VITE_PANACHE_360_VOTING_API_URL ||
   "/api/panache-360-voting";
+const MISS_PANACHE_VOTING_API_URL =
+  import.meta.env.VITE_MISS_PANACHE_VOTING_API_URL ||
+  "/api/miss-panache-voting";
 
 export interface CompetitionApplicationUpdatePayload {
   payment_status?: string;
@@ -86,6 +92,10 @@ export type Panache360VotingCategoryPayload = PanacheDorVotingCategoryPayload;
 export type Panache360VotingNomineePayload = PanacheDorVotingNomineePayload;
 export type Panache360VotingNomineePhotoUploadPayload =
   PanacheDorVotingNomineePhotoUploadPayload;
+export type MissPanacheVotingCategoryPayload = PanacheDorVotingCategoryPayload;
+export type MissPanacheVotingNomineePayload = PanacheDorVotingNomineePayload;
+export type MissPanacheVotingNomineePhotoUploadPayload =
+  PanacheDorVotingNomineePhotoUploadPayload;
 
 export type PanacheDorCsvImportSummary = {
   imported: number;
@@ -118,12 +128,15 @@ const readResponsePayload = async (response: Response) => {
         voting?: CYESVotingPayload;
         panacheDorVoting?: PanacheDorVotingPayload;
         panache360Voting?: Panache360VotingPayload;
+        missPanacheVoting?: MissPanacheVotingPayload;
         category?: CYESAwardCategory;
         panacheDorCategory?: PanacheDorAwardCategory;
         panache360Category?: Panache360AwardCategory;
+        missPanacheCategory?: MissPanacheAwardCategory;
         nominee?: CYESAwardNominee;
         panacheDorNominee?: PanacheDorAwardNominee;
         panache360Nominee?: Panache360AwardNominee;
+        missPanacheNominee?: MissPanacheAwardNominee;
         photoUrl?: string;
         photo_url?: string;
         path?: string;
@@ -702,6 +715,188 @@ export const recoverPanache360PaidPendingVotes = async (
   limit = 100
 ) => {
   return mutatePanache360VotingDashboard(accessKey, {
+    action: "recoverPaidPendingCampayVotes",
+    limit,
+  });
+};
+
+export const fetchMissPanacheVotingDashboard = async (accessKey: string) => {
+  const response = await fetch(MISS_PANACHE_VOTING_API_URL, {
+    headers: {
+      "x-dashboard-key": accessKey,
+    },
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok || !payload?.voting) {
+    throw new Error(payload?.message || "Could not load Miss Panache voting.");
+  }
+
+  return payload.voting as unknown as MissPanacheVotingPayload;
+};
+
+const mutateMissPanacheVotingDashboard = async (
+  accessKey: string,
+  body: Record<string, unknown>
+) => {
+  const response = await fetch(MISS_PANACHE_VOTING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok || !payload?.voting) {
+    throw new Error(payload?.message || "Could not update Miss Panache voting.");
+  }
+
+  return {
+    voting: payload.voting as unknown as MissPanacheVotingPayload,
+    importSummary: payload.importSummary,
+    syncSummary: payload.syncSummary,
+    verifySummary: payload.verifySummary,
+    reconcileSummary: payload.reconcileSummary,
+    autoHistoryReconcileSummary: payload.autoHistoryReconcileSummary,
+    autoVerifySummary: payload.autoVerifySummary,
+    paidPendingScanSummary: payload.paidPendingScanSummary,
+    recoverPaidPendingSummary: payload.recoverPaidPendingSummary,
+  };
+};
+
+export const createMissPanacheVotingCategory = async (
+  accessKey: string,
+  category: MissPanacheVotingCategoryPayload
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "createCategory",
+    category,
+  });
+};
+
+export const updateMissPanacheVotingCategory = async (
+  accessKey: string,
+  id: string,
+  updates: MissPanacheVotingCategoryPayload
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "updateCategory",
+    id,
+    updates,
+  });
+};
+
+export const deleteMissPanacheVotingCategory = async (
+  accessKey: string,
+  id: string
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "deleteCategory",
+    id,
+  });
+};
+
+export const createMissPanacheVotingNominee = async (
+  accessKey: string,
+  nominee: MissPanacheVotingNomineePayload
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "createNominee",
+    nominee,
+  });
+};
+
+export const updateMissPanacheVotingNominee = async (
+  accessKey: string,
+  id: string,
+  updates: MissPanacheVotingNomineePayload
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "updateNominee",
+    id,
+    updates,
+  });
+};
+
+export const deleteMissPanacheVotingNominee = async (
+  accessKey: string,
+  id: string
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "deleteNominee",
+    id,
+  });
+};
+
+export const uploadMissPanacheVotingNomineePhoto = async (
+  accessKey: string,
+  upload: MissPanacheVotingNomineePhotoUploadPayload
+) => {
+  const response = await fetch(MISS_PANACHE_VOTING_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify({
+      action: "uploadNomineePhoto",
+      ...upload,
+    }),
+  });
+  const payload = await readResponsePayload(response);
+  const photoUrl = payload?.photoUrl || payload?.photo_url || "";
+
+  if (!response.ok || !photoUrl) {
+    throw new Error(payload?.message || "Could not upload nominee photo.");
+  }
+
+  return {
+    photoUrl,
+    path: payload?.path || "",
+  };
+};
+
+export const importMissPanacheNomineesCsv = async (
+  accessKey: string,
+  csv: string
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "importNomineesCsv",
+    csv,
+  });
+};
+
+export const verifyPendingMissPanacheCampayVotes = async (accessKey: string) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "verifyPendingCampayVotes",
+  });
+};
+
+export const reconcileMissPanacheCampayHistory = async (
+  accessKey: string,
+  data: { startDate: string; endDate: string; dryRun: boolean }
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "reconcileCampayHistory",
+    startDate: data.startDate,
+    endDate: data.endDate,
+    dryRun: data.dryRun,
+  });
+};
+
+export const scanMissPanachePaidPendingVotes = async (accessKey: string) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
+    action: "scanPaidPendingCampayVotes",
+  });
+};
+
+export const recoverMissPanachePaidPendingVotes = async (
+  accessKey: string,
+  limit = 100
+) => {
+  return mutateMissPanacheVotingDashboard(accessKey, {
     action: "recoverPaidPendingCampayVotes",
     limit,
   });

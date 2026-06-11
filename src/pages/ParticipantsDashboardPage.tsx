@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { CYESVotingDashboard } from "@/components/admin/CYESVotingDashboard";
 import { Panache360VotingDashboard } from "@/components/admin/Panache360VotingDashboard";
 import { PanacheDorVotingDashboard } from "@/components/admin/PanacheDorVotingDashboard";
+import { MissPanacheVotingDashboard } from "@/components/admin/MissPanacheVotingDashboard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -533,6 +534,12 @@ const ParticipantsDashboardPage = () => {
                 >
                   Panache D&apos;or Voting
                 </TabsTrigger>
+                <TabsTrigger
+                  value="miss-panache-voting"
+                  className="rounded-full border border-border/60 bg-card px-4 py-2 data-[state=active]:border-primary data-[state=active]:text-primary"
+                >
+                  Miss Panache Voting
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="applications" className="space-y-6">
@@ -827,6 +834,10 @@ const ParticipantsDashboardPage = () => {
 
               <TabsContent value="panache-dor-voting" className="space-y-6">
                 <PanacheDorVotingDashboard accessKey={dashboardAccessKey} />
+              </TabsContent>
+
+              <TabsContent value="miss-panache-voting" className="space-y-6">
+                <MissPanacheVotingDashboard accessKey={dashboardAccessKey} />
               </TabsContent>
             </Tabs>
           </div>

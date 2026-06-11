@@ -311,6 +311,70 @@ export type Panache360VoteVerifyResponse = {
   voting?: Panache360VotingPayload;
 };
 
+export type MissPanacheAwardCategoryRow = Panache360AwardCategoryRow;
+export type MissPanacheAwardNomineeRow = Panache360AwardNomineeRow;
+export type MissPanacheAwardNominee = MissPanacheAwardNomineeRow & {
+  vote_url?: string | null;
+  vote_count?: number;
+  vote_provider_sync_id?: string | null;
+  vote_last_synced_at?: string | null;
+};
+export type MissPanacheAwardCategory = MissPanacheAwardCategoryRow & {
+  vote_count?: number;
+  nominees: MissPanacheAwardNominee[];
+};
+export type MissPanachePaymentSettings = PanacheDorPaymentSettings;
+export type MissPanacheVotePayment = Omit<
+  PanacheDorVotePayment,
+  'nominee' | 'category'
+> & {
+  nominee?: Pick<MissPanacheAwardNomineeRow, 'name' | 'slug'> | null;
+  category?: Pick<MissPanacheAwardCategoryRow, 'name' | 'slug'> | null;
+};
+export type MissPanachePaidPendingPayment = MissPanacheVotePayment & {
+  matched_reference?: string | null;
+  matched_external_reference?: string | null;
+  matched_status?: string | null;
+  matched_amount_xaf?: number | null;
+  matched_currency?: string | null;
+  matched_transaction_date?: string | null;
+  matched_updated_at?: string | null;
+};
+export type MissPanachePaymentSummary = PanacheDorPaymentSummary;
+export type MissPanachePaidPendingSummary = PanacheDorPaidPendingSummary;
+export type MissPanacheVotingPayload = {
+  categories: MissPanacheAwardCategory[];
+  total_nominees: number;
+  total_votes?: number;
+  counts_available: boolean;
+  blind_voting?: boolean;
+  results_publish_at?: string;
+  results_publish_label?: string;
+  competition_weight_percent?: number;
+  vote_provider?: string;
+  vote_provider_name?: string;
+  vote_provider_sync_configured?: boolean;
+  vote_provider_leaderboard_url?: string | null;
+  ayati_sync_configured: boolean;
+  ayati_leaderboard_url?: string | null;
+  last_synced_at?: string | null;
+  payment?: MissPanachePaymentSettings;
+  payments?: MissPanacheVotePayment[];
+  payment_summary?: MissPanachePaymentSummary;
+  paid_pending_payments?: MissPanachePaidPendingPayment[];
+  paid_pending_summary?: MissPanachePaidPendingSummary;
+  admin?: boolean;
+};
+export type MissPanacheVoteInitializePayload = PanacheDorVoteInitializePayload;
+export type MissPanacheVoteReceipt = PanacheDorVoteReceipt;
+export type MissPanacheVoteInitializeResponse = PanacheDorVoteInitializeResponse;
+export type MissPanacheVoteVerifyResponse = {
+  status: 'success' | 'pending' | 'failed' | 'already-counted' | string;
+  message?: string;
+  receipt?: MissPanacheVoteReceipt;
+  voting?: MissPanacheVotingPayload;
+};
+
 export type EventTicketPackage = {
   id: string;
   event_id: string;
@@ -749,6 +813,79 @@ export const panache360VotingService = {
     }
 
     return payload as Panache360VoteVerifyResponse;
+  },
+};
+
+// Miss Panache voting service
+const MISS_PANACHE_VOTING_API_URL =
+  import.meta.env.VITE_MISS_PANACHE_VOTING_API_URL ||
+  '/api/miss-panache-voting';
+
+const readMissPanacheVotingResponse = async (response: Response) => {
+  return (await response.json().catch(() => null)) as
+    | {
+        message?: string;
+        voting?: MissPanacheVotingPayload;
+        payment?: MissPanacheVoteInitializeResponse['payment'];
+        status?: string;
+        receipt?: MissPanacheVoteReceipt;
+      }
+    | null;
+};
+
+export const missPanacheVotingService = {
+  async getVoting() {
+    const response = await fetch(MISS_PANACHE_VOTING_API_URL);
+    const payload = await readMissPanacheVotingResponse(response);
+
+    if (!response.ok || !payload?.voting) {
+      throw new Error(payload?.message || 'Could not load Miss Panache contestants.');
+    }
+
+    return payload.voting;
+  },
+
+  async initializeCampayVote(data: MissPanacheVoteInitializePayload) {
+    const response = await fetch(MISS_PANACHE_VOTING_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'initializeCampayVote',
+        nomineeId: data.nomineeId,
+        voterEmail: data.voterEmail,
+        voteCount: data.voteCount,
+      }),
+    });
+    const payload = await readMissPanacheVotingResponse(response);
+
+    if (!response.ok || !payload?.payment) {
+      throw new Error(payload?.message || 'Could not start the secure payment.');
+    }
+
+    return payload as MissPanacheVoteInitializeResponse;
+  },
+
+  async verifyCampayVote(data: { txRef?: string; reference?: string }) {
+    const response = await fetch(MISS_PANACHE_VOTING_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'verifyCampayVote',
+        tx_ref: data.txRef,
+        reference: data.reference,
+      }),
+    });
+    const payload = await readMissPanacheVotingResponse(response);
+
+    if (!response.ok || !payload?.status) {
+      throw new Error(payload?.message || 'Could not verify the payment.');
+    }
+
+    return payload as MissPanacheVoteVerifyResponse;
   },
 };
 

@@ -65,6 +65,23 @@ const voteSources = [
     ),
     momoFeeRate: Number(
       process.env.PANACHE_360_MOMO_FEE_RATE ||
+      process.env.MOMO_FEE_RATE ||
+        0.02
+    ),
+  },
+  {
+    key: "miss_panache",
+    label: "Miss Panache votes",
+    table: "miss_panache_vote_payments",
+    nomineeRelation: "miss_panache_award_nominees",
+    categoryRelation: "miss_panache_award_categories",
+    cardFeeRate: Number(
+      process.env.MISS_PANACHE_CARD_FEE_RATE ||
+        process.env.CARD_FEE_RATE ||
+        0.05
+    ),
+    momoFeeRate: Number(
+      process.env.MISS_PANACHE_MOMO_FEE_RATE ||
         process.env.MOMO_FEE_RATE ||
         0.02
     ),
@@ -565,12 +582,14 @@ const combineDaily = (sourceResults) => {
         date,
         panache_dor_xaf: 0,
         panache_360_xaf: 0,
+        miss_panache_xaf: 0,
         tickets_xaf: 0,
         total_xaf: 0,
       };
       const amount = moneyAmount(row.gross_revenue_xaf);
       if (summary.key === "panache_dor") current.panache_dor_xaf += amount;
       else if (summary.key === "panache_360") current.panache_360_xaf += amount;
+      else if (summary.key === "miss_panache") current.miss_panache_xaf += amount;
       else if (summary.key === "tickets") current.tickets_xaf += amount;
       current.total_xaf += amount;
       rowsByDate.set(date, current);
@@ -654,6 +673,7 @@ const buildRevenue = async (supabase) => {
     vote_category_breakdown: {
       panache_dor: mapToRows(voteResults[0].categoryBreakdown, "category"),
       panache_360: mapToRows(voteResults[1].categoryBreakdown, "category"),
+      miss_panache: mapToRows(voteResults[2].categoryBreakdown, "category"),
     },
     ticket_package_breakdown: mapToRows(ticketResult.packageBreakdown, "package"),
     ticket_event_breakdown: mapToRows(ticketResult.eventBreakdown, "event"),

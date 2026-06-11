@@ -104,15 +104,26 @@ const MissPanachePage = () => {
               "The title is built around visibility, not just ceremony.",
             ]}
             footer={
-              <Button
-                asChild
-                className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
-              >
-                <Link to={competitionRegistrationLinks.missPanache.path}>
-                  Register now
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <Button
+                  asChild
+                  className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                >
+                  <Link to="/panache-expo/miss-panache/vote">
+                    Vote now
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-12 rounded-full border-black/12 bg-white/72 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                >
+                  <Link to={competitionRegistrationLinks.missPanache.path}>
+                    Register
+                  </Link>
+                </Button>
+              </div>
             }
           />
 
@@ -208,6 +219,26 @@ const MissPanachePage = () => {
                 <h2 className="mt-3 font-sans text-[clamp(2rem,3.5vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#171411]">
                   The stage brings everything into focus.
                 </h2>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    asChild
+                    className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
+                  >
+                    <Link to="/panache-expo/miss-panache/vote">
+                      Open voting
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="h-12 rounded-full border-black/12 bg-white/72 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
+                  >
+                    <Link to="/panache-expo/miss-panache/leaderboard">
+                      Results countdown
+                    </Link>
+                  </Button>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
