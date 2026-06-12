@@ -1,11 +1,11 @@
-﻿import { Footer } from "@/components/Footer";
+import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { BlindVotingCountdown } from "@/components/BlindVotingCountdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { MissPanacheAwardCategory } from "@/integrations/supabase/services";
-import { useMissPanacheVoting } from "@/hooks/useSupabase";
+import { useMissPanachePublicVoting } from "@/hooks/useMissPanachePublicVoting";
 import { isBlindVotingActive } from "@/lib/blind-voting";
 import {
   getMissPanacheCategoryVoteUrl,
@@ -146,7 +146,7 @@ const CategoryCard = ({
 };
 
 const MissPanacheVotingPage = () => {
-  const { data: voting, isLoading, error, refetch } = useMissPanacheVoting();
+  const { data: voting, isLoading, error, refetch } = useMissPanachePublicVoting();
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -204,7 +204,7 @@ const MissPanacheVotingPage = () => {
               Start by choosing a contest category, then open a contestant
               profile to vote securely. Public voting counts for{" "}
               {voting?.competition_weight_percent || 25}% of the final
-              competition score, with results hidden until announcement time.
+              competition score. Verified vote counts are now visible.
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -220,7 +220,7 @@ const MissPanacheVotingPage = () => {
                 className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
               >
                 <Link to="/panache-expo/miss-panache/leaderboard">
-                  Results countdown
+                  View leaderboard
                   <Trophy className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -289,9 +289,7 @@ const MissPanacheVotingPage = () => {
                       {selectedCategory.name}
                     </h2>
                     <p className="mt-4 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      {blindVoting
-                        ? "Support your favorite contestant. Vote totals and ranking hints stay hidden until results are published."
-                        : "Contestants in this category are listed alphabetically. Overall ranking is shown when public results are available."}
+                      Contestants in this category are listed alphabetically with their current verified vote counts.
                     </p>
                   </div>
 
@@ -307,14 +305,10 @@ const MissPanacheVotingPage = () => {
                       </div>
                       <div className="rounded-[1.2rem] bg-[#f8f2e8] px-4 py-3">
                         <p className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#171411]/48">
-                          {blindVoting ? "Mode" : "Votes"}
+                          Votes
                         </p>
                         <p className="mt-1 font-sans text-xl font-semibold text-[#171411]">
-                          {blindVoting
-                            ? "Blind"
-                            : showCounts
-                            ? selectedCategoryVoteTotal.toLocaleString()
-                            : "-"}
+                          {selectedCategoryVoteTotal.toLocaleString()}
                         </p>
                       </div>
                       <Button
@@ -323,7 +317,7 @@ const MissPanacheVotingPage = () => {
                         className="h-full min-h-[4.25rem] rounded-[1.2rem] border-black/10 bg-white px-4"
                       >
                         <Link to="/panache-expo/miss-panache/leaderboard">
-                          Results countdown
+                          Leaderboard
                         </Link>
                       </Button>
                     </div>
@@ -384,11 +378,7 @@ const MissPanacheVotingPage = () => {
                                 <Award className="h-12 w-12 text-[#171411]/28" />
                               </div>
                             )}
-                            {blindVoting ? (
-                              <Badge className="absolute left-4 top-4 rounded-full bg-white text-[#171411] hover:bg-white">
-                                Alphabetical listing
-                              </Badge>
-                            ) : showCounts && overallRank ? (
+                            {showCounts && overallRank ? (
                               <Badge className="absolute left-4 top-4 rounded-full bg-white text-[#171411] hover:bg-white">
                                 Overall #{overallRank}
                               </Badge>
@@ -413,11 +403,7 @@ const MissPanacheVotingPage = () => {
 
                           <div className="mt-4 rounded-[1.15rem] bg-[#f8f2e8] px-4 py-3">
                             <p className="font-sans text-sm font-semibold text-[#171411]">
-                              {showCounts
-                                ? `${getMissPanacheVoteCount(
-                                    nominee
-                                  ).toLocaleString()} verified votes`
-                                : `Results publish ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`}
+                              {getMissPanacheVoteCount(nominee).toLocaleString()} verified votes
                             </p>
                           </div>
 
@@ -469,9 +455,7 @@ const MissPanacheVotingPage = () => {
                       Pick the category you want to enter.
                     </h2>
                     <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/62">
-                      {blindVoting
-                        ? "Each category lists contestants alphabetically while voting is blind."
-                        : "Each category shows contestants alphabetically with current verified vote counts. Rankings are available on the results page."}
+                      Each category shows contestants alphabetically with current verified vote counts. Rankings are available on the results page.
                     </p>
                     {categoryIsMissing ? (
                       <p className="mt-3 font-sans text-sm font-semibold text-destructive">
@@ -486,7 +470,7 @@ const MissPanacheVotingPage = () => {
                     className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                   >
                     <Link to="/panache-expo/miss-panache/leaderboard">
-                      Results countdown
+                      Leaderboard
                       <Trophy className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
@@ -522,4 +506,3 @@ const MissPanacheVotingPage = () => {
 };
 
 export default MissPanacheVotingPage;
-
