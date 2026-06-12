@@ -138,8 +138,11 @@ const App = () => (
               <Route path="/panache-expo/panache-360" element={<Panache360Page />} />
               <Route path="/panache-expo/panache-360/register" element={<Panache360RegisterPage />} />
               <Route path="/panache-expo/panache-360/vote" element={<Panache360VotingPage />} />
-              <Route path="/panache-expo/panache-360/nominees/:slug" element={<Panache360NomineePage />} />
               <Route path="/panache-expo/panache-360/nominees/:slug/vote-count" element={<Panache360ContestantVotesPage />} />
+              <Route path="/panache-expo/panache-360/nominees/:slug/vote-count/*" element={<Panache360ContestantVotesPage />} />
+              <Route path="/panache-expo/panache-360/contestants/:slug/vote-count" element={<Panache360ContestantVotesPage />} />
+              <Route path="/panache-expo/panache-360/contestants/:slug/vote-count/*" element={<Panache360ContestantVotesPage />} />
+              <Route path="/panache-expo/panache-360/nominees/:slug" element={<Panache360NomineePage />} />
               <Route path="/panache-expo/panache-360/payment/verify" element={<Panache360PaymentVerifyPage />} />
               <Route path="/panache-expo/panache-360/leaderboard" element={<Panache360LeaderboardPage />} />
               <Route path="/panache-expo/panache-fashion-night" element={<FashionNightPage />} />
@@ -147,14 +150,17 @@ const App = () => (
               <Route path="/panache-expo/miss-panache" element={<MissPanachePage />} />
               <Route path="/panache-expo/miss-panache/register" element={<MissPanacheRegisterPage />} />
               <Route path="/panache-expo/miss-panache/vote" element={<MissPanacheVotingPage />} />
-              <Route path="/panache-expo/miss-panache/contestants/:slug" element={<MissPanacheNomineePage />} />
               <Route path="/panache-expo/miss-panache/contestants/:slug/vote-count" element={<MissPanacheContestantVotesPage />} />
+              <Route path="/panache-expo/miss-panache/contestants/:slug" element={<MissPanacheNomineePage />} />
               <Route path="/panache-expo/miss-panache/payment/verify" element={<MissPanachePaymentVerifyPage />} />
               <Route path="/panache-expo/miss-panache/leaderboard" element={<MissPanacheLeaderboardPage />} />
               <Route path="/panache-expo/panache-dor" element={<PanacheDorPage />} />
               <Route path="/panache-expo/panache-dor/vote" element={<PanacheDorVotingPage />} />
-              <Route path="/panache-expo/panache-dor/nominees/:slug" element={<PanacheDorNomineePage />} />
               <Route path="/panache-expo/panache-dor/nominees/:slug/vote-count" element={<PanacheDorContestantVotesPage />} />
+              <Route path="/panache-expo/panache-dor/nominees/:slug/vote-count/*" element={<PanacheDorContestantVotesPage />} />
+              <Route path="/panache-expo/panache-dor/contestants/:slug/vote-count" element={<PanacheDorContestantVotesPage />} />
+              <Route path="/panache-expo/panache-dor/contestants/:slug/vote-count/*" element={<PanacheDorContestantVotesPage />} />
+              <Route path="/panache-expo/panache-dor/nominees/:slug" element={<PanacheDorNomineePage />} />
               <Route path="/panache-expo/panache-dor/payment/verify" element={<PanacheDorPaymentVerifyPage />} />
               <Route path="/panache-expo/panache-dor/leaderboard" element={<PanacheDorLeaderboardPage />} />
               <Route path="/panache-expo/panache-dor/tickets" element={<EventTicketsPage eventSlug="panache-dor-awards-night" />} />
