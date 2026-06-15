@@ -148,6 +148,9 @@ export type PanacheDorVotingPayload = {
   blind_voting?: boolean;
   results_publish_at?: string;
   results_publish_label?: string;
+  voting_ends_at?: string;
+  voting_ends_label?: string;
+  voting_closed?: boolean;
   vote_provider?: string;
   vote_provider_name?: string;
   vote_provider_sync_configured?: boolean;

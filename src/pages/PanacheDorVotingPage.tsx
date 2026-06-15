@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PanacheDorAwardCategory } from "@/integrations/supabase/services";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
-import { isBlindVotingActive } from "@/lib/blind-voting";
+import { isBlindVotingActive, isVotingClosed } from "@/lib/blind-voting";
 import {
   getPanacheDorCategoryVoteUrl,
   getPanacheDorMotivation,
@@ -126,8 +126,12 @@ const PanacheDorVotingPage = () => {
     [categories, categorySlug]
   );
   const blindVoting = isBlindVotingActive(voting);
+  const votingClosed = isVotingClosed(voting);
   const showCounts = Boolean(voting?.counts_available);
   const categoryIsMissing = Boolean(categorySlug && !selectedCategory && categories.length);
+  const votingTimelineLabel = votingClosed
+    ? "Results reveal time"
+    : "Voting close countdown";
 
   const rankedCategoryNominees = useMemo(
     () =>
@@ -165,9 +169,9 @@ const PanacheDorVotingPage = () => {
               <span className="block font-display text-[#8241B6]">Voting</span>
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
-              Start by choosing an award category, then open a nominee profile
-              to vote securely. Public results are blind until the official
-              announcement time, so every category stays competitive.
+              {votingClosed
+                ? `Voting has ended. Public results stay blind until ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`
+                : `Start by choosing an award category, then open a nominee profile to vote securely before ${voting?.voting_ends_label || "20 June 2026 at 11:59 PM WAT"}. Public results stay blind until the reveal.`}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -183,7 +187,7 @@ const PanacheDorVotingPage = () => {
                 className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
               >
                 <Link to="/panache-expo/panache-dor/leaderboard">
-                  Results countdown
+                  {votingTimelineLabel}
                   <Trophy className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -286,7 +290,7 @@ const PanacheDorVotingPage = () => {
                         className="h-full min-h-[4.25rem] rounded-[1.2rem] border-black/10 bg-white px-4"
                       >
                         <Link to="/panache-expo/panache-dor/leaderboard">
-                          Results countdown
+                          {votingTimelineLabel}
                         </Link>
                       </Button>
                     </div>
@@ -417,7 +421,7 @@ const PanacheDorVotingPage = () => {
                               <Link
                                 to={`/panache-expo/panache-dor/nominees/${nominee.slug}`}
                               >
-                                Vote securely
+                                {votingClosed ? "View profile" : "Vote securely"}
                               </Link>
                             </Button>
                           </div>
@@ -463,7 +467,7 @@ const PanacheDorVotingPage = () => {
                     className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                   >
                     <Link to="/panache-expo/panache-dor/leaderboard">
-                      Results countdown
+                      {votingTimelineLabel}
                       <Trophy className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>

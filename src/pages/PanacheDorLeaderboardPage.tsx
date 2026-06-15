@@ -8,7 +8,7 @@ import type {
   PanacheDorAwardNominee,
 } from "@/integrations/supabase/services";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
-import { isBlindVotingActive, sortByName } from "@/lib/blind-voting";
+import { isBlindVotingActive, isVotingClosed, sortByName } from "@/lib/blind-voting";
 import PanacheAwards from "@/assets/PanacheAwards.jpeg";
 import {
   Award,
@@ -67,11 +67,13 @@ const NomineeLeaderboardRow = ({
   rank,
   showCounts,
   blindVoting,
+  votingClosed,
 }: {
   nominee: RankedNominee;
   rank: number;
   showCounts: boolean;
   blindVoting: boolean;
+  votingClosed: boolean;
 }) => (
   <article className="grid gap-4 rounded-[1.35rem] border border-black/8 bg-white/78 p-4 md:grid-cols-[auto_74px_1fr_auto] md:items-center">
     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#171411] font-sans text-sm font-semibold text-white">
@@ -122,7 +124,7 @@ const NomineeLeaderboardRow = ({
         className="rounded-full bg-[#171411] text-white hover:bg-[#171411]/92"
       >
         <Link to={`/panache-expo/panache-dor/nominees/${nominee.slug}`}>
-          Vote securely
+          {votingClosed ? "View profile" : "Vote securely"}
         </Link>
       </Button>
     </div>
@@ -133,6 +135,7 @@ const PanacheDorLeaderboardPage = () => {
   const { data: voting, isLoading, error, refetch } = usePanacheDorVoting();
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const blindVoting = isBlindVotingActive(voting);
+  const votingClosed = isVotingClosed(voting);
   const rankedNominees = useMemo(
     () =>
       blindVoting
@@ -182,7 +185,9 @@ const PanacheDorLeaderboardPage = () => {
             </h1>
             <p className="mt-6 max-w-2xl font-sans text-lg leading-relaxed text-[#171411]/70">
               {blindVoting
-                ? "Public results are blind while voting continues. Nominees are shown alphabetically until the official announcement time."
+                ? votingClosed
+                  ? `Voting has ended. Nominees remain alphabetical and public results stay hidden until ${voting?.results_publish_label || "12 July 2026 at 2:00 AM WAT"}.`
+                  : `Public results are blind while voting continues until ${voting?.voting_ends_label || "20 June 2026 at 11:59 PM WAT"}. Nominees are shown alphabetically until the reveal.`
                 : "This overall ranking is the public People's Choice view. Votes are counted from completed verified payments only; category pages show the category-specific race before voters open a nominee profile."}
             </p>
 
@@ -192,7 +197,7 @@ const PanacheDorLeaderboardPage = () => {
                 className="h-12 rounded-full bg-[#171411] px-7 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92"
               >
                 <Link to="/panache-expo/panache-dor/vote">
-                  Choose a voting category
+                  {votingClosed ? "View categories" : "Choose a voting category"}
                 </Link>
               </Button>
             </div>
@@ -208,7 +213,9 @@ const PanacheDorLeaderboardPage = () => {
             <div className="absolute inset-x-0 bottom-0 p-6">
               <Badge className="rounded-full bg-white text-[#171411] hover:bg-white">
                 {blindVoting
-                  ? "Results countdown"
+                  ? votingClosed
+                    ? "Results reveal time"
+                    : "Voting close countdown"
                   : showCounts
                   ? "Overall ranking synced"
                   : "Ranking preparing"}
@@ -288,6 +295,7 @@ const PanacheDorLeaderboardPage = () => {
                     rank={index + 1}
                     showCounts={showCounts}
                     blindVoting={blindVoting}
+                    votingClosed={votingClosed}
                   />
                 ))}
               </div>
@@ -328,6 +336,7 @@ const PanacheDorLeaderboardPage = () => {
                             rank={index + 1}
                             showCounts={showCounts}
                             blindVoting={blindVoting}
+                            votingClosed={votingClosed}
                           />
                         ))}
                       </div>

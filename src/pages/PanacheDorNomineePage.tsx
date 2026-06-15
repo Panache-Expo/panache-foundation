@@ -5,7 +5,7 @@ import { PanacheDorVoteForm } from "@/components/PanacheDorVoteForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { usePanacheDorVoting } from "@/hooks/useSupabase";
-import { isBlindVotingActive } from "@/lib/blind-voting";
+import { isBlindVotingActive, isVotingClosed } from "@/lib/blind-voting";
 import {
   flattenPanacheDorNominees,
   getPanacheDorCategoryVoteUrl,
@@ -28,6 +28,7 @@ const PanacheDorNomineePage = () => {
     [voting?.categories]
   );
   const blindVoting = isBlindVotingActive(voting);
+  const votingClosed = isVotingClosed(voting);
 
   const rankedNominees = useMemo(
     () =>
@@ -211,6 +212,9 @@ const PanacheDorNomineePage = () => {
                       nominee={nominee}
                       category={nominee.category}
                       payment={voting?.payment}
+                      votingClosed={votingClosed}
+                      votingEndsLabel={voting?.voting_ends_label}
+                      resultsPublishLabel={voting?.results_publish_label}
                     />
                   </div>
 
@@ -221,7 +225,7 @@ const PanacheDorNomineePage = () => {
                       className="h-12 rounded-full border-black/12 bg-white/74 px-7 font-sans text-sm font-semibold text-[#171411] hover:bg-white"
                     >
                       <Link to="/panache-expo/panache-dor/leaderboard">
-                        Results countdown
+                        {votingClosed ? "Results reveal time" : "Voting close countdown"}
                         <Trophy className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>

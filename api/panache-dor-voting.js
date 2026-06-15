@@ -65,6 +65,12 @@ const RESULTS_PUBLISH_AT =
 const RESULTS_PUBLISH_LABEL =
   process.env.PANACHE_DOR_RESULTS_PUBLISH_LABEL ||
   "12 July 2026 at 2:00 AM WAT";
+const VOTING_ENDS_AT =
+  process.env.PANACHE_DOR_VOTING_ENDS_AT ||
+  "2026-06-20T23:59:00+01:00";
+const VOTING_ENDS_LABEL =
+  process.env.PANACHE_DOR_VOTING_ENDS_LABEL ||
+  "20 June 2026 at 11:59 PM WAT";
 const AUTO_VERIFY_ENABLED =
   String(process.env.PANACHE_DOR_AUTO_VERIFY_ENABLED ?? "true")
     .trim()
@@ -646,14 +652,21 @@ const withUpdatedAt = (payload) => ({
 });
 
 const resultsPublishTimestamp = Date.parse(RESULTS_PUBLISH_AT);
+const votingEndsTimestamp = Date.parse(VOTING_ENDS_AT);
 
 const isBlindVotingActive = () =>
   Number.isFinite(resultsPublishTimestamp) && Date.now() < resultsPublishTimestamp;
+
+const isVotingClosed = () =>
+  Number.isFinite(votingEndsTimestamp) && Date.now() >= votingEndsTimestamp;
 
 const getBlindVotingMetadata = (includeDrafts = false) => ({
   blind_voting: !includeDrafts && isBlindVotingActive(),
   results_publish_at: RESULTS_PUBLISH_AT,
   results_publish_label: RESULTS_PUBLISH_LABEL,
+  voting_ends_at: VOTING_ENDS_AT,
+  voting_ends_label: VOTING_ENDS_LABEL,
+  voting_closed: isVotingClosed(),
 });
 
 const decorateNominee = (nominee, { exposeCounts = true } = {}) => ({
@@ -1374,6 +1387,13 @@ const maybeSendReceiptEmail = async (supabase, payment, nominee, category) => {
 };
 
 const initializeCampayVote = async (req, supabase, body) => {
+  if (isVotingClosed()) {
+    throw createHttpError(
+      `Panache D'or voting closed on ${VOTING_ENDS_LABEL}. Results will be published ${RESULTS_PUBLISH_LABEL}.`,
+      403
+    );
+  }
+
   const nomineeIdentifier =
     body.nomineeId || body.nominee_id || body.nomineeSlug || body.nominee_slug;
   const rawVoterEmail = normalizeText(

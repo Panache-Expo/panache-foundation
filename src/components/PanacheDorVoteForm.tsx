@@ -8,13 +8,16 @@ import type {
   PanacheDorPaymentSettings,
 } from "@/integrations/supabase/services";
 import { panacheDorVotingService } from "@/integrations/supabase/services";
-import { CreditCard, Loader2, Star } from "lucide-react";
+import { Clock3, CreditCard, Loader2, Star } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 
 type PanacheDorVoteFormProps = {
   nominee: PanacheDorAwardNominee;
   category: PanacheDorAwardCategory;
   payment?: PanacheDorPaymentSettings;
+  votingClosed?: boolean;
+  votingEndsLabel?: string;
+  resultsPublishLabel?: string;
 };
 
 const quickVoteOptions = [5, 10, 20, 50, 100];
@@ -24,6 +27,9 @@ export const PanacheDorVoteForm = ({
   nominee,
   category,
   payment,
+  votingClosed = false,
+  votingEndsLabel = "20 June 2026 at 11:59 PM WAT",
+  resultsPublishLabel = "12 July 2026 at 2:00 AM WAT",
 }: PanacheDorVoteFormProps) => {
   const [email, setEmail] = useState("");
   const [voteCount, setVoteCount] = useState(String(popularVoteOption));
@@ -47,11 +53,17 @@ export const PanacheDorVoteForm = ({
   const configurationMessage = !backendPaymentsConfigured
     ? "Secure payment is being connected. Nominees and results pages remain visible."
     : "";
+  const votingClosedMessage = `Panache D'or voting closed on ${votingEndsLabel}. Results will be revealed ${resultsPublishLabel}.`;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     setNotice("");
+
+    if (votingClosed) {
+      setError(votingClosedMessage);
+      return;
+    }
 
     if (!backendPaymentsConfigured) {
       setError(
@@ -85,6 +97,31 @@ export const PanacheDorVoteForm = ({
       setIsPreparingPayment(false);
     }
   };
+
+  if (votingClosed) {
+    return (
+      <section className="rounded-[1.6rem] border border-black/8 bg-[#f8f2e8] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-sans text-sm font-semibold text-[#171411]">
+              Voting is closed
+            </p>
+            <p className="mt-1 font-sans text-sm text-[#171411]/62">
+              {category.name}
+            </p>
+          </div>
+          <Badge className="rounded-full bg-white text-[#171411] hover:bg-white">
+            <Clock3 className="mr-2 h-4 w-4" />
+            Results reveal
+          </Badge>
+        </div>
+        <p className="mt-5 rounded-[1.15rem] bg-white px-4 py-3 font-sans text-sm leading-relaxed text-[#171411]/68">
+          Voting for {nominee.name} closed on {votingEndsLabel}. Public vote
+          totals stay hidden until {resultsPublishLabel}.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <form
