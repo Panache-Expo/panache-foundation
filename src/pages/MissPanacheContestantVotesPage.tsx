@@ -1,3 +1,13 @@
-import Page from "./MissPanachePublicContestantPage";
+import PrivateVoteCountPage from "./PrivateVoteCountPage";
 
-export default Page;
+const MissPanacheContestantVotesPage = () => (
+  <PrivateVoteCountPage
+    title="Miss Panache"
+    label="contestant"
+    backTo="/panache-expo/miss-panache"
+    source="miss-panache"
+    verifyApiPath="/api/miss-panache-contestant-votes"
+  />
+);
+
+export default MissPanacheContestantVotesPage;

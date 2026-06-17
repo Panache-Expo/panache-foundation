@@ -65,6 +65,25 @@ const eventPrefixes = {
   "cyes-awards-night": "CYES",
   "panache-dor-awards-night": "PDOR",
 };
+const CONTESTANT_BASE_PASS_PROVIDER = "contestant-pass";
+const CONTESTANT_BASE_PASS_PACKAGE_SLUG = "access-beer";
+const contestantBasePassSources = {
+  "panache-dor": {
+    label: "Panache D'or",
+    eventSlug: "panache-dor-awards-night",
+    verifyRpcName: "public_verify_panache_dor_contestant_password",
+  },
+  "panache-360": {
+    label: "Panache 360",
+    eventSlug: "panache-dor-awards-night",
+    verifyRpcName: "public_verify_panache_360_contestant_password",
+  },
+  "miss-panache": {
+    label: "Miss Panache",
+    eventSlug: "panache-dor-awards-night",
+    verifyRpcName: "verify_miss_panache_contestant_password",
+  },
+};
 const ticketBackgrounds = {
   "cyes-awards-night": "cyes-ticket-bg-downloaded.png",
   "panache-dor-awards-night": "panache-dor-ticket-bg-downloaded.png",
@@ -268,6 +287,18 @@ const normalizeUrl = (value) => {
 };
 
 const moneyAmount = (value) => Math.round(Number(value || 0));
+
+const normalizeContestantPassSource = (value) => {
+  const source = normalizeText(value)
+    .toLowerCase()
+    .replace(/_/g, "-")
+    .replace(/\s+/g, "-");
+
+  if (source === "panachedor") return "panache-dor";
+  if (source === "panache360") return "panache-360";
+  if (source === "misspanache") return "miss-panache";
+  return source;
+};
 
 const resolveChargeAmount = (ticketPackage) => {
   const packagePrice = moneyAmount(ticketPackage.price_xaf);
@@ -1034,6 +1065,13 @@ const sendTicketEmail = async ({ req, ticket, order, event, ticketPackage }) => 
   });
   const downloadUrl = buildDownloadUrl(req, ticket);
   const benefits = renderBenefits(ticketPackage.benefits).join(", ");
+  const isContestantBasePass =
+    order.provider === CONTESTANT_BASE_PASS_PROVIDER ||
+    Boolean(order.provider_payload?.contestant_base_pass);
+  const ticketLabel = isContestantBasePass ? "base event pass" : "ticket";
+  const readyMessage = isContestantBasePass
+    ? "Your complimentary contestant base pass is attached. No payment is required for this pass."
+    : "Your payment has been verified and your ticket is attached.";
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: SMTP_PORT,
@@ -1047,11 +1085,12 @@ const sendTicketEmail = async ({ req, ticket, order, event, ticketPackage }) => 
   await transporter.sendMail({
     from: SMTP_FROM,
     to: order.buyer_email,
-    subject: `${event.short_title} ticket - ${ticket.ticket_code}`,
+    subject: `${event.short_title} ${ticketLabel} - ${ticket.ticket_code}`,
     text: `
 Hello ${order.buyer_name},
 
-Your ticket for ${event.title} is ready.
+Your ${ticketLabel} for ${event.title} is ready.
+${readyMessage}
 
 Ticket code: ${ticket.ticket_code}
 Package: ${ticketPackage.name}
@@ -1066,9 +1105,9 @@ Please present the QR code at the entrance.
 `.trim(),
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#171411;">
-        <h2 style="margin:0 0 16px;">Your ${event.short_title} ticket is ready</h2>
+        <h2 style="margin:0 0 16px;">Your ${event.short_title} ${ticketLabel} is ready</h2>
         <p style="margin:0 0 12px;">Hello ${order.buyer_name},</p>
-        <p style="margin:0 0 12px;">Your payment has been verified and your ticket is attached.</p>
+        <p style="margin:0 0 12px;">${readyMessage}</p>
         <p style="margin:0 0 8px;">Ticket code: <strong>${ticket.ticket_code}</strong></p>
         <p style="margin:0 0 8px;">Package: <strong>${ticketPackage.name}</strong></p>
         <p style="margin:0 0 8px;">Admits: <strong>${ticket.admit_count}</strong></p>
@@ -1227,6 +1266,206 @@ const initializeTicketPayment = async (req, supabase, body) => {
       package_name: ticketPackage.name,
       redirect_url: redirectUrl,
     },
+  };
+};
+
+const verifyContestantForBasePass = async (supabase, sourceConfig, slug, password) => {
+  if (!slug) {
+    throw createHttpError("Contestant link is missing.", 400);
+  }
+  if (!password) {
+    throw createHttpError("Enter your private password.", 400);
+  }
+
+  const { data, error } = await supabase.rpc(sourceConfig.verifyRpcName, {
+    p_slug: slug,
+    p_password: password,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const contestant = Array.isArray(data) ? data[0] : data;
+  if (!contestant?.id) {
+    throw createHttpError("Invalid private password.", 401);
+  }
+
+  return {
+    id: contestant.id,
+    slug: contestant.slug || slug,
+    name: contestant.name || "Contestant",
+    organization: contestant.organization || null,
+    category_name: contestant.category_name || null,
+    category_slug: contestant.category_slug || null,
+    total_votes: contestant.total_votes || 0,
+  };
+};
+
+const loadContestantBasePassOrder = async (supabase, txRef) => {
+  const { data, error } = await supabase
+    .from("event_ticket_orders")
+    .select(
+      `${ORDER_COLUMNS}, event:event_ticket_events(${EVENT_COLUMNS}), package:event_ticket_packages(${PACKAGE_COLUMNS}), ticket:event_tickets(${TICKET_COLUMNS})`
+    )
+    .eq("tx_ref", txRef)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  return data || null;
+};
+
+const getBasePassPackage = (event) =>
+  event.packages.find((item) => item.slug === CONTESTANT_BASE_PASS_PACKAGE_SLUG) ||
+  event.packages.find(
+    (item) => moneyAmount(item.price_xaf) === 2000 && Number(item.admit_count) === 1
+  );
+
+const createContestantBasePass = async (req, supabase, body) => {
+  const source = normalizeContestantPassSource(
+    body.source || body.platform || body.competition
+  );
+  const sourceConfig = contestantBasePassSources[source];
+  const slug = normalizeText(body.slug || body.contestantSlug || body.contestant_slug);
+  const password = normalizeText(body.password || body.accessCode || body.access_code);
+
+  if (!sourceConfig) {
+    throw createHttpError("Contestant pass source is not supported.", 400);
+  }
+
+  const contestant = await verifyContestantForBasePass(
+    supabase,
+    sourceConfig,
+    slug,
+    password
+  );
+  const event = await loadPublicEvent(supabase, sourceConfig.eventSlug);
+  const ticketPackage = getBasePassPackage(event);
+  if (!ticketPackage) {
+    throw createHttpError("The base event pass package is not available.", 404);
+  }
+
+  const buyerName =
+    normalizeText(body.buyerName || body.buyer_name || body.name) ||
+    contestant.name;
+  const rawEmail = normalizeText(body.buyerEmail || body.buyer_email || body.email);
+  const buyerEmail = normalizeEmail(rawEmail);
+  const buyerWhatsapp = normalizePhone(
+    body.buyerWhatsapp || body.buyer_whatsapp || body.whatsapp
+  );
+  const whatsappConsent = Boolean(body.whatsappConsent || body.whatsapp_consent);
+
+  if (!buyerName) {
+    throw createHttpError("Enter the name for the pass.", 400);
+  }
+  if (!rawEmail || !buyerEmail) {
+    throw createHttpError("Enter a valid email address for the pass.", 400);
+  }
+  if (buyerWhatsapp && !whatsappConsent) {
+    throw createHttpError("Confirm WhatsApp consent or leave the number blank.", 400);
+  }
+
+  const txRef = `${CONTESTANT_BASE_PASS_PROVIDER}-${source}-${contestant.id}`;
+  const existingOrder = await loadContestantBasePassOrder(supabase, txRef);
+  if (existingOrder) {
+    const ticket =
+      Array.isArray(existingOrder.ticket) && existingOrder.ticket.length
+        ? existingOrder.ticket[0]
+        : await createOrLoadTicket(
+            supabase,
+            existingOrder,
+            existingOrder.event,
+            existingOrder.package
+          );
+
+    return {
+      status: "already-created",
+      message: "This contestant base pass has already been created.",
+      contestant,
+      ticket: await buildTicketResponse(
+        req,
+        ticket,
+        existingOrder,
+        existingOrder.event,
+        existingOrder.package
+      ),
+    };
+  }
+
+  const now = new Date().toISOString();
+  const basePassPayload = {
+    contestant_base_pass: {
+      source,
+      source_label: sourceConfig.label,
+      contestant_id: contestant.id,
+      contestant_slug: contestant.slug,
+      contestant_name: contestant.name,
+      category_name: contestant.category_name,
+      category_slug: contestant.category_slug,
+      generated_without_payment: true,
+      created_from: "private_vote_count_link",
+      created_at: now,
+    },
+    display_price_xaf: ticketPackage.price_xaf,
+    excluded_from_revenue: true,
+    no_payment_required: true,
+  };
+
+  const insertOrder = async () =>
+    supabase
+      .from("event_ticket_orders")
+      .insert({
+        event_id: event.id,
+        package_id: ticketPackage.id,
+        tx_ref: txRef,
+        campay_reference: null,
+        payment_link: null,
+        provider: CONTESTANT_BASE_PASS_PROVIDER,
+        status: "completed",
+        buyer_name: buyerName,
+        buyer_email: buyerEmail,
+        buyer_whatsapp: buyerWhatsapp || null,
+        whatsapp_consent: Boolean(buyerWhatsapp && whatsappConsent),
+        amount_xaf: ticketPackage.price_xaf,
+        currency: CURRENCY,
+        provider_status: "COMPLIMENTARY",
+        provider_payload: basePassPayload,
+        verified_at: now,
+      })
+      .select(
+        `${ORDER_COLUMNS}, event:event_ticket_events(${EVENT_COLUMNS}), package:event_ticket_packages(${PACKAGE_COLUMNS})`
+      )
+      .single();
+
+  let { data: order, error } = await insertOrder();
+  if (error?.code === "23505") {
+    order = await loadContestantBasePassOrder(supabase, txRef);
+    error = null;
+  }
+  if (error) {
+    throw error;
+  }
+  if (!order) {
+    throw createHttpError("Could not create this base pass.", 500);
+  }
+
+  const ticket = await createOrLoadTicket(supabase, order, order.event, order.package);
+  const emailResult = await maybeSendTicketEmail(supabase, {
+    req,
+    ticket,
+    order,
+    event: order.event,
+    ticketPackage: order.package,
+  });
+
+  return {
+    status: "success",
+    message: "Your base event pass is ready.",
+    contestant,
+    email: emailResult,
+    ticket: await buildTicketResponse(req, ticket, order, order.event, order.package),
   };
 };
 
@@ -1666,6 +1905,8 @@ export default async function handler(req, res) {
 
     if (action === "initializeTicketPayment") {
       result = await initializeTicketPayment(req, supabase, body);
+    } else if (action === "createContestantBasePass") {
+      result = await createContestantBasePass(req, supabase, body);
     } else if (action === "createLocalTestTicket") {
       result = await createLocalTestTicket(req, supabase, body);
     } else if (action === "verifyTicketPayment") {

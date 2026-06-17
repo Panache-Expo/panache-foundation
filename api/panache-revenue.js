@@ -390,6 +390,7 @@ const summarizeTickets = async (supabase) => {
     "tx_ref",
     "campay_reference",
     "status",
+    "provider",
     "amount_xaf",
     "currency",
     "provider_status",
@@ -415,6 +416,13 @@ const summarizeTickets = async (supabase) => {
   const recent = [];
 
   for (const order of rows) {
+    const isComplimentaryPass =
+      normalizeText(order.provider).toLowerCase() === "contestant-pass" ||
+      Boolean(order.provider_payload?.contestant_base_pass);
+    if (isComplimentaryPass) {
+      continue;
+    }
+
     const status = classifyStatus(order.status);
     if (status === "completed") summary.completed_payment_count += 1;
     else if (status === "pending") summary.pending_payment_count += 1;

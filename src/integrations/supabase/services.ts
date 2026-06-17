@@ -475,6 +475,39 @@ export type EventTicketVerifyResponse = {
   ticket?: EventTicketIssued;
 };
 
+export type ContestantBasePassSource = 'panache-dor' | 'panache-360' | 'miss-panache';
+
+export type EventTicketContestantBasePassPayload = {
+  source: ContestantBasePassSource;
+  slug: string;
+  password: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerWhatsapp?: string;
+  whatsappConsent?: boolean;
+};
+
+export type EventTicketContestantBasePassResponse = {
+  status: 'success' | 'already-created' | string;
+  message?: string;
+  contestant?: {
+    id: string;
+    slug: string;
+    name: string;
+    category_name?: string | null;
+    category_slug?: string | null;
+    total_votes?: number;
+  };
+  ticket?: EventTicketIssued;
+  email?: {
+    attempted?: boolean;
+    ok?: boolean;
+    skipped?: boolean;
+    message?: string;
+    error?: string;
+  };
+};
+
 export type EventTicketStaffTicket = {
   id: string;
   ticket_code: string;
@@ -902,6 +935,8 @@ const readEventTicketsResponse = async (response: Response) => {
         Partial<EventTicketInitializeResponse> &
         Partial<EventTicketVerifyResponse> & {
           message?: string;
+          contestant?: EventTicketContestantBasePassResponse['contestant'];
+          email?: EventTicketContestantBasePassResponse['email'];
           tickets?: EventTicketStaffTicket[];
           checked_in_count?: number;
         })
@@ -961,6 +996,26 @@ export const eventTicketsService = {
     }
 
     return payload as EventTicketVerifyResponse;
+  },
+
+  async createContestantBasePass(data: EventTicketContestantBasePassPayload) {
+    const response = await fetch(EVENT_TICKETS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'createContestantBasePass',
+        ...data,
+      }),
+    });
+    const payload = await readEventTicketsResponse(response);
+
+    if (!response.ok || !payload?.status || !payload?.ticket) {
+      throw new Error(payload?.message || 'Could not create the base event pass.');
+    }
+
+    return payload as EventTicketContestantBasePassResponse;
   },
 
   async lookupTicket(data: {

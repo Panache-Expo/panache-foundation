@@ -5,6 +5,7 @@ const PanacheDorContestantVotesPage = () => (
     title="Panache D’or"
     label="nominee"
     backTo="/panache-expo/panache-dor"
+    source="panache-dor"
     rpcName="public_verify_panache_dor_contestant_password"
   />
 );
