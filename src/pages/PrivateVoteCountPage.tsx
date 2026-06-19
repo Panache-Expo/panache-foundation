@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  eventTicketsService,
   type ContestantBasePassSource,
   type EventTicketIssued,
 } from "@/integrations/supabase/services";
@@ -29,6 +28,12 @@ type VoteCountEntry = {
   verified_at?: string | null;
 };
 
+type ContestantAccessPassResponse = {
+  status: "success" | "already-created" | string;
+  message?: string;
+  ticket?: EventTicketIssued;
+};
+
 type PrivateVoteCountPageProps = {
   title: string;
   label?: string;
@@ -38,6 +43,41 @@ type PrivateVoteCountPageProps = {
     | "public_verify_panache_dor_contestant_password"
     | "public_verify_panache_360_contestant_password";
   verifyApiPath?: string;
+};
+
+const CONTESTANT_ACCESS_PASS_API_URL =
+  import.meta.env.VITE_CONTESTANT_ACCESS_PASS_API_URL ||
+  "/api/contestant-access-pass";
+
+const createContestantAccessPass = async (data: {
+  source: ContestantBasePassSource;
+  slug: string;
+  password: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerWhatsapp?: string;
+  whatsappConsent?: boolean;
+}) => {
+  const response = await fetch(CONTESTANT_ACCESS_PASS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "createContestantAccessPass",
+      ...data,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | ContestantAccessPassResponse
+    | null;
+
+  if (!response.ok || !payload?.ticket) {
+    throw new Error(
+      payload?.message || "Could not create the contestant access pass."
+    );
+  }
+
+  return payload;
 };
 
 const formatCheckedAt = (value?: string | null) => {
@@ -174,7 +214,7 @@ const PrivateVoteCountPage = ({
         throw new Error("Unlock your vote count again before creating a pass.");
       }
 
-      const result = await eventTicketsService.createContestantBasePass({
+      const result = await createContestantAccessPass({
         source,
         slug: entry.slug || slug,
         password: accessPassword,
@@ -185,20 +225,20 @@ const PrivateVoteCountPage = ({
       });
 
       if (!result.ticket) {
-        throw new Error(result.message || "Could not create the base pass.");
+        throw new Error(result.message || "Could not create the contestant access pass.");
       }
 
       setTicket(result.ticket);
       setPassNotice(
         result.status === "already-created"
-          ? "Your base pass already existed. The same pass is ready to download."
-          : "Your base pass is ready to download."
+          ? "Your contestant access pass already existed. The same pass is ready to download."
+          : "Your contestant access pass is ready to download."
       );
     } catch (requestError) {
       setPassError(
         requestError instanceof Error
           ? requestError.message
-          : "Could not create the base event pass."
+          : "Could not create the contestant access pass."
       );
     } finally {
       setIsCreatingPass(false);
@@ -305,10 +345,10 @@ const PrivateVoteCountPage = ({
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2 font-sans text-2xl text-[#171411]">
                           <Ticket className="h-5 w-5 text-[#8241B6]" />
-                          Base event pass
+                          Contestant access pass
                         </CardTitle>
                         <CardDescription>
-                          Create one complimentary access pass from this private link. It uses the same QR ticket format as the 2,000 XAF access ticket, without payment.
+                          Create one complimentary purple QR access pass from this private link. It admits one person and does not include the free drink.
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -331,6 +371,9 @@ const PrivateVoteCountPage = ({
                               <p className="mt-3 font-sans text-sm text-[#171411]/64">
                                 {ticket.package.name} | {ticket.admit_count} guest
                                 {ticket.admit_count === 1 ? "" : "s"} | {ticket.event.event_date_label}
+                              </p>
+                              <p className="mt-1 font-sans text-sm text-[#171411]/64">
+                                No free drink included
                               </p>
                               <p className="mt-1 font-sans text-sm text-[#171411]/64">
                                 {ticket.event.venue}
@@ -413,7 +456,7 @@ const PrivateVoteCountPage = ({
                               ) : (
                                 <>
                                   <Ticket className="h-4 w-4" />
-                                  Create base pass
+                                  Create access pass
                                 </>
                               )}
                             </Button>
