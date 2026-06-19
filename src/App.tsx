@@ -10,6 +10,7 @@ import CYESPage from "./pages/CYESPage";
 import CYESAwardsPage from "./pages/CYESAwardsPage";
 import CYESNominationsPage from "./pages/CYESNominationsPage";
 import CYESVotingPage from "./pages/CYESVotingPage";
+import CYESContestantVotesPage from "./pages/CYESContestantVotesPage";
 import CYESLeaderboardPage from "./pages/CYESLeaderboardPage";
 import CYESRegisterPage from "./pages/CYESRegisterPage";
 import CYESPitchCompetitionPage from "./pages/CYESPitchCompetitionPage";
@@ -48,7 +49,6 @@ import MissPanacheLeaderboardPage from "./pages/MissPanacheLeaderboardPage";
 import ParticipantsDashboardPage from "./pages/ParticipantsDashboardPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import NotFound from "./pages/NotFound";
-import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 import { DeveloperContactCta } from "./components/DeveloperContactCta";
 import { initGoogleAnalytics, trackPageView } from "./lib/analytics";
 
@@ -172,6 +172,8 @@ const App = () => (
               <Route path="/cyes/awards" element={<CYESAwardsPage />} />
               <Route path="/cyes/nominations" element={<CYESNominationsPage />} />
               <Route path="/cyes/vote" element={<CYESVotingPage />} />
+              <Route path="/cyes/nominees/:slug/vote-count" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/nominees/:slug/vote-count/*" element={<CYESContestantVotesPage />} />
               <Route path="/cyes/leaderboard" element={<CYESLeaderboardPage />} />
               <Route path="/cyes/register" element={<CYESRegisterPage />} />
               <Route path="/cyes/pitch-competition" element={<CYESPitchCompetitionPage />} />
