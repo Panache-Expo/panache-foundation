@@ -50,6 +50,7 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 import { DeveloperContactCta } from "./components/DeveloperContactCta";
+import { EmailRankingsButton } from "./components/admin/EmailRankingsButton";
 import { initGoogleAnalytics, trackPageView } from "./lib/analytics";
 
 const queryClient = new QueryClient({
@@ -128,6 +129,7 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <DeveloperContactCta />
+          <EmailRankingsButton />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<FoundationHome />} />
