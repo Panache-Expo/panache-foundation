@@ -49,7 +49,8 @@ type PrivateVoteCountPageProps = {
 
 const CONTESTANT_ACCESS_PASS_API_URL =
   import.meta.env.VITE_CONTESTANT_ACCESS_PASS_API_URL ||
-  "/api/contestant-access-pass";
+  import.meta.env.VITE_EVENT_TICKETS_API_URL ||
+  "/api/event-tickets";
 
 const createContestantAccessPass = async (data: {
   source: ContestantBasePassSource;
@@ -64,7 +65,7 @@ const createContestantAccessPass = async (data: {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      action: "createContestantAccessPass",
+      action: "createContestantBasePass",
       ...data,
     }),
   });

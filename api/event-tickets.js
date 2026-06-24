@@ -68,6 +68,11 @@ const eventPrefixes = {
 const CONTESTANT_BASE_PASS_PROVIDER = "contestant-pass";
 const CONTESTANT_BASE_PASS_PACKAGE_SLUG = "access-beer";
 const contestantBasePassSources = {
+  cyes: {
+    label: "CYES Awards",
+    eventSlug: "cyes-awards-night",
+    verifyRpcName: "public_verify_cyes_contestant_password",
+  },
   "panache-dor": {
     label: "Panache D'or",
     eventSlug: "panache-dor-awards-night",
@@ -526,6 +531,28 @@ const applyTicketEventDisplayOverrides = (event) => ({
   ...(ticketEventDisplayOverrides[event?.slug] || {}),
 });
 
+const isContestantBasePassOrder = (order = {}) =>
+  order.provider === CONTESTANT_BASE_PASS_PROVIDER ||
+  Boolean(order.provider_payload?.contestant_base_pass);
+
+const getDisplayTicketPackage = (order, ticketPackage) => {
+  if (!isContestantBasePassOrder(order)) {
+    return ticketPackage;
+  }
+
+  return {
+    ...ticketPackage,
+    slug: "contestant-access-pass",
+    name: "Access Pass",
+    description:
+      "Complimentary nominee entrance pass. This pass does not include a free drink.",
+    price_xaf: 0,
+    admit_count: 1,
+    benefits: ["Event access", "QR entrance pass"],
+    style_key: "contestant-access",
+  };
+};
+
 const serializeEvent = (event) => {
   const displayEvent = applyTicketEventDisplayOverrides(event);
 
@@ -544,6 +571,7 @@ const serializeEvent = (event) => {
 
 const buildTicketResponse = async (req, ticket, order, event, ticketPackage) => {
   const displayEvent = applyTicketEventDisplayOverrides(event);
+  const displayPackage = getDisplayTicketPackage(order, ticketPackage);
   const checkInUrl = buildCheckInUrl(req, ticket);
   const qrImageDataUrl = await QRCode.toDataURL(checkInUrl, {
     width: 420,
@@ -566,7 +594,7 @@ const buildTicketResponse = async (req, ticket, order, event, ticketPackage) => 
     download_url: buildDownloadUrl(req, ticket),
     qr_image_data_url: qrImageDataUrl,
     event: serializeEvent({ ...displayEvent, packages: [] }),
-    package: ticketPackage,
+    package: displayPackage,
     order: {
       id: order.id,
       tx_ref: order.tx_ref,
@@ -943,6 +971,7 @@ const formatCompactXaf = (amount) => {
 
 const buildTicketPdfBuffer = async ({ req, ticket, order, event, ticketPackage }) => {
   event = applyTicketEventDisplayOverrides(event);
+  ticketPackage = getDisplayTicketPackage(order, ticketPackage);
   const width = 420;
   const height = 760;
   const theme = getTicketVisualTheme(event, ticketPackage);
@@ -1976,7 +2005,10 @@ export default async function handler(req, res) {
 
     if (action === "initializeTicketPayment") {
       result = await initializeTicketPayment(req, supabase, body);
-    } else if (action === "createContestantBasePass") {
+    } else if (
+      action === "createContestantBasePass" ||
+      action === "createContestantAccessPass"
+    ) {
       result = await createContestantBasePass(req, supabase, body);
     } else if (action === "createLocalTestTicket") {
       result = await createLocalTestTicket(req, supabase, body);

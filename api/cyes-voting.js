@@ -1860,6 +1860,50 @@ const handleUploadNomineePhoto = async (res, supabase, body) => {
   });
 };
 
+const handleVerifyContestantPassword = async (res, supabase, body) => {
+  const slug = normalizeText(body.slug || body.contestantSlug || body.contestant_slug);
+  const password = normalizeText(body.password || body.accessCode || body.access_code);
+
+  if (!slug) {
+    return sendJson(res, 400, { message: "Contestant link is missing." });
+  }
+  if (!password) {
+    return sendJson(res, 400, { message: "Enter your private password." });
+  }
+
+  const { data, error } = await supabase.rpc(
+    "public_verify_cyes_contestant_password",
+    {
+      p_slug: slug,
+      p_password: password,
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  const contestant = Array.isArray(data) ? data[0] : data;
+  if (!contestant?.id) {
+    return sendJson(res, 401, { message: "Invalid contestant password." });
+  }
+
+  return sendJson(res, 200, {
+    contestant: {
+      id: contestant.id,
+      slug: contestant.slug || slug,
+      name: contestant.name,
+      organization: contestant.organization || null,
+      bio: contestant.bio || null,
+      photo_url: contestant.photo_url || null,
+      category_name: contestant.category_name || null,
+      category_slug: contestant.category_slug || null,
+      total_votes: contestant.total_votes || 0,
+      verified_at: contestant.verified_at || new Date().toISOString(),
+    },
+  });
+};
+
 const handleAdminAction = async (req, res, supabase, body) => {
   if (!assertAuthorized(req, res)) {
     return;
@@ -2072,6 +2116,10 @@ export default async function handler(req, res) {
 
       if (CYES_VOTING_CLOSED && ["requestOtp", "castVote"].includes(action)) {
         return sendVotingClosed(res);
+      }
+
+      if (action === "verifyContestantPassword") {
+        return await handleVerifyContestantPassword(res, supabase, body);
       }
 
       if (action === "requestOtp") {
