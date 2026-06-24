@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { WhatsAppLogo } from "@/components/WhatsAppLogo";
 import {
   Facebook,
   Instagram,
@@ -60,6 +61,11 @@ const cyesSocials = [
 const socialLinkClasses =
   "inline-flex h-12 w-12 items-center justify-center rounded-full text-[#11100e] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-65";
 
+const GLEN_WEBSITE_URL = "https://glenmue.dev";
+const GLEN_WHATSAPP_NUMBER = "+237657560828";
+const GLEN_WHATSAPP_HREF =
+  "https://wa.me/237657560828?text=Hi%20Glen%2C%20I%20saw%20the%20Panache%20Foundation%20website%20and%20I%27d%20like%20to%20discuss%20building%20something%20similar.";
+
 type FooterVariant = "panache" | "cyes";
 
 type FooterProps = {
@@ -80,7 +86,7 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
   const primaryRegisterTo = isCyesVariant ? "/cyes/register" : "/panache-expo/register";
 
   return (
-    <footer className={`relative px-3 pb-4 pt-14 md:px-4 md:pt-16 ${outerBackgroundClassName}`}>
+    <footer className={`relative px-0 pb-4 pt-14 md:px-4 md:pt-16 ${outerBackgroundClassName}`}>
       <div className={`relative overflow-hidden rounded-[2.75rem] px-6  pt-8 md:px-10 md: md:pt-10 lg:px-14 lg: lg:pt-12 ${innerBackgroundClassName}`}>
         <div className={`pointer-events-none absolute inset-0 ${glowBackgroundClassName}`} />
 
@@ -151,7 +157,7 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
                 <MessageCircle className="h-4 w-4 text-[#25D366]" />
                 Register via WhatsApp
               </a>
-              <p className="max-w-[16rem] font-sans text-sm leading-relaxed text-[#11100e]/62">
+              <p className=" font-sans text-sm leading-relaxed text-[#11100e]/62">
                 WhatsApp bot for Panache and CYES registration and support:
                 <span className="block font-semibold text-[#11100e]">
                   {PANACHE_SUPPORT_WHATSAPP_NUMBER}
@@ -271,17 +277,27 @@ export const Footer = ({ variant = "panache" }: FooterProps) => {
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-2 pt-4 text-sm font-medium text-[#11100e]/80 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <p>&copy; 2026 Panache Expo. All rights reserved.</p>
-          <p className="text-xs text-[#11100e]/58">
+          <p className="flex flex-wrap items-center gap-1.5 text-xs text-[#11100e]/58">
             Website crafted by
             <a
-              href="https://wa.me/237657560828?text=Hi%20Glen%2C%20I%20saw%20the%20Panache%20Foundation%20website%20and%20I%27d%20like%20to%20discuss%20building%20something%20similar."
+              href={GLEN_WEBSITE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-1 font-semibold text-[#11100e] underline-offset-4 transition-opacity hover:opacity-70 hover:underline"
+              className="font-semibold text-[#11100e] underline-offset-4 transition-opacity hover:opacity-70 hover:underline"
             >
               Glen Mue
             </a>
-            . Need a website or voting platform like this? Contact me.
+            <span>.</span>
+            <a
+              href={GLEN_WHATSAPP_HREF}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Chat with Glen Mue on WhatsApp at ${GLEN_WHATSAPP_NUMBER}`}
+              title={`Glen Mue WhatsApp ${GLEN_WHATSAPP_NUMBER}`}
+              className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/45 bg-white/72 text-[#25D366] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_rgba(16,10,7,0.12)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:bg-white"
+            >
+              <WhatsAppLogo className="h-[1.125rem] w-[1.125rem]" />
+            </a>
           </p>
         </div>
 

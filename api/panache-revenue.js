@@ -418,7 +418,10 @@ const summarizeTickets = async (supabase) => {
   for (const order of rows) {
     const isComplimentaryPass =
       normalizeText(order.provider).toLowerCase() === "contestant-pass" ||
-      Boolean(order.provider_payload?.contestant_base_pass);
+      normalizeText(order.provider).toLowerCase() === "contestant-access-pass" ||
+      Boolean(order.provider_payload?.contestant_base_pass) ||
+      Boolean(order.provider_payload?.contestant_access_pass) ||
+      Boolean(order.provider_payload?.excluded_from_revenue);
     if (isComplimentaryPass) {
       continue;
     }

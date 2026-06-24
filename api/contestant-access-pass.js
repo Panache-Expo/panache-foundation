@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import { createClient } from "@supabase/supabase-js";
@@ -24,6 +26,7 @@ const TICKET_COLUMNS =
 
 const CONTESTANT_ACCESS_PASS_PROVIDER = "contestant-access-pass";
 const CONTESTANT_ACCESS_PASS_DB_PACKAGE_SLUG = "access-beer";
+const CONTESTANT_ACCESS_PASS_BACKGROUND = "panache-dor-ticket-bg-downloaded.png";
 
 const contestantAccessPassSources = {
   "panache-dor": {
@@ -130,7 +133,7 @@ const serializeEvent = (event) => {
 const getDisplayPackage = (ticketPackage) => ({
   ...ticketPackage,
   slug: "contestant-access-pass",
-  name: "Contestant Access Pass",
+  name: "Access Pass",
   description:
     "Complimentary nominee entrance pass. This pass does not include a free drink.",
   price_xaf: 0,
@@ -229,6 +232,17 @@ const buildDownloadUrl = (req, ticket) => {
   return `${baseUrl}/api/contestant-access-pass?download=1&ticketCode=${encodeURIComponent(ticket.ticket_code)}&token=${encodeURIComponent(ticket.qr_token)}`;
 };
 
+const getContestantAccessPassBackgroundPath = () => {
+  const candidate = path.join(
+    process.cwd(),
+    "src",
+    "assets",
+    "tickets",
+    CONTESTANT_ACCESS_PASS_BACKGROUND
+  );
+  return fs.existsSync(candidate) ? candidate : "";
+};
+
 const buildTicketResponse = async (req, ticket, order, event, dbPackage) => {
   const displayPackage = getDisplayPackage(dbPackage);
   const checkInUrl = buildCheckInUrl(req, ticket);
@@ -266,14 +280,17 @@ const buildTicketResponse = async (req, ticket, order, event, dbPackage) => {
 };
 
 const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
+  const displayEvent = applyTicketEventDisplayOverrides(event);
   const displayPackage = getDisplayPackage(dbPackage);
   const width = 420;
   const height = 760;
-  const deep = "#18051f";
-  const deepAlt = "#2a0a35";
+  const deep = "#11031d";
+  const deepAlt = "#240934";
   const purple = "#8241B6";
-  const purpleLight = "#f1dcff";
-  const gold = "#E4B94A";
+  const purpleBright = "#A55BE8";
+  const purpleLight = "#F1DCFF";
+  const purpleSoft = "#D8A8FF";
+  const backgroundPath = getContestantAccessPassBackgroundPath();
   const qrUrl = buildCheckInUrl(req, ticket);
   const qrBuffer = await QRCode.toBuffer(qrUrl, {
     type: "png",
@@ -291,64 +308,102 @@ const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    doc.rect(0, 0, width, height).fill(deep);
-    doc.circle(width - 36, 88, 148).fillColor(purple).fillOpacity(0.28).fill();
-    doc.circle(34, 290, 124).fillColor(gold).fillOpacity(0.13).fill();
-    doc.circle(width - 48, height - 96, 130).fillColor(purple).fillOpacity(0.18).fill();
+    if (backgroundPath) {
+      doc.image(backgroundPath, 0, 0, { width, height });
+      doc.rect(0, 0, width, height).fillColor(deep).fillOpacity(0.7).fill();
+    } else {
+      doc.rect(0, 0, width, height).fill(deep);
+    }
+    doc.fillOpacity(0.96).fillColor("#050207").rect(0, 0, width, 178).fill();
+    doc.fillOpacity(0.82).fillColor(purple).rect(0, 0, width, 10).fill();
+    doc.circle(width - 32, 82, 132).fillColor(purpleBright).fillOpacity(0.22).fill();
+    doc.circle(58, 170, 94).fillColor(purple).fillOpacity(0.12).fill();
+    doc.circle(width - 60, height - 86, 126).fillColor(deepAlt).fillOpacity(0.42).fill();
+    doc.circle(18, 396, 102).fillColor(purple).fillOpacity(0.12).fill();
+    doc.save();
+    doc.rotate(-19, { origin: [width / 2, height / 2] });
+    doc
+      .fillOpacity(0.08)
+      .fillColor(purpleLight)
+      .font("Helvetica-Bold")
+      .fontSize(28)
+      .text("ACCESS  PASS  ACCESS  PASS", -34, 404, {
+        width: width + 68,
+        align: "center",
+        characterSpacing: 2,
+      });
+    doc.restore();
     doc.fillOpacity(1);
-    doc.rect(0, 0, width, 12).fillColor(purple).fill();
 
-    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(15).text("PANACHE FOUNDATION", 28, 36, {
+    for (let index = 0; index < 8; index += 1) {
+      const y = 230 + index * 46;
+      doc
+        .fillOpacity(index % 2 === 0 ? 0.14 : 0.08)
+        .fillColor(index % 2 === 0 ? purpleBright : purple)
+        .roundedRect(width - 76 + index * 3, y, 118, 18, 9)
+        .fill();
+    }
+    doc.fillOpacity(1);
+
+    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(15).text("PANACHE FOUNDATION", 28, 38, {
       width: width - 56,
       align: "center",
       characterSpacing: 1.8,
     });
-    doc.fillColor(gold).font("Times-Bold").fontSize(30).text("Panache D'or Awards 2026", 28, 64, {
+    doc.fillColor(purpleLight).font("Times-Bold").fontSize(30).text("Panache D'or Awards 2026", 28, 70, {
       width: width - 56,
       align: "center",
     });
 
-    doc.roundedRect(52, 118, width - 104, 54, 14).fillColor(purple).fillOpacity(0.95).fill();
+    doc.roundedRect(54, 118, width - 108, 50, 13).fillColor(purple).fillOpacity(0.96).fill();
     doc.fillOpacity(1);
-    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(22).text(displayPackage.name.toUpperCase(), 58, 136, {
+    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(24).text(displayPackage.name.toUpperCase(), 58, 134, {
       width: width - 116,
       align: "center",
-      characterSpacing: 1.4,
+      characterSpacing: 1.7,
     });
 
-    doc.fillColor(purpleLight).font("Helvetica").fontSize(12).text(`${event.event_date_label}  |  7PM  |  ${event.venue}`, 36, 198, {
-      width: width - 72,
+    doc.fillColor("#FFFFFF").font("Times-Roman").fontSize(23).text("Panache D'or Awards", 34, 180, {
+      width: width - 68,
       align: "center",
     });
+    doc.fillColor(purpleBright).font("Helvetica-Bold").fontSize(9.5).text(`${displayEvent.event_date_label}  |  AWARD NIGHT 7PM  |  ${displayEvent.venue}`, 42, 216, {
+      width: width - 84,
+      align: "center",
+      characterSpacing: 0.5,
+    });
 
-    const qrSize = 246;
+    const qrSize = 242;
     const qrX = (width - qrSize) / 2;
-    const qrY = 254;
-    doc.roundedRect(qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 14).fillColor(deepAlt).fill();
-    doc.roundedRect(qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, 14).strokeColor(purple).lineWidth(1.4).stroke();
+    const qrY = 258;
+    doc.roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10).fillColor("#020302").fillOpacity(0.84).fill();
+    doc.fillOpacity(1);
+    doc.roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10).strokeColor(purple).strokeOpacity(0.42).lineWidth(1.2).stroke();
+    doc.strokeOpacity(1);
     doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
 
-    doc.fillColor(purpleLight).font("Helvetica-Bold").fontSize(13).text(displayPackage.benefits.join("  |  "), 30, qrY + qrSize + 36, {
-      width: width - 60,
+    doc.fillColor(purpleLight).font("Helvetica").fontSize(12).text(displayPackage.benefits.join(", "), 30, qrY + qrSize + 42, {
+      width: width - 72,
       align: "center",
+      ellipsis: true,
     });
-    doc.fillColor(gold).font("Helvetica-Bold").fontSize(11).text("NO FREE DRINK INCLUDED", 30, qrY + qrSize + 61, {
+    doc.fillColor(purpleSoft).font("Helvetica-Bold").fontSize(10.5).text("NO FREE DRINK INCLUDED", 30, qrY + qrSize + 66, {
       width: width - 60,
       align: "center",
       characterSpacing: 1.2,
     });
 
-    doc.fillColor("#FFFFFF").font("Helvetica").fontSize(ticket.buyer_name.length > 30 ? 18 : 22).text(ticket.buyer_name, 24, 612, {
+    doc.fillColor("#FFFFFF").font("Helvetica").fontSize(ticket.buyer_name.length > 30 ? 18 : 21).text(ticket.buyer_name, 24, 608, {
       width: width - 48,
       align: "center",
       ellipsis: true,
     });
-    doc.fillColor(purpleLight).font("Helvetica-Bold").fontSize(12).text(`TICKET CODE: ${ticket.ticket_code}`, 24, 655, {
+    doc.fillColor(purpleBright).font("Helvetica-Bold").fontSize(12).text(`TICKET CODE: ${ticket.ticket_code}`, 24, 654, {
       width: width - 48,
       align: "center",
-      characterSpacing: 0.45,
+      characterSpacing: 0.35,
     });
-    doc.fillColor("#FFFFFF").font("Helvetica").fontSize(8.8).text("1 guest  |  Complimentary nominee access  |  Present QR at entrance", 30, 708, {
+    doc.fillColor("#FFFFFF").font("Helvetica").fontSize(8.2).text("1 guest  |  Complimentary nominee access  |  Present QR at entrance", 30, 708, {
       width: width - 60,
       align: "center",
     });
@@ -407,6 +462,10 @@ const createContestantAccessPass = async (req, supabase, body) => {
   }
 
   const now = new Date().toISOString();
+  const storedAccessPackageAmountXaf = Math.max(
+    1,
+    Number.parseInt(String(dbPackage.price_xaf || 0), 10) || 1
+  );
   const providerPayload = {
     contestant_access_pass: {
       source,
@@ -424,6 +483,7 @@ const createContestantAccessPass = async (req, supabase, body) => {
     excluded_from_revenue: true,
     no_payment_required: true,
     display_price_xaf: 0,
+    stored_package_price_xaf: storedAccessPackageAmountXaf,
   };
 
   const insertOrder = async () =>
@@ -441,7 +501,7 @@ const createContestantAccessPass = async (req, supabase, body) => {
         buyer_email: buyerEmail,
         buyer_whatsapp: buyerWhatsapp || null,
         whatsapp_consent: Boolean(buyerWhatsapp && whatsappConsent),
-        amount_xaf: 0,
+        amount_xaf: storedAccessPackageAmountXaf,
         currency: CURRENCY,
         provider_status: "COMPLIMENTARY_ACCESS_ONLY",
         provider_payload: providerPayload,

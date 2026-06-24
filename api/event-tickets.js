@@ -154,6 +154,12 @@ const ticketPackageVisualAliases = {
   access: "access-beer",
 };
 
+const isAccessPassPackage = (ticketPackage = {}) => {
+  const slug = String(ticketPackage.slug || "").toLowerCase();
+  const styleKey = String(ticketPackage.style_key || "").toLowerCase();
+  return slug === "access-beer" || styleKey === "access";
+};
+
 const ticketPriceVisuals = {
   2000: {
     tierAccent: "#E83E8C",
@@ -415,13 +421,26 @@ const buildDownloadUrl = (req, ticket) =>
     ticket.ticket_code
   )}&token=${encodeURIComponent(ticket.qr_token)}`;
 
-const getTicketBackgroundPath = (eventSlug) => {
-  const filename = ticketBackgrounds[eventSlug];
-  if (!filename) {
-    return "";
+const getTicketBackgroundPath = (eventSlug, ticketPackage = {}) => {
+  const eventPrefix =
+    eventSlug === "cyes-awards-night"
+      ? "cyes"
+      : eventSlug === "panache-dor-awards-night"
+        ? "panache-dor"
+        : "";
+  const packageSlug = normalizeText(ticketPackage.slug).toLowerCase();
+  const packageBackground = eventPrefix && packageSlug
+    ? `${eventPrefix}-${packageSlug}-ticket-bg.png`
+    : "";
+  const filenames = [packageBackground, ticketBackgrounds[eventSlug]].filter(Boolean);
+
+  for (const filename of filenames) {
+    const candidate = path.join(process.cwd(), "src", "assets", "tickets", filename);
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
   }
-  const candidate = path.join(process.cwd(), "src", "assets", "tickets", filename);
-  return fs.existsSync(candidate) ? candidate : "";
+  return "";
 };
 
 const getPanacheDorLogoPath = () => {
@@ -615,6 +634,32 @@ const getTicketVisualTheme = (event, ticketPackage) => {
     ticketPackageVisuals[ticketPackage.style_key] ||
     ticketPackageVisuals["premium-table-5"];
 
+  if (event.slug === "cyes-awards-night" && isAccessPassPackage(ticketPackage)) {
+    return {
+      ...brandTheme,
+      ...packageTheme,
+      deep: "#050505",
+      deepAlt: "#151515",
+      accent: "#FFFFFF",
+      ink: "#0A0A0A",
+      light: "#F7F3E4",
+      tier: "ACCESS",
+      tierAccent: "#F1C84B",
+      tierAccentDark: "#0A0A0A",
+      tierAccentSoft: "#FFF4C2",
+      tierAccentInk: "#0A0A0A",
+      motif: "CYES  ACCESS",
+      backgroundOverlayOpacity: 0.58,
+      monochromeLogo: true,
+      qrDark: "#0A0A0A",
+      qrLight: "#FFFFFF",
+      qrCardFill: "#FFFFFF",
+      qrCardOpacity: 1,
+      qrStroke: "#F1C84B",
+      qrStrokeOpacity: 0.9,
+    };
+  }
+
   return {
     ...brandTheme,
     ...packageTheme,
@@ -659,7 +704,29 @@ const drawTicketBackground = (doc, width, height, theme) => {
   doc.fillOpacity(1);
 };
 
-const drawCyesAwardLogo = (doc, width, y) => {
+const drawCyesAwardLogo = (doc, width, y, theme = {}) => {
+  if (theme.monochromeLogo) {
+    doc
+      .fillColor("#FFFFFF")
+      .font("Helvetica-Bold")
+      .fontSize(25)
+      .text("CYES", 0, y + 5, {
+        width,
+        align: "center",
+        characterSpacing: 1.8,
+      });
+    doc
+      .fillColor(theme.tierAccent || "#F1C84B")
+      .font("Helvetica-Bold")
+      .fontSize(8.8)
+      .text("AWARDS NIGHT", 0, y + 38, {
+        width,
+        align: "center",
+        characterSpacing: 2.1,
+      });
+    return;
+  }
+
   const scale = 0.88;
   const logoWidth = 122;
   const logoX = (width - logoWidth) / 2;
@@ -886,12 +953,12 @@ const buildTicketPdfBuffer = async ({ req, ticket, order, event, ticketPackage }
     margin: 1,
     errorCorrectionLevel: "M",
     color: {
-      dark: `${theme.tierAccent}ff`,
-      light: "#00000000",
+      dark: theme.qrDark || `${theme.tierAccent}ff`,
+      light: theme.qrLight || "#00000000",
     },
   });
   const eventDetails = ticketEventDetails[event.slug] || {};
-  const backgroundPath = getTicketBackgroundPath(event.slug);
+  const backgroundPath = getTicketBackgroundPath(event.slug, ticketPackage);
 
   return await new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: [width, height], margin: 0 });
@@ -901,13 +968,17 @@ const buildTicketPdfBuffer = async ({ req, ticket, order, event, ticketPackage }
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    if (backgroundPath) {
+    if (backgroundPath && !theme.forceGeneratedBackground) {
       doc.image(backgroundPath, 0, 0, { width, height });
     } else {
       drawTicketBackground(doc, width, height, theme);
     }
 
-    doc.rect(0, 0, width, height).fillColor("#040503").fillOpacity(0.72).fill();
+    doc
+      .rect(0, 0, width, height)
+      .fillColor("#040503")
+      .fillOpacity(theme.backgroundOverlayOpacity ?? 0.72)
+      .fill();
     doc.fillOpacity(1);
     doc.circle(26, 318, 112).fillColor(theme.tierAccent).fillOpacity(0.12).fill();
     doc.circle(width - 22, 222, 102).fillColor(theme.tierAccent).fillOpacity(0.1).fill();
@@ -924,7 +995,7 @@ const buildTicketPdfBuffer = async ({ req, ticket, order, event, ticketPackage }
     if (event.slug === "panache-dor-awards-night") {
       drawPanacheDorAwardLogo(doc, width, 8, theme);
     } else {
-      drawCyesAwardLogo(doc, width, 40);
+      drawCyesAwardLogo(doc, width, 40, theme);
     }
 
     doc
@@ -961,14 +1032,14 @@ const buildTicketPdfBuffer = async ({ req, ticket, order, event, ticketPackage }
 
     doc
       .roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10)
-      .fillColor("#020302")
-      .fillOpacity(0.84)
+      .fillColor(theme.qrCardFill || "#020302")
+      .fillOpacity(theme.qrCardOpacity ?? 0.84)
       .fill()
       .fillOpacity(1);
     doc
       .roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10)
-      .strokeColor(theme.tierAccent)
-      .strokeOpacity(0.24)
+      .strokeColor(theme.qrStroke || theme.tierAccent)
+      .strokeOpacity(theme.qrStrokeOpacity ?? 0.24)
       .lineWidth(1.1)
       .stroke()
       .strokeOpacity(1);

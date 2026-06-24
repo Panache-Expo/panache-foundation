@@ -1,10 +1,16 @@
-import { Loader2, Mail, MessageCircle } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { trackEvent } from "@/lib/analytics";
+import { WhatsAppLogo } from "@/components/WhatsAppLogo";
+import {
+  PANACHE_SUPPORT_WHATSAPP_HREF,
+  PANACHE_SUPPORT_WHATSAPP_NUMBER,
+} from "@/lib/registration-links";
 
-const GLEN_WHATSAPP_HREF =
-  "https://wa.me/237657560828?text=Hi%20Glen%2C%20I%20saw%20the%20Panache%20Foundation%20website%20and%20I%27d%20like%20to%20discuss%20building%20something%20similar.";
+const PANACHE_AGENT_WHATSAPP_HREF = `${PANACHE_SUPPORT_WHATSAPP_HREF}?text=${encodeURIComponent(
+  "Hi Panache, I need help from the WhatsApp agent."
+)}`;
 const DASHBOARD_ACCESS_KEY_STORAGE = "panache-dashboard-access-key";
 const RANKINGS_EMAIL_API_URL =
   import.meta.env.VITE_PANACHE_RANKINGS_EMAIL_API_URL ||
@@ -90,26 +96,19 @@ export const DeveloperContactCta = () => {
 
   return (
     <a
-      href={GLEN_WHATSAPP_HREF}
+      href={PANACHE_AGENT_WHATSAPP_HREF}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Contact Glen Mue for a similar website"
+      aria-label={`Chat with the Panache WhatsApp agent at ${PANACHE_SUPPORT_WHATSAPP_NUMBER}`}
+      title={`WhatsApp agent ${PANACHE_SUPPORT_WHATSAPP_NUMBER}`}
       onClick={() =>
-        trackEvent("developer_whatsapp_clicked", {
+        trackEvent("panache_agent_whatsapp_clicked", {
           placement: "floating_cta",
         })
       }
-      className="fixed bottom-5 right-4 z-50 inline-flex items-center gap-3 rounded-full border border-black/10 bg-[#11100e] px-4 py-3 font-sans text-sm font-semibold text-white shadow-[0_18px_44px_rgba(17,16,14,0.28)] transition-all hover:-translate-y-0.5 hover:bg-[#11100e]/92 md:right-6 md:px-5"
+      className="fixed bottom-5 right-4 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/40 bg-[linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,255,255,0.58))] text-[#25D366] shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-8px_18px_rgba(90,54,35,0.08),0_18px_44px_rgba(16,10,7,0.18)] backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-white/70 hover:bg-white/88 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]/45 md:right-6"
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366] text-white">
-        <MessageCircle className="h-5 w-5" />
-      </span>
-      <span className="flex flex-col leading-tight">
-        <span className="text-[0.72rem] font-medium text-white/70">
-          Need a website like this?
-        </span>
-        {/* <span>Talk to Glen</span> */}
-      </span>
+      <WhatsAppLogo className="h-7 w-7 drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]" />
     </a>
   );
 };

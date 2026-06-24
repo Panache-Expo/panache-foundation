@@ -176,7 +176,7 @@ const AboutIntro = () => {
       ref={introRef}
       className="relative min-h-[220svh] md:min-h-[250svh]"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex h-screen items-center justify-center px-2">
+      <div className="pointer-events-none overflow-hidden absolute inset-x-0 top-0 flex h-screen items-center justify-center">
         <h3 className="bg-gradient-to-b from-white via-white/78 to-transparent bg-clip-text font-sans text-center text-[clamp(10.1rem,24.7vw,17.6rem)] tracking-[-0.095em] text-transparent">
           360 BEAUTY
         </h3>
