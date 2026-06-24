@@ -475,7 +475,11 @@ export type EventTicketVerifyResponse = {
   ticket?: EventTicketIssued;
 };
 
-export type ContestantBasePassSource = 'panache-dor' | 'panache-360' | 'miss-panache';
+export type ContestantBasePassSource =
+  | 'panache-dor'
+  | 'panache-360'
+  | 'miss-panache'
+  | 'cyes';
 
 export type EventTicketContestantBasePassPayload = {
   source: ContestantBasePassSource;

@@ -43,6 +43,8 @@ type PrivateVoteCountPageProps = {
     | "public_verify_panache_dor_contestant_password"
     | "public_verify_panache_360_contestant_password";
   verifyApiPath?: string;
+  footerVariant?: "panache" | "cyes";
+  accessPassDescription?: string;
 };
 
 const CONTESTANT_ACCESS_PASS_API_URL =
@@ -88,7 +90,9 @@ const formatCheckedAt = (value?: string | null) => {
 };
 
 const extractVoteCountSlug = (pathname: string) => {
-  const match = pathname.match(/\/(?:contestants|nominees)\/([^/]+)\/vote-count/i);
+  const match = pathname.match(
+    /\/(?:contestants|nominees)\/([^/]+)\/(?:vote-count|access-pass)/i
+  );
   if (!match?.[1]) return "";
 
   try {
@@ -105,6 +109,8 @@ const PrivateVoteCountPage = ({
   source,
   rpcName,
   verifyApiPath,
+  footerVariant = "panache",
+  accessPassDescription,
 }: PrivateVoteCountPageProps) => {
   const { slug: routeSlug = "" } = useParams();
   const location = useLocation();
@@ -125,6 +131,20 @@ const PrivateVoteCountPage = ({
   const [passNotice, setPassNotice] = useState("");
   const [passError, setPassError] = useState("");
   const [isCreatingPass, setIsCreatingPass] = useState(false);
+  const isCyes = source === "cyes";
+  const accentTextClass = isCyes ? "text-[#b08714]" : "text-[#8241B6]";
+  const badgeClass = isCyes
+    ? "rounded-full bg-[#fff6cf] text-[#0f0f0f] hover:bg-[#fff6cf]"
+    : "rounded-full bg-[#f8f2e8] text-[#8241B6] hover:bg-[#f8f2e8]";
+  const softPanelClass = isCyes ? "bg-[#fff9df]" : "bg-[#f8f2e8]";
+  const primaryButtonClass = isCyes
+    ? "h-12 rounded-full bg-[#0f0f0f] px-7 text-[#f5d35d] hover:bg-black"
+    : "h-12 rounded-full px-7";
+  const passDescription =
+    accessPassDescription ||
+    (isCyes
+      ? "Create one complimentary CYES QR access pass from this private link. It admits one person and does not include a free drink."
+      : "Create one complimentary purple QR access pass from this private link. It admits one person and does not include the free drink.");
 
   const resetUnlockedState = () => {
     setEntry(null);
@@ -272,7 +292,7 @@ const PrivateVoteCountPage = ({
               </Card>
 
               <div>
-                <Badge className="rounded-full bg-[#f8f2e8] text-[#8241B6] hover:bg-[#f8f2e8]">
+                <Badge className={badgeClass}>
                   Private vote count
                 </Badge>
                 <h1 className="mt-5 font-sans text-[clamp(2.8rem,6vw,5rem)] font-semibold leading-[0.88] tracking-[-0.08em] text-[#171411]">
@@ -286,7 +306,7 @@ const PrivateVoteCountPage = ({
                   <Card className="mt-8 rounded-[1.5rem] border-black/8 bg-white shadow-none">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 font-sans text-2xl text-[#171411]">
-                        <Lock className="h-5 w-5 text-[#8241B6]" />
+                        <Lock className={`h-5 w-5 ${accentTextClass}`} />
                         Unlock your count
                       </CardTitle>
                       <CardDescription>This page is private to the {label} who owns this link.</CardDescription>
@@ -310,7 +330,12 @@ const PrivateVoteCountPage = ({
                           <p className="rounded-[1rem] bg-destructive/10 px-4 py-3 font-sans text-sm text-destructive">{error}</p>
                         ) : null}
 
-                        <Button type="submit" variant="hero" className="h-12 rounded-full px-7" disabled={isLoading}>
+                        <Button
+                          type="submit"
+                          variant={isCyes ? "default" : "hero"}
+                          className={primaryButtonClass}
+                          disabled={isLoading}
+                        >
                           {isLoading ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -325,13 +350,13 @@ const PrivateVoteCountPage = ({
                   </Card>
                 ) : (
                   <div className="mt-8 space-y-4">
-                    <div className="rounded-[1.5rem] border border-black/8 bg-[#f8f2e8] p-6">
-                      <p className="font-sans text-sm font-semibold uppercase tracking-[0.2em] text-[#8241B6]">Verified votes</p>
+                    <div className={`rounded-[1.5rem] border border-black/8 p-6 ${softPanelClass}`}>
+                      <p className={`font-sans text-sm font-semibold uppercase tracking-[0.2em] ${accentTextClass}`}>Verified votes</p>
                       <div className="mt-3 flex items-end gap-3">
                         <p className="font-sans text-6xl font-semibold tracking-[-0.08em] text-[#171411]">
                           {(entry.total_votes || 0).toLocaleString()}
                         </p>
-                        <Trophy className="mb-2 h-8 w-8 text-[#8241B6]" />
+                        <Trophy className={`mb-2 h-8 w-8 ${accentTextClass}`} />
                       </div>
                       <p className="mt-3 font-sans text-sm text-[#171411]/60">Checked: {formatCheckedAt(entry.verified_at)}</p>
                     </div>
@@ -344,11 +369,11 @@ const PrivateVoteCountPage = ({
                     <Card className="rounded-[1.5rem] border-black/8 bg-white shadow-none">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2 font-sans text-2xl text-[#171411]">
-                          <Ticket className="h-5 w-5 text-[#8241B6]" />
+                          <Ticket className={`h-5 w-5 ${accentTextClass}`} />
                           Contestant access pass
                         </CardTitle>
                         <CardDescription>
-                          Create one complimentary purple QR access pass from this private link. It admits one person and does not include the free drink.
+                          {passDescription}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -361,8 +386,8 @@ const PrivateVoteCountPage = ({
                               </p>
                             ) : null}
 
-                            <div className="rounded-[1.25rem] border border-black/8 bg-[#f8f2e8] p-5">
-                              <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-[#8241B6]">
+                            <div className={`rounded-[1.25rem] border border-black/8 p-5 ${softPanelClass}`}>
+                              <p className={`font-sans text-xs font-semibold uppercase tracking-[0.18em] ${accentTextClass}`}>
                                 Ticket code
                               </p>
                               <p className="mt-2 font-sans text-2xl font-semibold text-[#171411]">
@@ -380,7 +405,11 @@ const PrivateVoteCountPage = ({
                               </p>
                             </div>
 
-                            <Button asChild variant="hero" className="h-12 rounded-full px-7">
+                            <Button
+                              asChild
+                              variant={isCyes ? "default" : "hero"}
+                              className={primaryButtonClass}
+                            >
                               <a href={ticket.download_url}>
                                 <Download className="h-4 w-4" />
                                 Download PDF pass
@@ -429,7 +458,7 @@ const PrivateVoteCountPage = ({
                             {buyerWhatsapp ? (
                               <label
                                 htmlFor="basePassWhatsappConsent"
-                                className="flex cursor-pointer items-start gap-3 rounded-[1rem] border border-black/8 bg-[#f8f2e8] p-4 font-sans text-sm text-[#171411]/70"
+                                className={`flex cursor-pointer items-start gap-3 rounded-[1rem] border border-black/8 p-4 font-sans text-sm text-[#171411]/70 ${softPanelClass}`}
                               >
                                 <Checkbox
                                   id="basePassWhatsappConsent"
@@ -447,7 +476,12 @@ const PrivateVoteCountPage = ({
                               </p>
                             ) : null}
 
-                            <Button type="submit" variant="hero" className="h-12 rounded-full px-7" disabled={isCreatingPass}>
+                            <Button
+                              type="submit"
+                              variant={isCyes ? "default" : "hero"}
+                              className={primaryButtonClass}
+                              disabled={isCreatingPass}
+                            >
                               {isCreatingPass ? (
                                 <>
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -475,7 +509,7 @@ const PrivateVoteCountPage = ({
           </div>
         </section>
       </main>
-      <Footer />
+      <Footer variant={footerVariant} />
     </div>
   );
 };

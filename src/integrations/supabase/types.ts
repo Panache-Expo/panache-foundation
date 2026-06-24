@@ -171,36 +171,42 @@ export type Database = {
         Row: {
           bio: string | null
           category_id: string
+          contestant_password_hash: string | null
           created_at: string
           id: string
           name: string
           organization: string | null
           photo_url: string | null
           sort_order: number
+          slug: string
           status: string
           updated_at: string
         }
         Insert: {
           bio?: string | null
           category_id: string
+          contestant_password_hash?: string | null
           created_at?: string
           id?: string
           name: string
           organization?: string | null
           photo_url?: string | null
           sort_order?: number
+          slug?: string
           status?: string
           updated_at?: string
         }
         Update: {
           bio?: string | null
           category_id?: string
+          contestant_password_hash?: string | null
           created_at?: string
           id?: string
           name?: string
           organization?: string | null
           photo_url?: string | null
           sort_order?: number
+          slug?: string
           status?: string
           updated_at?: string
         }

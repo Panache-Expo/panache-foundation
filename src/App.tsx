@@ -11,6 +11,7 @@ import CYESAwardsPage from "./pages/CYESAwardsPage";
 import CYESNominationsPage from "./pages/CYESNominationsPage";
 import CYESVotingPage from "./pages/CYESVotingPage";
 import CYESLeaderboardPage from "./pages/CYESLeaderboardPage";
+import CYESContestantVotesPage from "./pages/CYESContestantVotesPage";
 import CYESRegisterPage from "./pages/CYESRegisterPage";
 import CYESPitchCompetitionPage from "./pages/CYESPitchCompetitionPage";
 import CharityNightPage from "./pages/CharityNightPage";
@@ -175,6 +176,14 @@ const App = () => (
               <Route path="/cyes/nominations" element={<CYESNominationsPage />} />
               <Route path="/cyes/vote" element={<CYESVotingPage />} />
               <Route path="/cyes/leaderboard" element={<CYESLeaderboardPage />} />
+              <Route path="/cyes/nominees/:slug/vote-count" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/nominees/:slug/vote-count/*" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/nominees/:slug/access-pass" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/nominees/:slug/access-pass/*" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/contestants/:slug/vote-count" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/contestants/:slug/vote-count/*" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/contestants/:slug/access-pass" element={<CYESContestantVotesPage />} />
+              <Route path="/cyes/contestants/:slug/access-pass/*" element={<CYESContestantVotesPage />} />
               <Route path="/cyes/register" element={<CYESRegisterPage />} />
               <Route path="/cyes/pitch-competition" element={<CYESPitchCompetitionPage />} />
               <Route path="/cyes/tickets" element={<EventTicketsPage eventSlug="cyes-awards-night" />} />

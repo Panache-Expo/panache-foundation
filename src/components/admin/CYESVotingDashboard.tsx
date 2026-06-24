@@ -32,10 +32,14 @@ import { Textarea } from "@/components/ui/textarea";
 import type { CYESAwardCategory, CYESAwardNominee } from "@/integrations/supabase/services";
 import { useToast } from "@/hooks/use-toast";
 import {
+  type CYESContestantAccessLink,
   createCyesVotingCategory,
   createCyesVotingNominee,
   deleteCyesVotingNominee,
   fetchCyesVotingDashboard,
+  generateMissingCyesContestantPasswords,
+  listCyesContestantAccessLinks,
+  resetCyesContestantPassword,
   updateCyesVotingCategory,
   updateCyesVotingNominee,
   uploadCyesVotingNomineePhoto,
@@ -44,7 +48,10 @@ import {
   Award,
   BarChart3,
   CheckCircle2,
+  Copy,
   ImagePlus,
+  KeyRound,
+  Link2,
   Loader2,
   Plus,
   RefreshCw,
@@ -182,6 +189,24 @@ const toSortOrder = (value: string) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const formatAccessRowsForCopy = (rows: CYESContestantAccessLink[]) =>
+  rows
+    .map((row) => {
+      const passwordLine = row.password
+        ? `Password: ${row.password}`
+        : "Password: Ask Glen for your private password.";
+      return [
+        `${row.name}${row.organization ? ` (${row.organization})` : ""}`,
+        row.category_name ? `Category: ${row.category_name}` : "",
+        `Access link: ${row.access_pass_url}`,
+        passwordLine,
+        "Use the link to unlock your private vote count, then create and download your complimentary CYES access pass.",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
+
 const categoryToDraft = (category: CYESAwardCategory): CategoryDraft => ({
   name: category.name,
   description: category.description || "",
@@ -218,12 +243,17 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
   const [isSavingNominee, setIsSavingNominee] = useState(false);
   const [isDeletingNominee, setIsDeletingNominee] = useState(false);
   const [isUploadingNomineePhoto, setIsUploadingNomineePhoto] = useState(false);
+  const [isLoadingAccessLinks, setIsLoadingAccessLinks] = useState(false);
+  const [isGeneratingAccessLinks, setIsGeneratingAccessLinks] = useState(false);
+  const [isResettingAccessPassword, setIsResettingAccessPassword] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedNomineeId, setSelectedNomineeId] = useState("");
   const [newCategoryDraft, setNewCategoryDraft] = useState(emptyCategoryDraft);
   const [categoryDraft, setCategoryDraft] = useState(emptyCategoryDraft);
   const [newNomineeDraft, setNewNomineeDraft] = useState(() => emptyNomineeDraft());
   const [nomineeDraft, setNomineeDraft] = useState(() => emptyNomineeDraft());
+  const [accessLinks, setAccessLinks] = useState<CYESContestantAccessLink[]>([]);
+  const [generatedAccessRows, setGeneratedAccessRows] = useState<CYESContestantAccessLink[]>([]);
 
   const selectedCategory = categories.find(
     (category) => category.id === selectedCategoryId
@@ -496,6 +526,111 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
     }
   };
 
+  const handleCopyAccessRows = async (rows: CYESContestantAccessLink[]) => {
+    const text = formatAccessRowsForCopy(rows);
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied",
+        description: "The CYES access message is ready to paste.",
+      });
+    } catch (error) {
+      toast({
+        title: "Copy failed",
+        description:
+          error instanceof Error ? error.message : "Copy the message manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLoadAccessLinks = async () => {
+    setIsLoadingAccessLinks(true);
+    try {
+      const nominees = await listCyesContestantAccessLinks(accessKey);
+      setAccessLinks(nominees);
+      toast({
+        title: "Access links loaded",
+        description: `${nominees.length} CYES nominee links are available.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Could not load access links",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingAccessLinks(false);
+    }
+  };
+
+  const handleGenerateMissingAccessPasswords = async () => {
+    setIsGeneratingAccessLinks(true);
+    try {
+      const generated = await generateMissingCyesContestantPasswords(accessKey);
+      setGeneratedAccessRows(generated);
+      setAccessLinks((current) =>
+        current.map((row) =>
+          generated.some((generatedRow) => generatedRow.id === row.id)
+            ? { ...row, password_configured: true }
+            : row
+        )
+      );
+      toast({
+        title: "Passwords generated",
+        description: `${generated.length} missing CYES nominee passwords were created.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Could not generate passwords",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingAccessLinks(false);
+    }
+  };
+
+  const handleResetSelectedAccessPassword = async () => {
+    if (!selectedNominee) return;
+
+    setIsResettingAccessPassword(true);
+    try {
+      const nominee = await resetCyesContestantPassword(accessKey, {
+        id: selectedNominee.id,
+        slug: selectedNominee.slug,
+      });
+      setGeneratedAccessRows((current) => [
+        nominee,
+        ...current.filter((row) => row.id !== nominee.id),
+      ]);
+      setAccessLinks((current) =>
+        current.map((row) =>
+          row.id === nominee.id
+            ? { ...row, password_configured: true, access_pass_url: nominee.access_pass_url }
+            : row
+        )
+      );
+      toast({
+        title: "Password reset",
+        description: `${nominee.name}'s new private password is shown below.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Could not reset password",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingAccessPassword(false);
+    }
+  };
+
   const handleUploadNomineePhoto = async (
     file: File | undefined,
     target: "existing" | "new"
@@ -615,6 +750,138 @@ export const CYESVotingDashboard = ({ accessKey }: CYESVotingDashboardProps) => 
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-3xl border border-border/60 bg-muted/20 p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h3 className="font-display text-xl text-primary">
+                Nominee Access Passes
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Generate private nominee passwords, copy access links, and reset a
+                selected nominee when needed.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleLoadAccessLinks()}
+                disabled={isLoadingAccessLinks || isGeneratingAccessLinks}
+              >
+                {isLoadingAccessLinks ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2 className="mr-2 h-4 w-4" />
+                )}
+                Load Links
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleGenerateMissingAccessPasswords()}
+                disabled={isGeneratingAccessLinks || isLoadingAccessLinks}
+              >
+                {isGeneratingAccessLinks ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <KeyRound className="mr-2 h-4 w-4" />
+                )}
+                Generate Missing
+              </Button>
+              {selectedNominee ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleResetSelectedAccessPassword()}
+                  disabled={isResettingAccessPassword}
+                >
+                  {isResettingAccessPassword ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <KeyRound className="mr-2 h-4 w-4" />
+                  )}
+                  Reset Selected
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          {generatedAccessRows.length ? (
+            <div className="mt-5 rounded-2xl border border-amber-300/70 bg-amber-50 p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-amber-950">
+                    Newly generated passwords
+                  </p>
+                  <p className="text-sm text-amber-900/70">
+                    Copy this now. Existing passwords cannot be shown again later.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleCopyAccessRows(generatedAccessRows)}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Message
+                </Button>
+              </div>
+              <Textarea
+                readOnly
+                value={formatAccessRowsForCopy(generatedAccessRows)}
+                className="min-h-48 bg-white font-mono text-xs"
+              />
+            </div>
+          ) : null}
+
+          {accessLinks.length ? (
+            <div className="mt-5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-medium text-primary">
+                  {accessLinks.length} nominee access links
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void handleCopyAccessRows(accessLinks)}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Links
+                </Button>
+              </div>
+              <div className="max-h-72 overflow-auto rounded-2xl border border-border/60 bg-background">
+                {accessLinks.map((nominee) => (
+                  <div
+                    key={nominee.id}
+                    className="grid gap-2 border-b border-border/50 p-3 text-sm last:border-b-0 md:grid-cols-[1fr_1.4fr_auto]"
+                  >
+                    <div>
+                      <p className="font-medium text-primary">{nominee.name}</p>
+                      <p className="text-muted-foreground">
+                        {nominee.category_name || "CYES nominee"}
+                      </p>
+                    </div>
+                    <a
+                      href={nominee.access_pass_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="break-all text-primary underline-offset-4 hover:underline"
+                    >
+                      {nominee.access_pass_url}
+                    </a>
+                    <Badge
+                      variant={nominee.password_configured ? "default" : "outline"}
+                      className="h-fit justify-self-start md:justify-self-end"
+                    >
+                      {nominee.password_configured ? "Password set" : "Needs password"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid gap-6 xl:grid-cols-2">

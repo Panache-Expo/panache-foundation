@@ -26,9 +26,17 @@ const TICKET_COLUMNS =
 
 const CONTESTANT_ACCESS_PASS_PROVIDER = "contestant-access-pass";
 const CONTESTANT_ACCESS_PASS_DB_PACKAGE_SLUG = "access-beer";
-const CONTESTANT_ACCESS_PASS_BACKGROUND = "panache-dor-ticket-bg-downloaded.png";
+const contestantAccessPassBackgrounds = {
+  "cyes-awards-night": "cyes-access-beer-ticket-bg.png",
+  "panache-dor-awards-night": "panache-dor-ticket-bg-downloaded.png",
+};
 
 const contestantAccessPassSources = {
+  cyes: {
+    label: "CYES Awards",
+    eventSlug: "cyes-awards-night",
+    verifyRpcName: "public_verify_cyes_contestant_password",
+  },
   "panache-dor": {
     label: "Panache D'or",
     eventSlug: "panache-dor-awards-night",
@@ -47,6 +55,11 @@ const contestantAccessPassSources = {
 };
 
 const ticketEventDisplayOverrides = {
+  "cyes-awards-night": {
+    title: "CYES & Awards Night",
+    short_title: "CYES & Awards",
+    venue: "Chariot Hotel, Buea",
+  },
   "panache-dor-awards-night": {
     venue: "Chariot Hotel, Buea",
   },
@@ -89,6 +102,7 @@ const normalizePhone = (value) => normalizeText(value).replace(/[\s()-]/g, "");
 
 const normalizeContestantPassSource = (value) => {
   const text = normalizeText(value).toLowerCase();
+  if (["cyes", "cyes-awards", "cyes_awards"].includes(text)) return "cyes";
   if (["panache-dor", "panache_dor", "dor"].includes(text)) return "panache-dor";
   if (["panache-360", "panache_360", "360"].includes(text)) return "panache-360";
   if (["miss-panache", "miss_panache", "miss"].includes(text)) return "miss-panache";
@@ -188,7 +202,10 @@ const verifyContestant = async (supabase, sourceConfig, slug, password) => {
   };
 };
 
-const createTicketCode = () => `PASS-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+const createTicketCode = (eventSlug) => {
+  const prefix = eventSlug === "cyes-awards-night" ? "CYES" : "PASS";
+  return `${prefix}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+};
 
 const createOrLoadTicket = async (supabase, order, event, ticketPackage) => {
   const { data: existingTicket, error: existingError } = await supabase
@@ -206,7 +223,7 @@ const createOrLoadTicket = async (supabase, order, event, ticketPackage) => {
       order_id: order.id,
       event_id: event.id,
       package_id: ticketPackage.id,
-      ticket_code: createTicketCode(),
+      ticket_code: createTicketCode(event.slug),
       qr_token: crypto.randomBytes(18).toString("hex"),
       buyer_name: order.buyer_name,
       buyer_email: order.buyer_email,
@@ -232,13 +249,16 @@ const buildDownloadUrl = (req, ticket) => {
   return `${baseUrl}/api/contestant-access-pass?download=1&ticketCode=${encodeURIComponent(ticket.ticket_code)}&token=${encodeURIComponent(ticket.qr_token)}`;
 };
 
-const getContestantAccessPassBackgroundPath = () => {
+const getContestantAccessPassBackgroundPath = (eventSlug) => {
+  const filename = contestantAccessPassBackgrounds[eventSlug];
+  if (!filename) return "";
+
   const candidate = path.join(
     process.cwd(),
     "src",
     "assets",
     "tickets",
-    CONTESTANT_ACCESS_PASS_BACKGROUND
+    filename
   );
   return fs.existsSync(candidate) ? candidate : "";
 };
@@ -284,20 +304,28 @@ const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
   const displayPackage = getDisplayPackage(dbPackage);
   const width = 420;
   const height = 760;
-  const deep = "#11031d";
-  const deepAlt = "#240934";
-  const purple = "#8241B6";
-  const purpleBright = "#A55BE8";
-  const purpleLight = "#F1DCFF";
-  const purpleSoft = "#D8A8FF";
-  const backgroundPath = getContestantAccessPassBackgroundPath();
+  const isCyes = displayEvent.slug === "cyes-awards-night";
+  const deep = isCyes ? "#050505" : "#11031d";
+  const deepAlt = isCyes ? "#151515" : "#240934";
+  const accent = isCyes ? "#F1C84B" : "#8241B6";
+  const accentBright = isCyes ? "#F6D969" : "#A55BE8";
+  const accentLight = isCyes ? "#FFF4C2" : "#F1DCFF";
+  const accentSoft = isCyes ? "#F1C84B" : "#D8A8FF";
+  const eventBrandLabel = isCyes ? "CYES" : "PANACHE FOUNDATION";
+  const eventTitle = isCyes ? "CYES & Awards" : "Panache D'or Awards";
+  const eventHeading = isCyes ? "CYES Awards Night 2026" : "Panache D'or Awards 2026";
+  const eventTime = isCyes ? "EVENT PROPER 7PM" : "AWARD NIGHT 7PM";
+  const backgroundPath = getContestantAccessPassBackgroundPath(displayEvent.slug);
   const qrUrl = buildCheckInUrl(req, ticket);
   const qrBuffer = await QRCode.toBuffer(qrUrl, {
     type: "png",
     width: 360,
     margin: 1,
     errorCorrectionLevel: "M",
-    color: { dark: `${purple}ff`, light: "#00000000" },
+    color: {
+      dark: isCyes ? "#0A0A0Aff" : `${accent}ff`,
+      light: isCyes ? "#FFFFFFFF" : "#00000000",
+    },
   });
 
   return await new Promise((resolve, reject) => {
@@ -310,21 +338,21 @@ const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
 
     if (backgroundPath) {
       doc.image(backgroundPath, 0, 0, { width, height });
-      doc.rect(0, 0, width, height).fillColor(deep).fillOpacity(0.7).fill();
+      doc.rect(0, 0, width, height).fillColor(deep).fillOpacity(isCyes ? 0.62 : 0.7).fill();
     } else {
       doc.rect(0, 0, width, height).fill(deep);
     }
     doc.fillOpacity(0.96).fillColor("#050207").rect(0, 0, width, 178).fill();
-    doc.fillOpacity(0.82).fillColor(purple).rect(0, 0, width, 10).fill();
-    doc.circle(width - 32, 82, 132).fillColor(purpleBright).fillOpacity(0.22).fill();
-    doc.circle(58, 170, 94).fillColor(purple).fillOpacity(0.12).fill();
+    doc.fillOpacity(0.82).fillColor(accent).rect(0, 0, width, 10).fill();
+    doc.circle(width - 32, 82, 132).fillColor(accentBright).fillOpacity(0.22).fill();
+    doc.circle(58, 170, 94).fillColor(accent).fillOpacity(0.12).fill();
     doc.circle(width - 60, height - 86, 126).fillColor(deepAlt).fillOpacity(0.42).fill();
-    doc.circle(18, 396, 102).fillColor(purple).fillOpacity(0.12).fill();
+    doc.circle(18, 396, 102).fillColor(accent).fillOpacity(0.12).fill();
     doc.save();
     doc.rotate(-19, { origin: [width / 2, height / 2] });
     doc
       .fillOpacity(0.08)
-      .fillColor(purpleLight)
+      .fillColor(accentLight)
       .font("Helvetica-Bold")
       .fontSize(28)
       .text("ACCESS  PASS  ACCESS  PASS", -34, 404, {
@@ -339,35 +367,35 @@ const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
       const y = 230 + index * 46;
       doc
         .fillOpacity(index % 2 === 0 ? 0.14 : 0.08)
-        .fillColor(index % 2 === 0 ? purpleBright : purple)
+        .fillColor(index % 2 === 0 ? accentBright : accent)
         .roundedRect(width - 76 + index * 3, y, 118, 18, 9)
         .fill();
     }
     doc.fillOpacity(1);
 
-    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(15).text("PANACHE FOUNDATION", 28, 38, {
+    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(15).text(eventBrandLabel, 28, 38, {
       width: width - 56,
       align: "center",
       characterSpacing: 1.8,
     });
-    doc.fillColor(purpleLight).font("Times-Bold").fontSize(30).text("Panache D'or Awards 2026", 28, 70, {
+    doc.fillColor(accentLight).font("Times-Bold").fontSize(30).text(eventHeading, 28, 70, {
       width: width - 56,
       align: "center",
     });
 
-    doc.roundedRect(54, 118, width - 108, 50, 13).fillColor(purple).fillOpacity(0.96).fill();
+    doc.roundedRect(54, 118, width - 108, 50, 13).fillColor(accent).fillOpacity(0.96).fill();
     doc.fillOpacity(1);
-    doc.fillColor("#FFFFFF").font("Helvetica-Bold").fontSize(24).text(displayPackage.name.toUpperCase(), 58, 134, {
+    doc.fillColor(isCyes ? "#0A0A0A" : "#FFFFFF").font("Helvetica-Bold").fontSize(24).text(displayPackage.name.toUpperCase(), 58, 134, {
       width: width - 116,
       align: "center",
       characterSpacing: 1.7,
     });
 
-    doc.fillColor("#FFFFFF").font("Times-Roman").fontSize(23).text("Panache D'or Awards", 34, 180, {
+    doc.fillColor("#FFFFFF").font("Times-Roman").fontSize(23).text(eventTitle, 34, 180, {
       width: width - 68,
       align: "center",
     });
-    doc.fillColor(purpleBright).font("Helvetica-Bold").fontSize(9.5).text(`${displayEvent.event_date_label}  |  AWARD NIGHT 7PM  |  ${displayEvent.venue}`, 42, 216, {
+    doc.fillColor(accentBright).font("Helvetica-Bold").fontSize(9.5).text(`${displayEvent.event_date_label}  |  ${eventTime}  |  ${displayEvent.venue}`, 42, 216, {
       width: width - 84,
       align: "center",
       characterSpacing: 0.5,
@@ -376,18 +404,18 @@ const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
     const qrSize = 242;
     const qrX = (width - qrSize) / 2;
     const qrY = 258;
-    doc.roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10).fillColor("#020302").fillOpacity(0.84).fill();
+    doc.roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10).fillColor(isCyes ? "#FFFFFF" : "#020302").fillOpacity(isCyes ? 1 : 0.84).fill();
     doc.fillOpacity(1);
-    doc.roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10).strokeColor(purple).strokeOpacity(0.42).lineWidth(1.2).stroke();
+    doc.roundedRect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, 10).strokeColor(accent).strokeOpacity(isCyes ? 0.9 : 0.42).lineWidth(1.2).stroke();
     doc.strokeOpacity(1);
     doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
 
-    doc.fillColor(purpleLight).font("Helvetica").fontSize(12).text(displayPackage.benefits.join(", "), 30, qrY + qrSize + 42, {
+    doc.fillColor(accentLight).font("Helvetica").fontSize(12).text(displayPackage.benefits.join(", "), 30, qrY + qrSize + 42, {
       width: width - 72,
       align: "center",
       ellipsis: true,
     });
-    doc.fillColor(purpleSoft).font("Helvetica-Bold").fontSize(10.5).text("NO FREE DRINK INCLUDED", 30, qrY + qrSize + 66, {
+    doc.fillColor(accentSoft).font("Helvetica-Bold").fontSize(10.5).text("NO FREE DRINK INCLUDED", 30, qrY + qrSize + 66, {
       width: width - 60,
       align: "center",
       characterSpacing: 1.2,
@@ -398,7 +426,7 @@ const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
       align: "center",
       ellipsis: true,
     });
-    doc.fillColor(purpleBright).font("Helvetica-Bold").fontSize(12).text(`TICKET CODE: ${ticket.ticket_code}`, 24, 654, {
+    doc.fillColor(accentBright).font("Helvetica-Bold").fontSize(12).text(`TICKET CODE: ${ticket.ticket_code}`, 24, 654, {
       width: width - 48,
       align: "center",
       characterSpacing: 0.35,

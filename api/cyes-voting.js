@@ -61,7 +61,7 @@ const PARTICIPANTS_DASHBOARD_PATH =
 const CATEGORY_COLUMNS =
   "id, slug, name, description, status, voting_enabled, sort_order, created_at, updated_at";
 const NOMINEE_COLUMNS =
-  "id, category_id, name, organization, bio, photo_url, status, sort_order, created_at, updated_at";
+  "id, category_id, slug, name, organization, bio, photo_url, status, sort_order, created_at, updated_at";
 const VOTE_COLUMNS =
   "id, category_id, nominee_id, voter_name, voter_phone, voter_email, status, otp_expires_at, verified_at, created_at, updated_at";
 
@@ -233,6 +233,29 @@ const sanitizeStorageFileName = (value) => {
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return normalized || fallbackName;
+};
+
+const createUniqueNomineeSlug = async (supabase, desiredSlug, ignoreId = "") => {
+  const baseSlug = slugify(desiredSlug) || `cyes-nominee-${Date.now()}`;
+
+  for (let index = 0; index < 200; index += 1) {
+    const candidate = index === 0 ? baseSlug : `${baseSlug}-${index + 1}`;
+    let query = supabase
+      .from("cyes_award_nominees")
+      .select("id")
+      .eq("slug", candidate)
+      .limit(1);
+
+    if (ignoreId) {
+      query = query.neq("id", ignoreId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    if (!data?.length) return candidate;
+  }
+
+  return `${baseSlug}-${crypto.randomBytes(3).toString("hex")}`;
 };
 
 const extensionForMimeType = (contentType) => {
@@ -1757,6 +1780,12 @@ const sanitizeNomineePayload = (payload, { creating = false } = {}) => {
   if (name) {
     updates.name = name;
   }
+  if (creating || "slug" in payload) {
+    updates.slug = slugify(payload.slug || name);
+    if (!updates.slug) {
+      return { error: "Nominee slug could not be generated." };
+    }
+  }
   if ("organization" in payload) {
     updates.organization = normalizeText(payload.organization);
   }
@@ -1902,6 +1931,8 @@ const handleAdminAction = async (req, res, supabase, body) => {
       return sendJson(res, 400, { message: error });
     }
 
+    updates.slug = await createUniqueNomineeSlug(supabase, updates.slug || updates.name);
+
     const { data, error: insertError } = await supabase
       .from("cyes_award_nominees")
       .insert([updates])
@@ -1927,6 +1958,10 @@ const handleAdminAction = async (req, res, supabase, body) => {
     const { error, updates } = sanitizeNomineePayload(body.updates || body.nominee || {});
     if (error) {
       return sendJson(res, 400, { message: error });
+    }
+
+    if (updates.slug) {
+      updates.slug = await createUniqueNomineeSlug(supabase, updates.slug, id);
     }
 
     const { data, error: updateError } = await supabase

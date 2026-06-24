@@ -19,6 +19,9 @@ const DASHBOARD_API_URL =
   import.meta.env.VITE_DASHBOARD_API_URL || "/api/dashboard-applications";
 const CYES_VOTING_API_URL =
   import.meta.env.VITE_CYES_VOTING_API_URL || "/api/cyes-voting";
+const CYES_CONTESTANT_VOTES_API_URL =
+  import.meta.env.VITE_CYES_CONTESTANT_VOTES_API_URL ||
+  "/api/cyes-contestant-votes";
 const PANACHE_DOR_VOTING_API_URL =
   import.meta.env.VITE_PANACHE_DOR_VOTING_API_URL ||
   "/api/panache-dor-voting";
@@ -47,6 +50,7 @@ export type CYESVotingCategoryPayload = {
 
 export type CYESVotingNomineePayload = {
   category_id?: string;
+  slug?: string;
   name?: string;
   organization?: string | null;
   bio?: string | null;
@@ -59,6 +63,18 @@ export type CYESVotingNomineePhotoUploadPayload = {
   fileName: string;
   contentType: string;
   base64: string;
+};
+
+export type CYESContestantAccessLink = {
+  id: string;
+  slug: string;
+  name: string;
+  organization?: string | null;
+  category_name?: string | null;
+  category_slug?: string | null;
+  access_pass_url: string;
+  password_configured?: boolean;
+  password?: string;
 };
 
 export type PanacheDorVotingCategoryPayload = {
@@ -137,6 +153,8 @@ const readResponsePayload = async (response: Response) => {
         panacheDorNominee?: PanacheDorAwardNominee;
         panache360Nominee?: Panache360AwardNominee;
         missPanacheNominee?: MissPanacheAwardNominee;
+        nominees?: CYESContestantAccessLink[];
+        generated?: CYESContestantAccessLink[];
         photoUrl?: string;
         photo_url?: string;
         path?: string;
@@ -354,6 +372,58 @@ export const uploadCyesVotingNomineePhoto = async (
     photoUrl,
     path: payload?.path || "",
   };
+};
+
+const mutateCyesContestantAccess = async (
+  accessKey: string,
+  body: Record<string, unknown>
+) => {
+  const response = await fetch(CYES_CONTESTANT_VOTES_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-dashboard-key": accessKey,
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await readResponsePayload(response);
+
+  if (!response.ok || !payload) {
+    throw new Error(payload?.message || "Could not load CYES nominee access links.");
+  }
+
+  return payload;
+};
+
+export const listCyesContestantAccessLinks = async (accessKey: string) => {
+  const payload = await mutateCyesContestantAccess(accessKey, {
+    action: "listAccessLinks",
+  });
+
+  return (payload.nominees || []) as CYESContestantAccessLink[];
+};
+
+export const generateMissingCyesContestantPasswords = async (
+  accessKey: string
+) => {
+  const payload = await mutateCyesContestantAccess(accessKey, {
+    action: "generateMissingPasswords",
+  });
+
+  return (payload.generated || []) as CYESContestantAccessLink[];
+};
+
+export const resetCyesContestantPassword = async (
+  accessKey: string,
+  nominee: { id?: string; slug?: string }
+) => {
+  const payload = await mutateCyesContestantAccess(accessKey, {
+    action: "resetPassword",
+    id: nominee.id,
+    slug: nominee.slug,
+  });
+
+  return payload.nominee as CYESContestantAccessLink;
 };
 
 export const fetchPanacheDorVotingDashboard = async (accessKey: string) => {
