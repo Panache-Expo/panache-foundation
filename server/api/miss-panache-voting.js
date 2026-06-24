@@ -2551,6 +2551,17 @@ const handlePost = async (req, res, supabase) => {
 
 export default async function handler(req, res) {
   try {
+    
+    // 1. Get the Authorization header from cron-job.org
+    const authHeader = req.headers['authorization'];
+
+    // 2. Validate the secret token against your Vercel Environment Variable
+    if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      // If missing or wrong, block the request immediately
+      sendJson(res, 401, { message: "Unauthorized request. Missing or invalid security token." });
+      return;
+    }
+
     const supabase = getSupabase();
 
     if (req.method === "GET") {
