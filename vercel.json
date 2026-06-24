@@ -4,11 +4,15 @@
   "crons": [
     {
       "path": "/api/panache-dor-voting",
-      "schedule": "15 2 * * *"
+      "schedule": "*/10 * * * *"
     },
     {
       "path": "/api/panache-360-voting",
-      "schedule": "45 2 * * *"
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/miss-panache-voting",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

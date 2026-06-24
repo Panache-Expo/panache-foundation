@@ -80,10 +80,7 @@ const AUTO_VERIFY_LIMIT = Number.parseInt(
   process.env.MISS_PANACHE_AUTO_VERIFY_LIMIT || "10",
   10
 );
-const AUTO_VERIFY_COOLDOWN_MS = Number.parseInt(
-  process.env.MISS_PANACHE_AUTO_VERIFY_COOLDOWN_MS || "3600000",
-  10
-);
+const AUTO_VERIFY_COOLDOWN_MS = 10 * 60 * 1000;
 const AUTO_HISTORY_RECONCILE_ENABLED =
   String(process.env.MISS_PANACHE_AUTO_HISTORY_RECONCILE_ENABLED ?? "true")
     .trim()
