@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
-const apiDir = path.join(repoRoot, "api");
+const apiDir = path.join(repoRoot, "server", "api");
 const port = Number(process.env.PORT || 8787);
 
 const loadEnvFile = (filename) => {
