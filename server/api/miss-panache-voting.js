@@ -2551,9 +2551,9 @@ const handlePost = async (req, res, supabase) => {
 
 export default async function handler(req, res) {
   try {
-    
+
     // 1. Get the Authorization header from cron-job.org
-    const authHeader = req.headers['authorization'];
+    const authHeader = req.headers['Authorization'];
 
     // 2. Validate the secret token against your Vercel Environment Variable
     if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

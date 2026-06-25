@@ -35,6 +35,10 @@ const removeRouteParamFromQuery = (req) => {
 };
 
 export default async function handler(req, res) {
+  if (req.headers["authorization"] !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const routePath = getRoutePath(req).replace(/^\/+|\/+$/g, "");
   const routeHandler = apiHandlers[routePath];
 
