@@ -2561,8 +2561,6 @@ export default async function handler(req, res) {
       sendJson(res, 401, { message: "Unauthorized request. Missing or invalid security token." });
       return;
     }
-    console.log("Expected Secret:", process.env.CRON_SECRET);
-    console.log("Received Secret:", receivedSecret);
 
     const supabase = getSupabase();
 
