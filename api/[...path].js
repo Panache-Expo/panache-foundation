@@ -41,6 +41,10 @@ export default async function handler(req, res) {
   if (!routeHandler) {
     return sendJson(res, 404, { message: "API route not found." });
   }
+  
+  if (req.headers["authorization"] !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
   removeRouteParamFromQuery(req);
   return routeHandler(req, res);
