@@ -35,7 +35,19 @@ const removeRouteParamFromQuery = (req) => {
 };
 
 export default async function handler(req, res) {
-  if (req.headers["authorization"] !== `Bearer ${process.env.CRON_SECRET}`) {
+  const expectedSecret = String(process.env.CRON_SECRET || "").trim();
+  const rawAuthHeader = String(
+    req.headers["authorization"] ||
+      req.headers["x-cron-secret"] ||
+      req.headers["cron-secret"] ||
+      ""
+  ).trim();
+
+  const receivedSecret = rawAuthHeader.startsWith("Bearer ")
+    ? rawAuthHeader.slice(7).trim()
+    : rawAuthHeader;
+
+  if (!expectedSecret || receivedSecret !== expectedSecret) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
