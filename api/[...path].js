@@ -50,6 +50,8 @@ export default async function handler(req, res) {
   if (!expectedSecret || receivedSecret !== expectedSecret) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  console.log("Expected Secret:", process.env.CRON_SECRET);
+  console.log("Received Secret:", receivedSecret);
 
   const routePath = getRoutePath(req).replace(/^\/+|\/+$/g, "");
   const routeHandler = apiHandlers[routePath];
