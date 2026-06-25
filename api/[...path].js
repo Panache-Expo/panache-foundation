@@ -34,6 +34,19 @@ const removeRouteParamFromQuery = (req) => {
   req.query = query;
 };
 
+const publicRoutes = new Set([
+  "miss-panache-voting",
+  "panache-360-voting",
+  "panache-dor-voting",
+  "cyes-voting",
+  "event-tickets",
+  "competition-applications",
+  "send-registration-email",
+]);
+
+const isCronAuthorized = (req) =>
+  Boolean(process.env.CRON_SECRET && req.headers["authorization"] === `Bearer ${process.env.CRON_SECRET}`);
+
 export default async function handler(req, res) {
   const routePath = getRoutePath(req).replace(/^\/+|\/+$/g, "");
   const routeHandler = apiHandlers[routePath];
@@ -41,9 +54,9 @@ export default async function handler(req, res) {
   if (!routeHandler) {
     return sendJson(res, 404, { message: "API route not found." });
   }
-  
-  if (req.headers["authorization"] !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: "Unauthorized" });
+
+  if (!publicRoutes.has(routePath) && !isCronAuthorized(req)) {
+    return sendJson(res, 401, { message: "Unauthorized request." });
   }
 
   removeRouteParamFromQuery(req);
