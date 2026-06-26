@@ -473,6 +473,7 @@ export type EventTicketVerifyResponse = {
   status: 'success' | 'pending' | 'failed' | 'already-counted' | string;
   message?: string;
   ticket?: EventTicketIssued;
+  email?: EventTicketContestantBasePassResponse['email'];
 };
 
 export type ContestantBasePassSource =

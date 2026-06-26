@@ -46,6 +46,54 @@ const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
 
+const getErrorMessage = (error, fallback) =>
+  error instanceof Error ? error.message : fallback;
+
+const createTransportOptions = () => {
+  const options = [];
+  const addOption = (port, secure) => {
+    const key = `${SMTP_HOST}:${port}:${secure}`;
+    if (options.some((option) => option.key === key)) return;
+    options.push({
+      key,
+      host: SMTP_HOST,
+      port,
+      secure,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+  };
+
+  addOption(SMTP_PORT, SMTP_SECURE);
+  if (SMTP_HOST.toLowerCase().includes("gmail.com")) {
+    addOption(465, true);
+    addOption(587, false);
+  }
+  return options;
+};
+
+const createVerifiedTransporter = async () => {
+  let lastError = null;
+
+  for (const option of createTransportOptions()) {
+    const { key, ...transportOption } = option;
+    const transporter = nodemailer.createTransport(transportOption);
+    try {
+      await transporter.verify();
+      return transporter;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Could not connect to the SMTP server.");
+};
+
 const EVENT_COLUMNS =
   "id, slug, title, short_title, event_date, event_date_label, venue, brand, status, sort_order, created_at, updated_at";
 const PACKAGE_COLUMNS =
@@ -1148,11 +1196,18 @@ const updateTicketEmailStatus = async (supabase, orderId, result) => {
 
 const sendTicketEmail = async ({ req, ticket, order, event, ticketPackage }) => {
   event = applyTicketEventDisplayOverrides(event);
-  if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM || !order.buyer_email) {
+  if (!order.buyer_email) {
     return {
-      attempted: false,
-      skipped: true,
-      message: "SMTP is not configured or buyer email is missing.",
+      attempted: true,
+      ok: false,
+      message: "Buyer email is missing.",
+    };
+  }
+  if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+    return {
+      attempted: true,
+      ok: false,
+      message: "SMTP is not configured on the server.",
     };
   }
 
@@ -1172,15 +1227,7 @@ const sendTicketEmail = async ({ req, ticket, order, event, ticketPackage }) => 
   const readyMessage = isContestantBasePass
     ? "Your complimentary contestant base pass is attached. No payment is required for this pass."
     : "Your payment has been verified and your ticket is attached.";
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
+  const transporter = await createVerifiedTransporter();
 
   await transporter.sendMail({
     from: SMTP_FROM,
@@ -1234,10 +1281,6 @@ Please present the QR code at the entrance.
 };
 
 const maybeSendTicketEmail = async (supabase, args) => {
-  if (args.order.ticket_email_sent_at) {
-    return { attempted: false, skipped: true, message: "Ticket email already sent." };
-  }
-
   try {
     const result = await sendTicketEmail(args);
     if (result.attempted) {
@@ -1248,7 +1291,7 @@ const maybeSendTicketEmail = async (supabase, args) => {
     const result = {
       attempted: true,
       ok: false,
-      error: error instanceof Error ? error.message : String(error),
+      message: getErrorMessage(error, "Ticket email could not be sent."),
     };
     await updateTicketEmailStatus(supabase, args.order.id, result);
     return result;
@@ -1479,11 +1522,19 @@ const createContestantBasePass = async (req, supabase, body) => {
             existingOrder.event,
             existingOrder.package
           );
+    const emailResult = await maybeSendTicketEmail(supabase, {
+      req,
+      ticket,
+      order: existingOrder,
+      event: existingOrder.event,
+      ticketPackage: existingOrder.package,
+    });
 
     return {
       status: "already-created",
       message: "This contestant base pass has already been created.",
       contestant,
+      email: emailResult,
       ticket: await buildTicketResponse(
         req,
         ticket,
@@ -1697,9 +1748,17 @@ const verifyTicketPayment = async (req, supabase, body) => {
       Array.isArray(order.ticket) && order.ticket.length
         ? order.ticket[0]
         : await createOrLoadTicket(supabase, order, event, ticketPackage);
+    const emailResult = await maybeSendTicketEmail(supabase, {
+      req,
+      ticket,
+      order,
+      event,
+      ticketPackage,
+    });
     return {
       status: "already-counted",
       message: "This ticket payment has already been verified.",
+      email: emailResult,
       ticket: await buildTicketResponse(req, ticket, order, event, ticketPackage),
     };
   }

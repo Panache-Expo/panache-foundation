@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
+import nodemailer from "nodemailer";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL =
@@ -14,6 +15,13 @@ const EVENT_TICKETS_BASE_URL = (
   process.env.PANACHE_FRONTEND_BASE_URL ||
   ""
 ).replace(/\/+$/, "");
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465);
+const SMTP_SECURE =
+  String(process.env.SMTP_SECURE || "true").toLowerCase() !== "false";
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
 
 const EVENT_COLUMNS =
   "id, slug, title, short_title, event_date, event_date_label, venue, brand, status, sort_order, created_at, updated_at";
@@ -123,6 +131,54 @@ const createSupabaseAdmin = () => {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
   });
+};
+
+const getErrorMessage = (error, fallback) =>
+  error instanceof Error ? error.message : fallback;
+
+const createTransportOptions = () => {
+  const options = [];
+  const addOption = (port, secure) => {
+    const key = `${SMTP_HOST}:${port}:${secure}`;
+    if (options.some((option) => option.key === key)) return;
+    options.push({
+      key,
+      host: SMTP_HOST,
+      port,
+      secure,
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+  };
+
+  addOption(SMTP_PORT, SMTP_SECURE);
+  if (SMTP_HOST.toLowerCase().includes("gmail.com")) {
+    addOption(465, true);
+    addOption(587, false);
+  }
+  return options;
+};
+
+const createVerifiedTransporter = async () => {
+  let lastError = null;
+
+  for (const option of createTransportOptions()) {
+    const { key, ...transportOption } = option;
+    const transporter = nodemailer.createTransport(transportOption);
+    try {
+      await transporter.verify();
+      return transporter;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Could not connect to the SMTP server.");
 };
 
 const applyTicketEventDisplayOverrides = (event) => ({
@@ -440,6 +496,104 @@ const drawTicketPdf = async ({ req, ticket, event, dbPackage }) => {
   });
 };
 
+const updateTicketEmailStatus = async (supabase, orderId, result) => {
+  const { error } = await supabase
+    .from("event_ticket_orders")
+    .update({
+      ticket_email_sent_at: result.ok ? new Date().toISOString() : null,
+      ticket_email_error: result.ok
+        ? null
+        : result.message || result.error || "Ticket email could not be sent.",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId);
+
+  if (error) {
+    console.error("Could not update contestant access pass email status", error);
+  }
+};
+
+const sendContestantAccessPassEmail = async ({ req, ticket, order, event, dbPackage }) => {
+  const displayEvent = applyTicketEventDisplayOverrides(event);
+  const displayPackage = getDisplayPackage(dbPackage);
+  if (!order.buyer_email) {
+    return { attempted: true, ok: false, message: "Buyer email is missing." };
+  }
+  if (!SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
+    return { attempted: true, ok: false, message: "SMTP is not configured on the server." };
+  }
+
+  const pdfBuffer = await drawTicketPdf({ req, ticket, order, event, dbPackage });
+  const downloadUrl = buildDownloadUrl(req, ticket);
+  const transporter = await createVerifiedTransporter();
+
+  await transporter.sendMail({
+    from: SMTP_FROM,
+    to: order.buyer_email,
+    subject: `${displayEvent.short_title} access pass - ${ticket.ticket_code}`,
+    text: `
+Hello ${order.buyer_name},
+
+Your access pass for ${displayEvent.title} is ready.
+
+Ticket code: ${ticket.ticket_code}
+Package: ${displayPackage.name}
+Admits: ${ticket.admit_count}
+Date: ${displayEvent.event_date_label}
+Venue: ${displayEvent.venue}
+
+Download your pass: ${downloadUrl}
+
+Please present the QR code at the entrance.
+`.trim(),
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#171411;">
+        <h2 style="margin:0 0 16px;">Your ${displayEvent.short_title} access pass is ready</h2>
+        <p style="margin:0 0 12px;">Hello ${order.buyer_name},</p>
+        <p style="margin:0 0 12px;">Your complimentary nominee access pass is attached.</p>
+        <p style="margin:0 0 8px;">Ticket code: <strong>${ticket.ticket_code}</strong></p>
+        <p style="margin:0 0 8px;">Package: <strong>${displayPackage.name}</strong></p>
+        <p style="margin:0 0 8px;">Admits: <strong>${ticket.admit_count}</strong></p>
+        <p style="margin:0 0 8px;">Date: <strong>${displayEvent.event_date_label}</strong></p>
+        <p style="margin:0 0 16px;">Venue: <strong>${displayEvent.venue}</strong></p>
+        <p style="margin:0 0 20px;">
+          <a href="${downloadUrl}" style="display:inline-block;padding:12px 18px;background:#171411;color:#ffffff;text-decoration:none;border-radius:999px;">
+            Download access pass
+          </a>
+        </p>
+        <p style="margin:0;">Please present the QR code at the entrance.</p>
+      </div>
+    `,
+    attachments: [
+      {
+        filename: `${ticket.ticket_code}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+
+  return { attempted: true, ok: true };
+};
+
+const maybeSendContestantAccessPassEmail = async (supabase, args) => {
+  try {
+    const result = await sendContestantAccessPassEmail(args);
+    if (result.attempted) {
+      await updateTicketEmailStatus(supabase, args.order.id, result);
+    }
+    return result;
+  } catch (error) {
+    const result = {
+      attempted: true,
+      ok: false,
+      message: getErrorMessage(error, "Ticket email could not be sent."),
+    };
+    await updateTicketEmailStatus(supabase, args.order.id, result);
+    return result;
+  }
+};
+
 const loadContestantAccessPassOrder = async (supabase, txRef) => {
   const { data, error } = await supabase
     .from("event_ticket_orders")
@@ -480,11 +634,19 @@ const createContestantAccessPass = async (req, supabase, body) => {
     const ticket = Array.isArray(existingOrder.ticket) && existingOrder.ticket.length
       ? existingOrder.ticket[0]
       : await createOrLoadTicket(supabase, existingOrder, existingOrder.event, existingOrder.package);
+    const emailResult = await maybeSendContestantAccessPassEmail(supabase, {
+      req,
+      ticket,
+      order: existingOrder,
+      event: existingOrder.event,
+      dbPackage: existingOrder.package,
+    });
 
     return {
       status: "already-created",
       message: "This contestant access pass has already been created.",
       contestant,
+      email: emailResult,
       ticket: await buildTicketResponse(req, ticket, existingOrder, existingOrder.event, existingOrder.package),
     };
   }
@@ -547,10 +709,18 @@ const createContestantAccessPass = async (req, supabase, body) => {
   if (!order) throw createHttpError("Could not create this contestant access pass.", 500);
 
   const ticket = await createOrLoadTicket(supabase, order, order.event, order.package);
+  const emailResult = await maybeSendContestantAccessPassEmail(supabase, {
+    req,
+    ticket,
+    order,
+    event: order.event,
+    dbPackage: order.package,
+  });
   return {
     status: "success",
     message: "Your contestant access pass is ready.",
     contestant,
+    email: emailResult,
     ticket: await buildTicketResponse(req, ticket, order, order.event, order.package),
   };
 };

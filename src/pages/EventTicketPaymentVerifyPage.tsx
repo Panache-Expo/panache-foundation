@@ -279,6 +279,11 @@ export const EventTicketPaymentVerifyPage = ({
   const isSuccess =
     result?.status === "success" || result?.status === "already-counted";
   const isPending = result?.status === "pending";
+  const emailFailed = Boolean(result?.email && result.email.ok !== true);
+  const emailFailureMessage =
+    result?.email?.message ||
+    result?.email?.error ||
+    "Ticket was created, but the email was not sent.";
 
   return (
     <div className={`min-h-screen ${config.bg} text-[#171411]`}>
@@ -306,10 +311,16 @@ export const EventTicketPaymentVerifyPage = ({
               <h1 className="mt-5 font-sans text-[clamp(2.2rem,5vw,4.6rem)] font-semibold leading-[0.9] tracking-[-0.07em]">
                 Your ticket is ready.
               </h1>
-              <p className="mx-auto mt-4 max-w-2xl font-sans text-lg text-[#171411]/66">
-                We have emailed the ticket to {ticket.buyer_email}. You can also
-                download it here.
-              </p>
+              {emailFailed ? (
+                <p className="mx-auto mt-4 max-w-2xl rounded-2xl bg-red-50 px-4 py-3 font-sans text-sm font-semibold text-red-700">
+                  Email was not sent: {emailFailureMessage}
+                </p>
+              ) : (
+                <p className="mx-auto mt-4 max-w-2xl font-sans text-lg text-[#171411]/66">
+                  We have emailed the ticket to {ticket.buyer_email}. You can also
+                  download it here.
+                </p>
+              )}
 
               <TicketSummary ticket={ticket} />
 

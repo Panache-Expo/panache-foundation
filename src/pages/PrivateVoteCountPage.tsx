@@ -255,6 +255,15 @@ const PrivateVoteCountPage = ({
           ? "Your contestant access pass already existed. The same pass is ready to download."
           : "Your contestant access pass is ready to download."
       );
+      if (result.email && result.email.ok !== true) {
+        setPassError(
+          `Email was not sent: ${
+            result.email.message ||
+            result.email.error ||
+            "Please download the pass from this page."
+          }`
+        );
+      }
     } catch (requestError) {
       setPassError(
         requestError instanceof Error
