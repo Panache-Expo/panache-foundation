@@ -111,23 +111,26 @@ const issueAccessCode = async (supabase, body) => {
   }
 
   const accessCode = normalizeText(body.access_code || body.accessCode) || generateAccessCode();
-  const { data, error } = await supabase.rpc("admin_issue_cyes_access_code", {
+  const { error } = await supabase.rpc("set_cyes_contestant_password", {
     p_nominee_id: nomineeId,
-    p_access_code: accessCode,
+    p_password: accessCode,
   });
 
   if (error) throw error;
 
-  const nominee = Array.isArray(data) ? data[0] : data;
+  const { data: nominee, error: nomineeError } = await supabase
+    .from("cyes_award_nominees")
+    .select("id,name,organization,slug,status,category:cyes_award_categories(name,slug,status)")
+    .eq("id", nomineeId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (nomineeError) throw nomineeError;
   if (!nominee?.id) {
     return { statusCode: 404, payload: { message: "Active CYES nominee not found." } };
   }
 
-  const serialized = serializeNominee({
-    ...nominee,
-    category_name: nominee.category_name,
-    category_slug: nominee.category_slug,
-  });
+  const serialized = serializeNominee(nominee);
 
   return {
     statusCode: 200,
