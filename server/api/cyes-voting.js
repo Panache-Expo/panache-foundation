@@ -89,6 +89,10 @@ const CYES_VOTING_CLOSED_LABEL =
 const CYES_VOTING_CLOSED_MESSAGE =
   process.env.CYES_VOTING_CLOSED_MESSAGE ||
   `CYES Awards voting ended on ${CYES_VOTING_CLOSED_LABEL}. Follow the CYES WhatsApp channel for announcements: ${CYES_ANNOUNCEMENT_CHANNEL_URL}`;
+const CYES_RESULTS_PUBLISH_AT =
+  process.env.CYES_RESULTS_PUBLISH_AT || "2026-07-09T00:00:00+01:00";
+const CYES_RESULTS_PUBLISH_LABEL =
+  process.env.CYES_RESULTS_PUBLISH_LABEL || "9 July 2026";
 
 const allowedStatuses = new Set(["active", "draft", "archived"]);
 const allowedNomineePhotoTypes = new Set([
@@ -117,6 +121,21 @@ const getVotingClosureMetadata = () => ({
   announcement_channel_url: CYES_ANNOUNCEMENT_CHANNEL_URL,
   closed_message: CYES_VOTING_CLOSED_MESSAGE,
 });
+
+const isCyesBlindVotingActive = (now = Date.now()) => {
+  const timestamp = Date.parse(CYES_RESULTS_PUBLISH_AT);
+  return Number.isFinite(timestamp) && now < timestamp;
+};
+
+const getCyesRevealMetadata = ({ includeDrafts = false } = {}) => {
+  const blindVoting = !includeDrafts && isCyesBlindVotingActive();
+  return {
+    blind_voting: blindVoting,
+    counts_available: !blindVoting,
+    results_publish_at: CYES_RESULTS_PUBLISH_AT,
+    results_publish_label: CYES_RESULTS_PUBLISH_LABEL,
+  };
+};
 
 const sendVotingClosed = (res) =>
   sendJson(res, 403, {
@@ -592,6 +611,8 @@ const fetchVoteSourceAnalytics = async (supabase, categoryIds) => {
 };
 
 const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
+  const revealMetadata = getCyesRevealMetadata({ includeDrafts });
+  const countsAvailable = revealMetadata.counts_available;
   let categoryQuery = supabase
     .from("cyes_award_categories")
     .select(CATEGORY_COLUMNS)
@@ -682,21 +703,22 @@ const fetchVotingPayload = async (supabase, { includeDrafts = false } = {}) => {
 
   const categoriesWithNominees = (categories || []).map((category) => ({
     ...category,
-    vote_count: categoryVoteCounts[category.id] || 0,
-    source_breakdown: voteSourceAnalytics?.byCategory?.[category.id] || null,
+    vote_count: countsAvailable ? categoryVoteCounts[category.id] || 0 : 0,
+    source_breakdown: countsAvailable ? voteSourceAnalytics?.byCategory?.[category.id] || null : null,
     nominees: nominees
       .filter((nominee) => nominee.category_id === category.id)
       .map((nominee) => ({
         ...nominee,
-        vote_count: nomineeVoteCounts[nominee.id] || 0,
-        source_breakdown: voteSourceAnalytics?.byNominee?.[nominee.id] || null,
+        vote_count: countsAvailable ? nomineeVoteCounts[nominee.id] || 0 : 0,
+        source_breakdown: countsAvailable ? voteSourceAnalytics?.byNominee?.[nominee.id] || null : null,
       })),
   }));
 
   return {
     categories: categoriesWithNominees,
-    total_votes: totalVotes,
-    source_breakdown: voteSourceAnalytics?.totals || null,
+    total_votes: countsAvailable ? totalVotes : 0,
+    source_breakdown: countsAvailable ? voteSourceAnalytics?.totals || null : null,
+    ...revealMetadata,
     ...getVotingClosureMetadata(),
   };
 };
@@ -1860,7 +1882,7 @@ const handleUploadNomineePhoto = async (res, supabase, body) => {
   });
 };
 
-const handleVerifyContestantPassword = async (res, supabase, body) => {
+const handleVerifyContestantPassword = async (req, res, supabase, body) => {
   const slug = normalizeText(body.slug || body.contestantSlug || body.contestant_slug);
   const password = normalizeText(body.password || body.accessCode || body.access_code);
 
@@ -1888,6 +1910,11 @@ const handleVerifyContestantPassword = async (res, supabase, body) => {
     return sendJson(res, 401, { message: "Invalid contestant password." });
   }
 
+  const revealMetadata = getCyesRevealMetadata({
+    includeDrafts: isAuthorizedDashboardRequest(req),
+  });
+  const countsAvailable = revealMetadata.counts_available;
+
   return sendJson(res, 200, {
     contestant: {
       id: contestant.id,
@@ -1898,9 +1925,10 @@ const handleVerifyContestantPassword = async (res, supabase, body) => {
       photo_url: contestant.photo_url || null,
       category_name: contestant.category_name || null,
       category_slug: contestant.category_slug || null,
-      total_votes: contestant.total_votes || 0,
+      total_votes: countsAvailable ? contestant.total_votes || 0 : 0,
       verified_at: contestant.verified_at || new Date().toISOString(),
     },
+    ...revealMetadata,
   });
 };
 
@@ -2119,7 +2147,7 @@ export default async function handler(req, res) {
       }
 
       if (action === "verifyContestantPassword") {
-        return await handleVerifyContestantPassword(res, supabase, body);
+        return await handleVerifyContestantPassword(req, res, supabase, body);
       }
 
       if (action === "requestOtp") {

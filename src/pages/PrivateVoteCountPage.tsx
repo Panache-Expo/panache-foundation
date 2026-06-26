@@ -26,6 +26,10 @@ type VoteCountEntry = {
   category_slug?: string | null;
   total_votes: number;
   verified_at?: string | null;
+  counts_available?: boolean;
+  blind_voting?: boolean;
+  results_publish_at?: string;
+  results_publish_label?: string;
 };
 
 type ContestantAccessPassResponse = {
@@ -186,13 +190,23 @@ const PrivateVoteCountPage = ({
     const payload = (await response.json().catch(() => null)) as {
       message?: string;
       contestant?: VoteCountEntry;
+      counts_available?: boolean;
+      blind_voting?: boolean;
+      results_publish_at?: string;
+      results_publish_label?: string;
     } | null;
 
     if (!response.ok || !payload?.contestant) {
       throw new Error(payload?.message || "Invalid private password.");
     }
 
-    return payload.contestant;
+    return {
+      ...payload.contestant,
+      counts_available: payload.counts_available,
+      blind_voting: payload.blind_voting,
+      results_publish_at: payload.results_publish_at,
+      results_publish_label: payload.results_publish_label,
+    };
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -363,12 +377,23 @@ const PrivateVoteCountPage = ({
                   <div className="mt-8 space-y-4">
                     <div className={`rounded-[1.5rem] border border-black/8 p-6 ${softPanelClass}`}>
                       <p className={`font-sans text-sm font-semibold uppercase tracking-[0.2em] ${accentTextClass}`}>Verified votes</p>
-                      <div className="mt-3 flex items-end gap-3">
-                        <p className="font-sans text-6xl font-semibold tracking-[-0.08em] text-[#171411]">
-                          {(entry.total_votes || 0).toLocaleString()}
-                        </p>
-                        <Trophy className={`mb-2 h-8 w-8 ${accentTextClass}`} />
-                      </div>
+                      {isCyes && entry.counts_available === false ? (
+                        <div className="mt-3 rounded-[1.15rem] border border-black/8 bg-white/70 px-4 py-4">
+                          <p className="font-sans text-2xl font-semibold tracking-[-0.04em] text-[#171411]">
+                            Hidden until {entry.results_publish_label || "the reveal day"}
+                          </p>
+                          <p className="mt-2 font-sans text-sm text-[#171411]/60">
+                            Your access is unlocked, but CYES vote counts are not public yet.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-3 flex items-end gap-3">
+                          <p className="font-sans text-6xl font-semibold tracking-[-0.08em] text-[#171411]">
+                            {(entry.total_votes || 0).toLocaleString()}
+                          </p>
+                          <Trophy className={`mb-2 h-8 w-8 ${accentTextClass}`} />
+                        </div>
+                      )}
                       <p className="mt-3 font-sans text-sm text-[#171411]/60">Checked: {formatCheckedAt(entry.verified_at)}</p>
                     </div>
 

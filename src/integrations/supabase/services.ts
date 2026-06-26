@@ -36,6 +36,10 @@ export type CYESVotingPayload = {
   categories: CYESAwardCategory[];
   total_votes: number;
   source_breakdown?: VoteSourceBreakdown | null;
+  counts_available?: boolean;
+  blind_voting?: boolean;
+  results_publish_at?: string;
+  results_publish_label?: string;
   voting_closed?: boolean;
   voting_closed_at?: string;
   announcement_channel_url?: string;

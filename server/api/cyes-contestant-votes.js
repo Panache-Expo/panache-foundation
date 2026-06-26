@@ -12,6 +12,10 @@ const SITE_BASE_URL = (
   process.env.EVENT_TICKETS_BASE_URL ||
   "https://panache-foundation.org"
 ).replace(/\/+$/, "");
+const CYES_RESULTS_PUBLISH_AT =
+  process.env.CYES_RESULTS_PUBLISH_AT || "2026-07-09T00:00:00+01:00";
+const CYES_RESULTS_PUBLISH_LABEL =
+  process.env.CYES_RESULTS_PUBLISH_LABEL || "9 July 2026";
 
 const NOMINEE_COLUMNS =
   "id, slug, name, organization, bio, photo_url, status, contestant_password_hash, category:cyes_award_categories(name, slug, status)";
@@ -57,6 +61,24 @@ const assertAdmin = (req, body = {}) => {
   }
 };
 
+const isAdminRequest = (req, body = {}) =>
+  Boolean(DASHBOARD_ACCESS_KEY && getDashboardKey(req, body) === DASHBOARD_ACCESS_KEY);
+
+const isCyesBlindVotingActive = (now = Date.now()) => {
+  const timestamp = Date.parse(CYES_RESULTS_PUBLISH_AT);
+  return Number.isFinite(timestamp) && now < timestamp;
+};
+
+const getCyesRevealMetadata = ({ admin = false } = {}) => {
+  const blindVoting = !admin && isCyesBlindVotingActive();
+  return {
+    blind_voting: blindVoting,
+    counts_available: !blindVoting,
+    results_publish_at: CYES_RESULTS_PUBLISH_AT,
+    results_publish_label: CYES_RESULTS_PUBLISH_LABEL,
+  };
+};
+
 const getSupabase = () => {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     throw createHttpError("CYES vote-count access is not configured yet.", 503);
@@ -81,7 +103,7 @@ const generatePrivatePassword = () =>
 const buildAccessPassUrl = (slug) =>
   `${SITE_BASE_URL}/cyes/nominees/${encodeURIComponent(slug)}/access-pass`;
 
-const serializeContestant = (contestant, slugFallback = "") => ({
+const serializeContestant = (contestant, slugFallback = "", { countsAvailable = true } = {}) => ({
   id: contestant.id,
   slug: contestant.slug || slugFallback,
   name: contestant.name,
@@ -90,11 +112,11 @@ const serializeContestant = (contestant, slugFallback = "") => ({
   photo_url: contestant.photo_url || null,
   category_name: contestant.category_name || contestant.category?.name || null,
   category_slug: contestant.category_slug || contestant.category?.slug || null,
-  total_votes: contestant.total_votes || 0,
+  total_votes: countsAvailable ? contestant.total_votes || 0 : 0,
   verified_at: contestant.verified_at || new Date().toISOString(),
 });
 
-const verifyContestantPassword = async (supabase, body) => {
+const verifyContestantPassword = async (supabase, body, req) => {
   const slug = normalizeText(body.slug || body.contestantSlug || body.contestant_slug);
   const password = normalizeText(body.password || body.accessCode || body.access_code);
 
@@ -116,8 +138,13 @@ const verifyContestantPassword = async (supabase, body) => {
     throw createHttpError("Invalid contestant password.", 401);
   }
 
+  const revealMetadata = getCyesRevealMetadata({ admin: isAdminRequest(req, body) });
+
   return {
-    contestant: serializeContestant(contestant, slug),
+    contestant: serializeContestant(contestant, slug, {
+      countsAvailable: revealMetadata.counts_available,
+    }),
+    ...revealMetadata,
   };
 };
 
@@ -245,7 +272,7 @@ export default async function handler(req, res) {
     const action = normalizeText(body.action || "verifyContestantPassword");
 
     if (action === "verifyContestantPassword") {
-      sendJson(res, 200, await verifyContestantPassword(supabase, body));
+      sendJson(res, 200, await verifyContestantPassword(supabase, body, req));
       return;
     }
 

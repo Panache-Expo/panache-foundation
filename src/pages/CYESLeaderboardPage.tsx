@@ -13,6 +13,7 @@ import type {
   CYESAwardNominee,
 } from "@/integrations/supabase/services";
 import { useCyesVoting } from "@/hooks/useSupabase";
+import { isBlindVotingActive, sortByName } from "@/lib/blind-voting";
 import { CYES_WHATSAPP_CHANNEL_URL } from "@/lib/registration-links";
 import cyesAwards from "@/assets/CYESCDAwards.jpeg";
 import cyesEvent from "@/assets/CYES.jpeg";
@@ -79,13 +80,15 @@ const formatRank = (rank: number) => {
 const nomineeLabel = (nominee: Pick<CYESAwardNominee, "name" | "organization">) =>
   [nominee.name, nominee.organization].filter(Boolean).join(" - ");
 
-const rankCategoryNominees = (category: CYESAwardCategory): RankedNominee[] => {
-  const sortedNominees = [...category.nominees].sort((left, right) => {
-    if (right.vote_count !== left.vote_count) {
-      return right.vote_count - left.vote_count;
-    }
-    return left.name.localeCompare(right.name);
-  });
+const rankCategoryNominees = (category: CYESAwardCategory, blindVoting: boolean): RankedNominee[] => {
+  const sortedNominees = blindVoting
+    ? sortByName(category.nominees)
+    : [...category.nominees].sort((left, right) => {
+        if (right.vote_count !== left.vote_count) {
+          return right.vote_count - left.vote_count;
+        }
+        return left.name.localeCompare(right.name);
+      });
 
   let previousVotes: number | null = null;
   let previousRank = 0;
@@ -108,24 +111,24 @@ const rankCategoryNominees = (category: CYESAwardCategory): RankedNominee[] => {
   });
 };
 
-const RankBadge = ({ rank }: { rank: number }) => {
+const RankBadge = ({ rank, blindVoting }: { rank: number; blindVoting: boolean }) => {
   const isTopRank = rank === 1;
   return (
     <div
       className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full font-sans text-sm font-semibold ${
-        isTopRank
+        !blindVoting && isTopRank
           ? "bg-[#171411] text-white"
           : "border border-black/10 bg-white text-[#171411]"
       }`}
     >
-      {isTopRank ? <Crown className="h-5 w-5" /> : `#${rank}`}
+      {blindVoting ? "A-Z" : isTopRank ? <Crown className="h-5 w-5" /> : `#${rank}`}
     </div>
   );
 };
 
-const NomineeRow = ({ nominee }: { nominee: RankedNominee }) => (
+const NomineeRow = ({ nominee, blindVoting }: { nominee: RankedNominee; blindVoting: boolean }) => (
   <article className="grid gap-4 rounded-[1.35rem] border border-black/8 bg-white/74 p-4 md:grid-cols-[auto_74px_1fr_auto] md:items-center">
-    <RankBadge rank={nominee.rank} />
+    <RankBadge rank={nominee.rank} blindVoting={blindVoting} />
     <div className="h-[4.6rem] w-[4.6rem] overflow-hidden rounded-[1rem] bg-[#eef2f6]">
       {nominee.photo_url ? (
         <img
@@ -149,12 +152,13 @@ const NomineeRow = ({ nominee }: { nominee: RankedNominee }) => (
         </p>
       ) : null}
       <p className="mt-2 font-sans text-sm text-[#171411]/58">
-        {nominee.categoryName} position: {formatRank(nominee.rank)} of{" "}
-        {nominee.totalNomineesInCategory}
+        {blindVoting
+          ? `${nominee.categoryName} alphabetical listing`
+          : `${nominee.categoryName} position: ${formatRank(nominee.rank)} of ${nominee.totalNomineesInCategory}`}
       </p>
     </div>
     <div className="inline-flex w-fit items-center gap-2 rounded-full bg-[#f3fbf6] px-4 py-2 font-sans text-sm font-semibold text-[#156D3B]">
-      Final position
+      {blindVoting ? "Results hidden" : "Final position"}
     </div>
   </article>
 );
@@ -164,14 +168,16 @@ const CYESLeaderboardPage = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const blindVoting = isBlindVotingActive(voting);
+  const showCounts = Boolean(voting?.counts_available);
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const rankedCategories = useMemo(
     () =>
       categories.map((category) => ({
         ...category,
-        rankedNominees: rankCategoryNominees(category),
+        rankedNominees: rankCategoryNominees(category, blindVoting),
       })),
-    [categories]
+    [blindVoting, categories]
   );
 
   const allRankedNominees = useMemo(
@@ -183,13 +189,16 @@ const CYESLeaderboardPage = () => {
     () =>
       [...allRankedNominees]
         .sort((left, right) => {
+          if (blindVoting) {
+            return left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
+          }
           if (right.vote_count !== left.vote_count) {
             return right.vote_count - left.vote_count;
           }
           return left.name.localeCompare(right.name);
         })
         .slice(0, 6),
-    [allRankedNominees]
+    [allRankedNominees, blindVoting]
   );
 
   const selectedCategory =
@@ -245,7 +254,11 @@ const CYESLeaderboardPage = () => {
               vote standings.
             </>
           }
-          description="Voting has ended, and participants can now review public standings, category positions, and the nominees leading each CYECD Awards category. Exact vote counts are kept private."
+          description={
+            blindVoting
+              ? `Voting has ended. Public vote counts and rankings remain hidden until ${voting?.results_publish_label || "the reveal day"}. Nominees are listed alphabetically for now.`
+              : "Voting has ended, and participants can now review public standings, category positions, and the nominees leading each CYECD Awards category. Exact vote counts are kept private."
+          }
           actions={
             <>
               <a href="#leaderboard">
@@ -277,7 +290,7 @@ const CYESLeaderboardPage = () => {
             },
             {
               label: "Counts",
-              value: "Private",
+              value: showCounts ? "Available" : "Hidden",
               accentClassName: "text-[#CC2129]",
             },
           ]}
@@ -291,12 +304,23 @@ const CYESLeaderboardPage = () => {
           <CYESSectionIntro
             eyebrow="Final results"
             title={
-              <>
-                Find your rank,
-                <span className="block font-display">review the standings</span>
-              </>
+              blindVoting ? (
+                <>
+                  Nominees remain
+                  <span className="block font-display">alphabetical</span>
+                </>
+              ) : (
+                <>
+                  Find your rank,
+                  <span className="block font-display">review the standings</span>
+                </>
+              )
             }
-            description="Voting ended on 17 May 2026 at 00:00 WAT. Search by nominee, organization, or category to review the public standings."
+            description={
+              blindVoting
+                ? `Voting ended on 17 May 2026 at 00:00 WAT. Vote counts and rankings stay hidden until ${voting?.results_publish_label || "the reveal day"}.`
+                : "Voting ended on 17 May 2026 at 00:00 WAT. Search by nominee, organization, or category to review the public standings."
+            }
           />
 
           <div className="mt-10 rounded-[1.35rem] border border-[#25D366]/20 bg-[#f3fbf6] px-5 py-5">
@@ -306,7 +330,9 @@ const CYESLeaderboardPage = () => {
                   Voting closed
                 </p>
                 <p className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-[#171411]/70">
-                  No new CYES Awards votes can be submitted. Follow the WhatsApp channel for event announcements, finalist updates, and next steps.
+                  {blindVoting
+                    ? `No new CYES Awards votes can be submitted. Public counts remain hidden until ${voting?.results_publish_label || "the reveal day"}.`
+                    : "No new CYES Awards votes can be submitted. Follow the WhatsApp channel for event announcements, finalist updates, and next steps."}
                 </p>
               </div>
               <a
@@ -376,7 +402,7 @@ const CYESLeaderboardPage = () => {
                     Overall spotlight
                   </p>
                   <h2 className="mt-2 font-sans text-[1.7rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
-                    Overall standings
+                    {blindVoting ? "Nominee directory" : "Overall standings"}
                   </h2>
                 </div>
                 <Trophy className="h-8 w-8 text-[#FFB200]" />
@@ -413,7 +439,7 @@ const CYESLeaderboardPage = () => {
                       className="grid gap-3 rounded-[1.2rem] border border-black/8 bg-white/74 p-4 sm:grid-cols-[auto_1fr_auto] sm:items-center"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff4d1] text-[#8A5A00]">
-                        {index < 3 ? (
+                        {!blindVoting && index < 3 ? (
                           <Medal className="h-5 w-5" />
                         ) : (
                           <BarChart3 className="h-5 w-5" />
@@ -424,11 +450,13 @@ const CYESLeaderboardPage = () => {
                           {nomineeLabel(nominee)}
                         </p>
                         <p className="mt-1 font-sans text-sm text-[#171411]/58">
-                          {nominee.categoryName} • {formatRank(nominee.rank)} in category
+                          {blindVoting
+                            ? `${nominee.categoryName} - alphabetical listing`
+                            : `${nominee.categoryName} - ${formatRank(nominee.rank)} in category`}
                         </p>
                       </div>
                       <p className="font-sans text-sm font-semibold text-[#156D3B]">
-                        Overall #{index + 1}
+                        {blindVoting ? "Results hidden" : `Overall #${index + 1}`}
                       </p>
                     </div>
                   ))}
@@ -457,6 +485,7 @@ const CYESLeaderboardPage = () => {
                     <NomineeRow
                       key={`${nominee.categoryId}-${nominee.id}`}
                       nominee={nominee}
+                      blindVoting={blindVoting}
                     />
                   ))
                 ) : (
@@ -478,7 +507,7 @@ const CYESLeaderboardPage = () => {
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <p className="font-sans text-sm font-semibold uppercase tracking-[0.12em] text-[#156D3B]">
-                        Category leaderboard
+                        {blindVoting ? "Category directory" : "Category leaderboard"}
                       </p>
                       <h2 className="mt-2 font-sans text-[1.7rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
                         {category.name}
@@ -490,7 +519,7 @@ const CYESLeaderboardPage = () => {
                       ) : null}
                     </div>
                     <div className="inline-flex items-center gap-2 rounded-full bg-[#eef5fb] px-4 py-2 font-sans text-sm font-semibold text-[#1875D2]">
-                      Final category ranking
+                      {blindVoting ? "Alphabetical listing" : "Final category ranking"}
                     </div>
                   </div>
 
@@ -500,6 +529,7 @@ const CYESLeaderboardPage = () => {
                         <NomineeRow
                           key={`${category.id}-${nominee.id}`}
                           nominee={nominee}
+                          blindVoting={blindVoting}
                         />
                       ))
                     ) : (

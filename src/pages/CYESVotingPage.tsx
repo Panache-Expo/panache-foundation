@@ -11,6 +11,7 @@ import type {
   CYESAwardNominee,
 } from "@/integrations/supabase/services";
 import { useCyesVoting } from "@/hooks/useSupabase";
+import { isBlindVotingActive, sortByName } from "@/lib/blind-voting";
 import { CYES_WHATSAPP_CHANNEL_URL } from "@/lib/registration-links";
 import cyesAwards from "@/assets/CYESCDAwards.jpeg";
 import cyesEvent from "@/assets/CYES.jpeg";
@@ -123,17 +124,21 @@ const getNomineeClassification = (
   };
 };
 
-const sortNomineesByVotes = (category: CYESAwardCategory) =>
-  [...category.nominees].sort((left, right) => {
-    if (right.vote_count !== left.vote_count) {
-      return right.vote_count - left.vote_count;
-    }
-    return left.name.localeCompare(right.name);
-  });
+const sortNomineesByVotes = (category: CYESAwardCategory, blindVoting: boolean) =>
+  blindVoting
+    ? sortByName(category.nominees)
+    : [...category.nominees].sort((left, right) => {
+        if (right.vote_count !== left.vote_count) {
+          return right.vote_count - left.vote_count;
+        }
+        return left.name.localeCompare(right.name);
+      });
 
 const CYESVotingPage = () => {
   const { data: voting, isLoading, error, refetch } = useCyesVoting();
 
+  const blindVoting = isBlindVotingActive(voting);
+  const showCounts = Boolean(voting?.counts_available);
   const categories = useMemo(() => voting?.categories || [], [voting?.categories]);
   const categoryStats = useMemo(() => {
     const categoriesWithNominees = categories.filter((category) => category.nominees.length);
@@ -167,7 +172,11 @@ const CYESVotingPage = () => {
               for the CYECD Awards.
             </>
           }
-          description={closedMessage}
+          description={
+            blindVoting
+              ? `CYES Awards voting ended on 17 May 2026 at 00:00 WAT. Vote counts and rankings stay hidden until ${voting?.results_publish_label || "the reveal day"}.`
+              : closedMessage
+          }
           actions={
             <>
               <a
@@ -200,7 +209,7 @@ const CYESVotingPage = () => {
             },
             {
               label: "Counts",
-              value: "Private",
+              value: showCounts ? "Available" : "Hidden",
               accentClassName: "text-[#1875D2]",
             },
           ]}
@@ -216,10 +225,16 @@ const CYESVotingPage = () => {
             title={
               <>
                 Results remain
-                <span className="block font-display">available to view</span>
+                <span className="block font-display">
+                  {blindVoting ? "hidden for reveal" : "available to view"}
+                </span>
               </>
             }
-            description="Vote submission is no longer available. You can still review the public standings and follow the CYES announcements channel for finalist, event, and awards updates."
+            description={
+              blindVoting
+                ? `Vote submission is no longer available. Vote counts and rankings stay hidden until ${voting?.results_publish_label || "the reveal day"}.`
+                : "Vote submission is no longer available. You can still review the public standings and follow the CYES announcements channel for finalist, event, and awards updates."
+            }
           />
 
           <div className={cyesSurfaceClasses + " mt-10 px-6 py-7 md:px-8"}>
@@ -280,14 +295,14 @@ const CYESVotingPage = () => {
           ) : categories.length ? (
             <div className="mt-10 grid gap-6">
               {categories.map((category) => {
-                const rankedNominees = sortNomineesByVotes(category);
+                const rankedNominees = sortNomineesByVotes(category, blindVoting);
 
                 return (
                   <section key={category.id} className={cyesSurfaceClasses + " px-5 py-6 md:px-7"}>
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <p className="font-sans text-sm font-semibold uppercase tracking-[0.12em] text-[#156D3B]">
-                          Final category results
+                          {blindVoting ? "Category nominees" : "Final category results"}
                         </p>
                         <h2 className="mt-2 font-sans text-[1.8rem] font-semibold leading-[0.98] tracking-[-0.05em] text-[#171411]">
                           {category.name}
@@ -300,17 +315,19 @@ const CYESVotingPage = () => {
                       </div>
                       <div className="inline-flex items-center gap-2 rounded-full bg-[#eef5fb] px-4 py-2 font-sans text-sm font-semibold text-[#1875D2]">
                         <BarChart3 className="h-4 w-4" />
-                        Final standings
+                        {blindVoting ? "Alphabetical listing" : "Final standings"}
                       </div>
                     </div>
 
                     <div className="mt-6 grid gap-4">
                       {rankedNominees.length ? (
                         rankedNominees.map((nominee, index) => {
-                          const classification = getNomineeClassification(
-                            nominee,
-                            rankedNominees
-                          );
+                          const classification = blindVoting
+                            ? {
+                                label: "Results hidden",
+                                className: "bg-[#F7F5F1] text-[#6E6255]",
+                              }
+                            : getNomineeClassification(nominee, rankedNominees);
 
                           return (
                             <article
@@ -338,7 +355,7 @@ const CYESVotingPage = () => {
                                     {nominee.name}
                                   </p>
                                   <span className="inline-flex items-center rounded-full bg-[#171411]/6 px-2.5 py-1 font-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#171411]/72">
-                                    #{index + 1}
+                                    {blindVoting ? "A-Z" : `#${index + 1}`}
                                   </span>
                                 </div>
                                 {nominee.organization ? (
@@ -354,7 +371,7 @@ const CYESVotingPage = () => {
                               </div>
                               <div className="flex flex-col items-start gap-2 md:items-end">
                                 <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 font-sans text-sm font-semibold text-[#171411] shadow-[0_8px_22px_rgba(17,16,14,0.06)]">
-                                  Final position #{index + 1}
+                                  {blindVoting ? "Alphabetical listing" : `Final position #${index + 1}`}
                                 </span>
                                 <span
                                   className={`inline-flex rounded-full px-3 py-1 font-sans text-xs font-semibold ${classification.className}`}
