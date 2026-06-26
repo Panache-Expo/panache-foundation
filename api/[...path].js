@@ -39,8 +39,10 @@ const publicRoutes = new Set([
   "panache-360-voting",
   "panache-dor-voting",
   "cyes-voting",
+  "cyes-contestant-votes",
   "event-tickets",
   "competition-applications",
+  "miss-panache-contestant-votes",
   "send-registration-email",
 ]);
 
