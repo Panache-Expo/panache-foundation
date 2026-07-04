@@ -46,8 +46,22 @@ const publicRoutes = new Set([
   "send-registration-email",
 ]);
 
+const selfAuthenticatedRoutes = new Set([
+  "contestant-access-pass",
+  "cyes-access-pass-agent",
+  "dashboard-applications",
+  "email-rankings",
+  "panache-dor-revenue-lite",
+  "panache-dor-revenue",
+  "panache-rankings-email",
+  "panache-revenue",
+]);
+
 const isCronAuthorized = (req) =>
-  Boolean(process.env.CRON_SECRET && req.headers["authorization"] === `Bearer ${process.env.CRON_SECRET}`);
+  Boolean(
+    process.env.CRON_SECRET &&
+      req.headers["authorization"] === `Bearer ${process.env.CRON_SECRET}`
+  );
 
 export default async function handler(req, res) {
   const routePath = getRoutePath(req).replace(/^\/+|\/+$/g, "");
@@ -57,7 +71,11 @@ export default async function handler(req, res) {
     return sendJson(res, 404, { message: "API route not found." });
   }
 
-  if (!publicRoutes.has(routePath) && !isCronAuthorized(req)) {
+  if (
+    !publicRoutes.has(routePath) &&
+    !selfAuthenticatedRoutes.has(routePath) &&
+    !isCronAuthorized(req)
+  ) {
     return sendJson(res, 401, { message: "Unauthorized request." });
   }
 
