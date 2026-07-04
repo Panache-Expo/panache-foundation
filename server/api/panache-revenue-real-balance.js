@@ -33,21 +33,22 @@ const LEDGER_YEAR = Number.parseInt(
 );
 const LEDGER_START_DATE =
   process.env.PANACHE_REVENUE_LEDGER_START_DATE || `${LEDGER_YEAR}-01-01`;
+const SYNC_KEY = `campay-ledger-${LEDGER_YEAR}`;
+const BACKFILL_CHUNK_DAYS = Math.max(
+  Number.parseInt(process.env.PANACHE_REVENUE_BACKFILL_CHUNK_DAYS || "45", 10) || 45,
+  1
+);
 const RECENT_REFRESH_DAYS = Math.max(
   Number.parseInt(process.env.PANACHE_REVENUE_RECENT_REFRESH_DAYS || "3", 10) || 3,
   1
 );
-const MAX_HISTORY_WINDOW_DAYS = Math.max(
-  Number.parseInt(process.env.PANACHE_REVENUE_HISTORY_WINDOW_DAYS || "31", 10) || 31,
-  1
-);
-const HISTORY_SPLIT_THRESHOLD = Math.max(
-  Number.parseInt(process.env.PANACHE_REVENUE_HISTORY_SPLIT_THRESHOLD || "800", 10) || 800,
-  50
-);
 const HISTORY_CONCURRENCY = Math.min(
-  Math.max(Number.parseInt(process.env.PANACHE_REVENUE_HISTORY_CONCURRENCY || "3", 10) || 3, 1),
-  6
+  Math.max(Number.parseInt(process.env.PANACHE_REVENUE_HISTORY_CONCURRENCY || "8", 10) || 8, 1),
+  12
+);
+const MAX_SYNC_RUNTIME_MS = Math.max(
+  Number.parseInt(process.env.PANACHE_REVENUE_MAX_SYNC_RUNTIME_MS || "45000", 10) || 45000,
+  5000
 );
 const UPSERT_BATCH_SIZE = 500;
 
@@ -64,6 +65,29 @@ const moneyAmount = (value) => {
   const number = Number(value || 0);
   return Number.isFinite(number) ? Math.round(Math.abs(number)) : 0;
 };
+
+const parseDate = (date) => new Date(`${date}T00:00:00.000Z`);
+const formatDate = (date) => date.toISOString().slice(0, 10);
+
+const addDays = (date, days) => {
+  const parsed = parseDate(date);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return formatDate(parsed);
+};
+
+const getDateRange = (startDate, endDate) => {
+  if (!startDate || !endDate || startDate > endDate) return [];
+  const dates = [];
+  let cursor = startDate;
+  while (cursor <= endDate) {
+    dates.push(cursor);
+    cursor = addDays(cursor, 1);
+  }
+  return dates;
+};
+
+const todayInCameroon = () =>
+  new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 10);
 
 const getAccessKey = (req) =>
   normalizeText(
@@ -96,6 +120,8 @@ const readJsonResponse = async (response) => {
   }
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const getCampayToken = async () => {
   if (!CAMPAY_APP_USERNAME || !CAMPAY_APP_PASSWORD) {
     throw new Error("CamPay credentials are not configured.");
@@ -126,7 +152,7 @@ const getCampayToken = async () => {
   return payload.token;
 };
 
-const campayRequest = async (endpoint, options = {}, retry = true) => {
+const campayRequest = async (endpoint, options = {}, retryAuth = true) => {
   const token = await getCampayToken();
   const response = await fetch(`${CAMPAY_BASE_URL}${endpoint}`, {
     ...options,
@@ -139,16 +165,34 @@ const campayRequest = async (endpoint, options = {}, retry = true) => {
   });
   const payload = await readJsonResponse(response);
 
-  if (response.status === 401 && retry) {
+  if (response.status === 401 && retryAuth) {
     campayTokenCache = { token: "", expiresAt: 0 };
     return campayRequest(endpoint, options, false);
   }
 
   if (!response.ok) {
-    throw new Error(payload?.message || "CamPay request failed.");
+    const error = new Error(payload?.message || "CamPay request failed.");
+    error.statusCode = response.status;
+    throw error;
   }
 
   return payload;
+};
+
+const campayRequestWithRetry = async (endpoint, options = {}, attempts = 3) => {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await campayRequest(endpoint, options);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || (error?.statusCode && error.statusCode < 500 && error.statusCode !== 429)) {
+        throw error;
+      }
+      await sleep(350 * attempt);
+    }
+  }
+  throw lastError;
 };
 
 const extractHistoryRows = (payload) => {
@@ -159,30 +203,13 @@ const extractHistoryRows = (payload) => {
   return [];
 };
 
-const getReportedHistoryTotal = (payload) => {
-  const candidates = [
-    payload?.count,
-    payload?.total,
-    payload?.total_count,
-    payload?.totalCount,
-    payload?.pagination?.total,
-    payload?.meta?.total,
-  ];
-  for (const candidate of candidates) {
-    const parsed = Number(candidate);
-    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
-  }
-  return null;
+const fetchCampayHistoryDay = async (date) => {
+  const payload = await campayRequestWithRetry("/api/history/", {
+    method: "POST",
+    body: JSON.stringify({ start_date: date, end_date: date }),
+  });
+  return extractHistoryRows(payload);
 };
-
-const hasHistoryContinuation = (payload) =>
-  Boolean(
-    payload?.next ||
-      payload?.next_page ||
-      payload?.nextPage ||
-      payload?.pagination?.next ||
-      payload?.meta?.next
-  );
 
 const firstTransactionReference = (row) =>
   normalizeText(
@@ -232,10 +259,8 @@ const classifyDirection = (row) => {
 
 const normalizeHistoryRow = (row) => {
   const providerReference = firstTransactionReference(row);
-  const campayReference = providerReference || stableFallbackReference(row);
-
   return {
-    campay_reference: campayReference,
+    campay_reference: providerReference || stableFallbackReference(row),
     external_reference:
       normalizeText(
         row?.external_reference || row?.external_ref || row?.externalReference
@@ -258,90 +283,12 @@ const normalizeHistoryRow = (row) => {
       normalizeText(row?.created_at || row?.date || row?.datetime || row?.timestamp) || null,
     raw: row || {},
     updated_at: new Date().toISOString(),
-    generated_reference: !providerReference,
-  };
-};
-
-const parseDate = (date) => new Date(`${date}T00:00:00.000Z`);
-
-const formatDate = (date) => date.toISOString().slice(0, 10);
-
-const addDays = (date, days) => {
-  const parsed = parseDate(date);
-  parsed.setUTCDate(parsed.getUTCDate() + days);
-  return formatDate(parsed);
-};
-
-const daysBetweenInclusive = (startDate, endDate) =>
-  Math.floor((parseDate(endDate) - parseDate(startDate)) / 86400000) + 1;
-
-const todayInCameroon = () =>
-  new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 10);
-
-const splitDateRange = (startDate, endDate) => {
-  const totalDays = daysBetweenInclusive(startDate, endDate);
-  const leftDays = Math.floor(totalDays / 2);
-  const leftEnd = addDays(startDate, Math.max(leftDays - 1, 0));
-  const rightStart = addDays(leftEnd, 1);
-  return [
-    { startDate, endDate: leftEnd },
-    { startDate: rightStart, endDate },
-  ];
-};
-
-const buildDateWindows = (startDate, endDate, maxDays = MAX_HISTORY_WINDOW_DAYS) => {
-  if (!startDate || !endDate || startDate > endDate) return [];
-  const windows = [];
-  let cursor = startDate;
-
-  while (cursor <= endDate) {
-    const windowEnd = [addDays(cursor, maxDays - 1), endDate].sort()[0];
-    windows.push({ startDate: cursor, endDate: windowEnd });
-    cursor = addDays(windowEnd, 1);
-  }
-
-  return windows;
-};
-
-const fetchHistoryRange = async (startDate, endDate, depth = 0) => {
-  const payload = await campayRequest("/api/history/", {
-    method: "POST",
-    body: JSON.stringify({ start_date: startDate, end_date: endDate }),
-  });
-  const rows = extractHistoryRows(payload);
-  const reportedTotal = getReportedHistoryTotal(payload);
-  const shouldSplit =
-    startDate < endDate &&
-    depth < 12 &&
-    (rows.length >= HISTORY_SPLIT_THRESHOLD ||
-      (reportedTotal !== null && reportedTotal > rows.length) ||
-      hasHistoryContinuation(payload));
-
-  if (!shouldSplit) {
-    return {
-      rows,
-      requests: 1,
-      ranges: [{ start_date: startDate, end_date: endDate, rows: rows.length }],
-    };
-  }
-
-  const [left, right] = splitDateRange(startDate, endDate);
-  const [leftResult, rightResult] = await Promise.all([
-    fetchHistoryRange(left.startDate, left.endDate, depth + 1),
-    fetchHistoryRange(right.startDate, right.endDate, depth + 1),
-  ]);
-
-  return {
-    rows: [...leftResult.rows, ...rightResult.rows],
-    requests: 1 + leftResult.requests + rightResult.requests,
-    ranges: [...leftResult.ranges, ...rightResult.ranges],
   };
 };
 
 const runWithConcurrency = async (items, limit, worker) => {
   const results = new Array(items.length);
   let cursor = 0;
-
   const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
     while (cursor < items.length) {
       const index = cursor;
@@ -349,79 +296,86 @@ const runWithConcurrency = async (items, limit, worker) => {
       results[index] = await worker(items[index], index);
     }
   });
-
   await Promise.all(runners);
   return results;
 };
 
-const fetchLedgerCoverage = async (supabase) => {
-  const [firstResult, latestResult] = await Promise.all([
-    supabase
-      .from("panache_dor_campay_transactions")
-      .select("transaction_date")
-      .not("transaction_date", "is", null)
-      .gte("transaction_date", `${LEDGER_START_DATE}T00:00:00Z`)
-      .order("transaction_date", { ascending: true })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("panache_dor_campay_transactions")
-      .select("transaction_date")
-      .not("transaction_date", "is", null)
-      .gte("transaction_date", `${LEDGER_START_DATE}T00:00:00Z`)
-      .order("transaction_date", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
-
-  if (firstResult.error) throw firstResult.error;
-  if (latestResult.error) throw latestResult.error;
-
-  return {
-    first_date: normalizeText(firstResult.data?.transaction_date).slice(0, 10) || null,
-    latest_date: normalizeText(latestResult.data?.transaction_date).slice(0, 10) || null,
-  };
-};
-
-const buildSyncWindows = (coverage, today) => {
-  const windows = [];
-
-  if (!coverage.first_date) {
-    windows.push(...buildDateWindows(LEDGER_START_DATE, today));
-    return windows;
-  }
-
-  if (coverage.first_date > LEDGER_START_DATE) {
-    windows.push(
-      ...buildDateWindows(LEDGER_START_DATE, addDays(coverage.first_date, -1))
-    );
-  }
-
-  const recentStart = [
-    LEDGER_START_DATE,
-    addDays(coverage.latest_date || today, -(RECENT_REFRESH_DAYS - 1)),
-  ].sort().at(-1);
-  windows.push(...buildDateWindows(recentStart, today));
-
-  const unique = new Map(
-    windows.map((window) => [`${window.startDate}:${window.endDate}`, window])
-  );
-  return [...unique.values()];
-};
-
-const upsertHistoryRows = async (supabase, normalizedRows) => {
-  let storedRows = 0;
-  for (let index = 0; index < normalizedRows.length; index += UPSERT_BATCH_SIZE) {
-    const batch = normalizedRows
-      .slice(index, index + UPSERT_BATCH_SIZE)
-      .map(({ generated_reference: _generated, ...row }) => row);
+const upsertHistoryRows = async (supabase, rows) => {
+  let stored = 0;
+  for (let index = 0; index < rows.length; index += UPSERT_BATCH_SIZE) {
+    const batch = rows.slice(index, index + UPSERT_BATCH_SIZE);
     const { error } = await supabase
       .from("panache_dor_campay_transactions")
       .upsert(batch, { onConflict: "campay_reference" });
     if (error) throw error;
-    storedRows += batch.length;
+    stored += batch.length;
   }
-  return storedRows;
+  return stored;
+};
+
+const getOrCreateSyncState = async (supabase, today) => {
+  const { data: existing, error: readError } = await supabase
+    .from("panache_revenue_sync_state")
+    .select("*")
+    .eq("sync_key", SYNC_KEY)
+    .maybeSingle();
+  if (readError) throw readError;
+
+  if (existing && String(existing.ledger_start_date) === LEDGER_START_DATE) {
+    return existing;
+  }
+
+  const initial = {
+    sync_key: SYNC_KEY,
+    ledger_start_date: LEDGER_START_DATE,
+    backfill_cursor_date: today,
+    backfill_completed_at: null,
+    last_recent_sync_at: null,
+    last_error: null,
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await supabase
+    .from("panache_revenue_sync_state")
+    .upsert(initial, { onConflict: "sync_key" })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+const updateSyncState = async (supabase, updates) => {
+  const { data, error } = await supabase
+    .from("panache_revenue_sync_state")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("sync_key", SYNC_KEY)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+const syncDates = async (supabase, dates) => {
+  if (!dates.length) return { fetched_rows: 0, unique_rows: 0, stored_rows: 0 };
+
+  const dayResults = await runWithConcurrency(
+    dates,
+    HISTORY_CONCURRENCY,
+    (date) => fetchCampayHistoryDay(date)
+  );
+  const rawRows = dayResults.flat();
+  const normalized = rawRows.map(normalizeHistoryRow);
+  const uniqueRows = [
+    ...new Map(normalized.map((row) => [row.campay_reference, row])).values(),
+  ];
+  const storedRows = uniqueRows.length
+    ? await upsertHistoryRows(supabase, uniqueRows)
+    : 0;
+
+  return {
+    fetched_rows: rawRows.length,
+    unique_rows: uniqueRows.length,
+    stored_rows: storedRows,
+  };
 };
 
 const syncCompleteCampayLedger = async (supabase) => {
@@ -429,50 +383,109 @@ const syncCompleteCampayLedger = async (supabase) => {
     return {
       attempted: false,
       available: false,
+      backfill_complete: false,
       error: "CamPay credentials are not configured.",
-      fetched_rows: 0,
-      stored_rows: 0,
-      generated_reference_count: 0,
     };
   }
 
+  const startedAt = Date.now();
   const today = todayInCameroon();
-  const coverageBefore = await fetchLedgerCoverage(supabase);
-  const windows = buildSyncWindows(coverageBefore, today);
+  let state = await getOrCreateSyncState(supabase, today);
+  let fetchedRows = 0;
+  let uniqueRows = 0;
+  let storedRows = 0;
+  let daysSynced = 0;
+  let chunksCompleted = 0;
 
-  const windowResults = await runWithConcurrency(
-    windows,
-    HISTORY_CONCURRENCY,
-    (window) => fetchHistoryRange(window.startDate, window.endDate)
-  );
+  try {
+    while (
+      String(state.backfill_cursor_date) >= LEDGER_START_DATE &&
+      Date.now() - startedAt < MAX_SYNC_RUNTIME_MS
+    ) {
+      const chunkEnd = String(state.backfill_cursor_date);
+      const chunkStart = [
+        LEDGER_START_DATE,
+        addDays(chunkEnd, -(BACKFILL_CHUNK_DAYS - 1)),
+      ].sort().at(-1);
+      const dates = getDateRange(chunkStart, chunkEnd);
+      const result = await syncDates(supabase, dates);
 
-  const rawRows = windowResults.flatMap((result) => result.rows);
-  const normalizedRows = rawRows.map(normalizeHistoryRow);
-  const uniqueRows = [
-    ...new Map(normalizedRows.map((row) => [row.campay_reference, row])).values(),
-  ];
-  const storedRows = uniqueRows.length
-    ? await upsertHistoryRows(supabase, uniqueRows)
-    : 0;
-  const coverageAfter = await fetchLedgerCoverage(supabase);
+      fetchedRows += result.fetched_rows;
+      uniqueRows += result.unique_rows;
+      storedRows += result.stored_rows;
+      daysSynced += dates.length;
+      chunksCompleted += 1;
 
-  return {
-    attempted: true,
-    available: true,
-    error: null,
-    ledger_start_date: LEDGER_START_DATE,
-    date_to: today,
-    coverage_before: coverageBefore,
-    coverage_after: coverageAfter,
-    requested_windows: windows.length,
-    campay_requests: windowResults.reduce((sum, result) => sum + result.requests, 0),
-    fetched_rows: rawRows.length,
-    unique_rows: uniqueRows.length,
-    stored_rows: storedRows,
-    generated_reference_count: uniqueRows.filter((row) => row.generated_reference).length,
-    ranges: windowResults.flatMap((result) => result.ranges).slice(0, 100),
-    synced_at: new Date().toISOString(),
-  };
+      const nextCursor = addDays(chunkStart, -1);
+      const complete = nextCursor < LEDGER_START_DATE;
+      state = await updateSyncState(supabase, {
+        backfill_cursor_date: nextCursor,
+        backfill_completed_at: complete ? new Date().toISOString() : null,
+        last_error: null,
+      });
+
+      if (complete) break;
+    }
+
+    const backfillComplete = String(state.backfill_cursor_date) < LEDGER_START_DATE;
+
+    if (backfillComplete) {
+      const recentStart = [
+        LEDGER_START_DATE,
+        addDays(today, -(RECENT_REFRESH_DAYS - 1)),
+      ].sort().at(-1);
+      const recentDates = getDateRange(recentStart, today);
+      const recentResult = await syncDates(supabase, recentDates);
+      fetchedRows += recentResult.fetched_rows;
+      uniqueRows += recentResult.unique_rows;
+      storedRows += recentResult.stored_rows;
+      daysSynced += recentDates.length;
+      state = await updateSyncState(supabase, {
+        last_recent_sync_at: new Date().toISOString(),
+        last_error: null,
+      });
+    }
+
+    const cursor = String(state.backfill_cursor_date);
+    const remainingDays = backfillComplete
+      ? 0
+      : getDateRange(LEDGER_START_DATE, cursor).length;
+
+    return {
+      attempted: true,
+      available: true,
+      error: null,
+      ledger_start_date: LEDGER_START_DATE,
+      date_to: today,
+      backfill_complete: backfillComplete,
+      backfill_cursor_date: cursor,
+      remaining_backfill_days: remainingDays,
+      days_synced_this_request: daysSynced,
+      chunks_completed_this_request: chunksCompleted,
+      fetched_rows: fetchedRows,
+      unique_rows: uniqueRows,
+      stored_rows: storedRows,
+      runtime_ms: Date.now() - startedAt,
+      synced_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    await updateSyncState(supabase, {
+      last_error: error instanceof Error ? error.message : String(error),
+    }).catch(() => null);
+    return {
+      attempted: true,
+      available: false,
+      backfill_complete: false,
+      error: error instanceof Error ? error.message : String(error),
+      ledger_start_date: LEDGER_START_DATE,
+      date_to: today,
+      backfill_cursor_date: String(state.backfill_cursor_date),
+      fetched_rows: fetchedRows,
+      unique_rows: uniqueRows,
+      stored_rows: storedRows,
+      runtime_ms: Date.now() - startedAt,
+    };
+  }
 };
 
 const fetchEveryLedgerRow = async (supabase) => {
@@ -489,22 +502,12 @@ const fetchEveryLedgerRow = async (supabase) => {
       .order("transaction_date", { ascending: false, nullsFirst: false })
       .range(page * pageSize, page * pageSize + pageSize - 1);
 
-    if (error) {
-      if (
-        error.code === "42P01" ||
-        error.code === "PGRST205" ||
-        /does not exist|could not find/i.test(error.message || "")
-      ) {
-        return { rows: [], available: false, error: error.message };
-      }
-      throw error;
-    }
-
+    if (error) throw error;
     rows.push(...data);
     if (data.length < pageSize) break;
   }
 
-  return { rows, available: true, error: null };
+  return rows;
 };
 
 const ledgerMovement = (row) => {
@@ -609,10 +612,9 @@ const buildLedgerAudit = (rows, sync) => {
       if (movement.credit_xaf > 0) summary.successful_credit_transaction_count += 1;
       if (movement.debit_xaf > 0) {
         summary.successful_debit_transaction_count += 1;
-        const principal = amount;
-        const actualFee = Math.max(movement.debit_xaf - principal, charge, 0);
+        const actualFee = Math.max(movement.debit_xaf - amount, charge, 0);
         withdrawals.successful_withdrawal_count += 1;
-        withdrawals.successful_withdrawals_xaf += principal;
+        withdrawals.successful_withdrawals_xaf += amount;
         withdrawals.successful_withdrawal_fees_xaf += actualFee;
         withdrawals.successful_withdrawals_with_fees_xaf += movement.debit_xaf;
       }
@@ -652,36 +654,9 @@ const buildLedgerAudit = (rows, sync) => {
 
 const buildRealBalanceSnapshot = async () => {
   const supabase = createAdminClient();
-  let sync;
-
-  try {
-    sync = await syncCompleteCampayLedger(supabase);
-  } catch (error) {
-    sync = {
-      attempted: true,
-      available: false,
-      error: error instanceof Error ? error.message : String(error),
-      fetched_rows: 0,
-      stored_rows: 0,
-      generated_reference_count: 0,
-    };
-  }
-
-  const ledger = await fetchEveryLedgerRow(supabase);
-  if (!ledger.available) {
-    return {
-      summary: {
-        available: false,
-        error: ledger.error,
-        balance_xaf: 0,
-        ignored_transaction_count: 0,
-        sync,
-      },
-      withdrawals: null,
-    };
-  }
-
-  return buildLedgerAudit(ledger.rows, sync);
+  const sync = await syncCompleteCampayLedger(supabase);
+  const ledgerRows = await fetchEveryLedgerRow(supabase);
+  return buildLedgerAudit(ledgerRows, sync);
 };
 
 const installRevenueResponseInterceptor = (res, snapshot) => {
@@ -697,12 +672,12 @@ const installRevenueResponseInterceptor = (res, snapshot) => {
         payload.revenue.real_account_balance_xaf = balance;
         payload.revenue.estimated_cash_after_withdrawals_xaf = balance;
         payload.revenue.campay_account_balance = snapshot.summary;
-        if (snapshot.withdrawals) payload.revenue.withdrawals = snapshot.withdrawals;
+        payload.revenue.withdrawals = snapshot.withdrawals;
         payload.revenue.assumptions = [
           `CamPay ledger balance covers transactions from ${LEDGER_START_DATE} and uses every synced transaction reference.`,
-          "No transaction ID is excluded from the balance, including rows that were previously marked for exclusion.",
-          "Successful CamPay credit values increase the balance and successful debit values reduce it; provider charges are therefore taken from the real ledger movement instead of estimated fee percentages.",
-          "Pending and failed transactions remain visible in audit counts but do not change the balance.",
+          "CamPay history is fetched one calendar day at a time, matching the proven voting reconciliation flow.",
+          "No transaction ID is excluded from the balance, including rows previously marked for exclusion.",
+          "Successful CamPay credits increase the balance and successful CamPay debits reduce it.",
           ...(Array.isArray(payload.revenue.assumptions) ? payload.revenue.assumptions : []),
         ];
       }
@@ -719,21 +694,7 @@ export default async function handler(req, res) {
     return baseRevenueHandler(req, res);
   }
 
-  let snapshot;
-  try {
-    snapshot = await buildRealBalanceSnapshot();
-  } catch (error) {
-    snapshot = {
-      summary: {
-        available: false,
-        error: error instanceof Error ? error.message : String(error),
-        balance_xaf: 0,
-        ignored_transaction_count: 0,
-      },
-      withdrawals: null,
-    };
-  }
-
+  const snapshot = await buildRealBalanceSnapshot();
   installRevenueResponseInterceptor(res, snapshot);
   return baseRevenueHandler(req, res);
 }
