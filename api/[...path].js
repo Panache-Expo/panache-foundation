@@ -36,6 +36,7 @@ const removeRouteParamFromQuery = (req) => {
 
 const publicRoutes = new Set([
   "miss-panache-voting",
+  "panache-360-public-counts",
   "panache-360-voting",
   "panache-dor-voting",
   "cyes-voting",
