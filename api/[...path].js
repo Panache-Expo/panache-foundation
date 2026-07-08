@@ -49,6 +49,7 @@ const publicRoutes = new Set([
 
 const selfAuthenticatedRoutes = new Set([
   "contestant-access-pass",
+  "contestant-pass-profile",
   "cyes-access-pass-agent",
   "dashboard-applications",
   "email-rankings",
