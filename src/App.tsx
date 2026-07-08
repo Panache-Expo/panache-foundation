@@ -52,6 +52,8 @@ import NotFound from "./pages/NotFound";
 import DatabaseDiagnostic from "./components/DatabaseDiagnostic";
 import { DeveloperContactCta } from "./components/DeveloperContactCta";
 import { EmailRankingsButton } from "./components/admin/EmailRankingsButton";
+import { Panache360VoteCountVisibilityControl } from "./components/admin/Panache360VoteCountVisibilityControl";
+import { Panache360PublicVoteCountSync } from "./components/Panache360PublicVoteCountSync";
 import { initGoogleAnalytics, trackPageView } from "./lib/analytics";
 
 const queryClient = new QueryClient({
@@ -97,7 +99,7 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error:', error, errorInfo);
+    console.error("App Error:", error, errorInfo);
   }
 
   render() {
@@ -129,6 +131,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToTop />
+          <Panache360PublicVoteCountSync />
+          <Panache360VoteCountVisibilityControl />
           <DeveloperContactCta />
           <EmailRankingsButton />
           <Suspense fallback={<LoadingFallback />}>
@@ -195,7 +199,7 @@ const App = () => (
               <Route path="/admin/panache-dor-revenue" element={<PanacheDorRevenueDashboardPage />} />
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
