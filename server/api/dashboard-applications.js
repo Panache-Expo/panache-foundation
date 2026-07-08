@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DASHBOARD_ACCESS_KEY = process.env.DASHBOARD_ACCESS_KEY;
+const PANACHE_360_SETTINGS_ID = "vote-counts";
 
 const parseRequestBody = (body) => {
   if (!body) {
@@ -90,6 +91,23 @@ const sanitizeUpdatePayload = (updates) => {
   return nextUpdates;
 };
 
+const readPanache360Visibility = async (admin) => {
+  const { data, error } = await admin
+    .from("panache_360_public_settings")
+    .select("vote_counts_visible, updated_at")
+    .eq("id", PANACHE_360_SETTINGS_ID)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    visible: Boolean(data?.vote_counts_visible),
+    updated_at: data?.updated_at || null,
+  };
+};
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
@@ -100,6 +118,18 @@ export default async function handler(req, res) {
   const admin = createAdminClient();
 
   if (req.method === "GET") {
+    if (req.query?.resource === "panache-360-visibility") {
+      try {
+        const panache360Visibility = await readPanache360Visibility(admin);
+        return res.status(200).json({ panache360Visibility });
+      } catch (error) {
+        console.error("Failed to fetch Panache 360 visibility", error);
+        return res.status(500).json({
+          message: "Could not load Panache 360 vote count visibility.",
+        });
+      }
+    }
+
     const { data, error } = await admin
       .from("competition_applications")
       .select("*")
@@ -115,6 +145,40 @@ export default async function handler(req, res) {
 
   if (req.method === "PATCH") {
     const body = parseRequestBody(req.body);
+
+    if (body.action === "setPanache360VoteCountVisibility") {
+      if (typeof body.visible !== "boolean") {
+        return res.status(400).json({ message: "A boolean visible value is required." });
+      }
+
+      const { data, error } = await admin
+        .from("panache_360_public_settings")
+        .upsert(
+          {
+            id: PANACHE_360_SETTINGS_ID,
+            vote_counts_visible: body.visible,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        )
+        .select("vote_counts_visible, updated_at")
+        .single();
+
+      if (error) {
+        console.error("Failed to update Panache 360 visibility", error);
+        return res.status(500).json({
+          message: "Could not update Panache 360 vote count visibility.",
+        });
+      }
+
+      return res.status(200).json({
+        panache360Visibility: {
+          visible: Boolean(data.vote_counts_visible),
+          updated_at: data.updated_at,
+        },
+      });
+    }
+
     const { id, updates } = body;
 
     if (!id || !updates || typeof updates !== "object") {
