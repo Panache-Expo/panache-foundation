@@ -1,5 +1,6 @@
 import competitionApplications from "./competition-applications.js";
 import contestantAccessPass from "./contestant-access-pass.js";
+import contestantPassProfile from "./contestant-access-pass-verification.js";
 import cyesAccessPassAgent from "./cyes-access-pass-agent.js";
 import cyesContestantVotes from "./cyes-contestant-votes.js";
 import cyesVoting from "./cyes-voting.js";
@@ -20,6 +21,7 @@ import sendRegistrationEmail from "./send-registration-email.js";
 export const apiHandlers = Object.freeze({
   "competition-applications": competitionApplications,
   "contestant-access-pass": contestantAccessPass,
+  "contestant-pass-profile": contestantPassProfile,
   "cyes-access-pass-agent": cyesAccessPassAgent,
   "cyes-contestant-votes": cyesContestantVotes,
   "cyes-voting": cyesVoting,
