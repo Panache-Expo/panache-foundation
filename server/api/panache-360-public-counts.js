@@ -4,6 +4,15 @@ const SUPABASE_URL =
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const SETTINGS_ID = "vote-counts";
+const VOTING_ENDS_AT =
+  process.env.PANACHE_360_VOTING_ENDS_AT || "2026-07-11T18:00:00+01:00";
+const VOTING_ENDS_LABEL =
+  process.env.PANACHE_360_VOTING_ENDS_LABEL || "11 July 2026 at 6:00 PM WAT";
+const RESULTS_PUBLISH_AT =
+  process.env.PANACHE_360_RESULTS_PUBLISH_AT || "2026-07-12T02:00:00+01:00";
+const RESULTS_PUBLISH_LABEL =
+  process.env.PANACHE_360_RESULTS_PUBLISH_LABEL || "12 July 2026 at 2:00 AM WAT";
+const votingEndsTimestamp = Date.parse(VOTING_ENDS_AT);
 
 const sendJson = (res, statusCode, payload) => {
   res.statusCode = statusCode;
@@ -57,6 +66,8 @@ export default async function handler(req, res) {
   try {
     const supabase = getSupabase();
     const visibility = await readVisibility(supabase);
+    const votingClosed =
+      Number.isFinite(votingEndsTimestamp) && Date.now() >= votingEndsTimestamp;
     let counts = [];
 
     if (visibility.visible) {
@@ -79,6 +90,11 @@ export default async function handler(req, res) {
     sendJson(res, 200, {
       ...visibility,
       counts,
+      voting_ends_at: VOTING_ENDS_AT,
+      voting_ends_label: VOTING_ENDS_LABEL,
+      voting_closed: votingClosed,
+      results_publish_at: RESULTS_PUBLISH_AT,
+      results_publish_label: RESULTS_PUBLISH_LABEL,
     });
   } catch (error) {
     console.error("Panache 360 public count visibility error", error);
