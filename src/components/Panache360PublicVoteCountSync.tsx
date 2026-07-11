@@ -18,18 +18,28 @@ type PublicCountControl = {
   visible: boolean;
   updated_at?: string | null;
   counts: PublicCount[];
+  voting_ends_at?: string | null;
+  voting_ends_label?: string | null;
+  voting_closed?: boolean;
+  results_publish_at?: string | null;
+  results_publish_label?: string | null;
 };
 
 type ControlledPanache360VotingPayload = Panache360VotingPayload & {
   public_vote_counts_visible?: boolean;
   public_vote_counts_signature?: string;
+  voting_ends_at?: string | null;
+  voting_ends_label?: string | null;
+  voting_closed?: boolean;
 };
 
 const isPanache360Path = (pathname: string) =>
   pathname.startsWith("/panache-expo/panache-360");
 
 const getControlSignature = (control: PublicCountControl) =>
-  `${control.visible ? "visible" : "hidden"}:${control.updated_at || ""}:${control.counts
+  `${control.visible ? "visible" : "hidden"}:${control.updated_at || ""}:${
+    control.voting_ends_at || ""
+  }:${control.voting_closed ? "closed" : "open"}:${control.counts
     .map((row) => `${row.nominee_id}:${Number(row.total_votes || 0)}`)
     .join("|")}`;
 
@@ -73,6 +83,11 @@ const applyCountControl = (
     blind_voting: !control.visible,
     public_vote_counts_visible: control.visible,
     public_vote_counts_signature: getControlSignature(control),
+    voting_ends_at: control.voting_ends_at || voting.voting_ends_at || null,
+    voting_ends_label: control.voting_ends_label || voting.voting_ends_label || null,
+    voting_closed: Boolean(control.voting_closed || voting.voting_closed),
+    results_publish_at: control.results_publish_at || voting.results_publish_at,
+    results_publish_label: control.results_publish_label || voting.results_publish_label,
   };
 };
 
@@ -109,6 +124,11 @@ export const Panache360PublicVoteCountSync = () => {
               visible?: boolean;
               updated_at?: string | null;
               counts?: PublicCount[];
+              voting_ends_at?: string | null;
+              voting_ends_label?: string | null;
+              voting_closed?: boolean;
+              results_publish_at?: string | null;
+              results_publish_label?: string | null;
             }
           | null;
 
@@ -120,6 +140,11 @@ export const Panache360PublicVoteCountSync = () => {
           visible: Boolean(payload.visible),
           updated_at: payload.updated_at || null,
           counts: Array.isArray(payload.counts) ? payload.counts : [],
+          voting_ends_at: payload.voting_ends_at || null,
+          voting_ends_label: payload.voting_ends_label || null,
+          voting_closed: Boolean(payload.voting_closed),
+          results_publish_at: payload.results_publish_at || null,
+          results_publish_label: payload.results_publish_label || null,
         });
       } catch {
         // Keep the last known public state if the visibility feed is temporarily unavailable.
