@@ -64,6 +64,7 @@ export const BlindVotingCountdown = ({
 
   const publishLabel = voting.results_publish_label || "12 July 2026 at 2:00 AM WAT";
   const votingEndsLabel = voting.voting_ends_label || "11 July 2026 at 6:00 PM WAT";
+  const countsAreVisible = Boolean(voting.counts_available);
   const displayTitle =
     title ||
     (showVotingCloseCountdown
@@ -74,9 +75,13 @@ export const BlindVotingCountdown = ({
   const displayDescription =
     description ||
     (showVotingCloseCountdown
-      ? `Voting remains open until ${votingEndsLabel}. Public vote totals and rankings stay hidden until results are revealed ${publishLabel}.`
+      ? countsAreVisible
+        ? `Voting remains open until ${votingEndsLabel}. The public ranking is currently visible, while the official reveal remains ${publishLabel}.`
+        : `Voting remains open until ${votingEndsLabel}. Public vote totals and rankings stay hidden until results are revealed ${publishLabel}.`
       : showRevealNotice
-      ? `Voting is closed. Public vote totals and rankings stay hidden until results are revealed ${publishLabel}.`
+      ? countsAreVisible
+        ? `Voting is closed. The public ranking is currently visible, while the official reveal remains ${publishLabel}.`
+        : `Voting is closed. Public vote totals and rankings stay hidden until results are revealed ${publishLabel}.`
       : "Vote totals and rankings are hidden while voting continues. Results will be published when the countdown ends.");
   const badgeText = showVotingCloseCountdown
     ? `Voting closes ${votingEndsLabel}`
