@@ -47,7 +47,7 @@ export const BlindVotingCountdown = ({
   useEffect(() => {
     setNow(Date.now());
 
-    if (!voting?.blind_voting) {
+    if (!voting?.blind_voting && !hasVotingClosePhase) {
       return undefined;
     }
 
@@ -56,14 +56,14 @@ export const BlindVotingCountdown = ({
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [voting?.blind_voting]);
+  }, [hasVotingClosePhase, voting?.blind_voting]);
 
-  if (!voting?.blind_voting) {
+  if (!voting?.blind_voting && !hasVotingClosePhase) {
     return null;
   }
 
   const publishLabel = voting.results_publish_label || "12 July 2026 at 2:00 AM WAT";
-  const votingEndsLabel = voting.voting_ends_label || "20 June 2026 at 11:59 PM WAT";
+  const votingEndsLabel = voting.voting_ends_label || "11 July 2026 at 6:00 PM WAT";
   const displayTitle =
     title ||
     (showVotingCloseCountdown
