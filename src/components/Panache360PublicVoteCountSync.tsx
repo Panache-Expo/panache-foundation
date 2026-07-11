@@ -47,6 +47,7 @@ const applyCountControl = (
   voting: Panache360VotingPayload,
   control: PublicCountControl
 ): ControlledPanache360VotingPayload => {
+  const votingWithControl = voting as ControlledPanache360VotingPayload;
   const countsByNominee = new Map(
     control.counts.map((row) => [row.nominee_id, Number(row.total_votes || 0)])
   );
@@ -83,9 +84,13 @@ const applyCountControl = (
     blind_voting: !control.visible,
     public_vote_counts_visible: control.visible,
     public_vote_counts_signature: getControlSignature(control),
-    voting_ends_at: control.voting_ends_at || voting.voting_ends_at || null,
-    voting_ends_label: control.voting_ends_label || voting.voting_ends_label || null,
-    voting_closed: Boolean(control.voting_closed || voting.voting_closed),
+    voting_ends_at:
+      control.voting_ends_at || votingWithControl.voting_ends_at || null,
+    voting_ends_label:
+      control.voting_ends_label || votingWithControl.voting_ends_label || null,
+    voting_closed: Boolean(
+      control.voting_closed || votingWithControl.voting_closed
+    ),
     results_publish_at: control.results_publish_at || voting.results_publish_at,
     results_publish_label: control.results_publish_label || voting.results_publish_label,
   };
