@@ -13,7 +13,7 @@ import panache360PublicCounts from "./panache-360-public-counts.js";
 import panache360Voting from "./panache-360-voting-visible.js";
 import panacheDorRevenueLite from "./panache-dor-revenue-lite.js";
 import panacheDorRevenue from "./panache-dor-revenue.js";
-import panacheDorVoting from "./panache-dor-voting.js";
+import panacheDorVoting from "./panache-dor-voting-visible.js";
 import panacheRankingsEmail from "./panache-rankings-email.js";
 import panacheRevenue from "./panache-revenue-account-ledger.js";
 import sendRegistrationEmail from "./send-registration-email.js";
