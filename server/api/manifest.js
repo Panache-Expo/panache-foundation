@@ -10,7 +10,7 @@ import eventTickets from "./event-tickets.js";
 import missPanacheContestantVotes from "./miss-panache-contestant-votes.js";
 import missPanacheVoting from "./miss-panache-voting.js";
 import panache360PublicCounts from "./panache-360-public-counts.js";
-import panache360Voting from "./panache-360-voting.js";
+import panache360Voting from "./panache-360-voting-visible.js";
 import panacheDorRevenueLite from "./panache-dor-revenue-lite.js";
 import panacheDorRevenue from "./panache-dor-revenue.js";
 import panacheDorVoting from "./panache-dor-voting.js";
