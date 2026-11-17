@@ -17,7 +17,8 @@ import panacheScriptLogo from "@/assets/PanacheHeroLogo.svg";
 import footerMuse from "@/assets/misspanache-subject-mask.png";
 
 const quickLinks = [
-  { label: "Foundation Home", to: "/" },
+  { label: "CIYES App Waitlist", to: "/waitlist" },
+  { label: "Foundation Home", to: "/foundation" },
   { label: "Panache Expo 2026", to: "/panache-expo" },
   { label: "CYES", to: "/cyes" },
   { label: "Panache 360 Beauty", to: "/panache-expo/panache-360" },

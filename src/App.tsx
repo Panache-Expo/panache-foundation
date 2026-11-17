@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import React, { Suspense, useEffect } from "react";
 import FoundationHome from "./pages/FoundationHome";
+import CiyesAppHome from "./pages/CiyesAppHome";
 import PanacheExpoPage from "./pages/PanacheExpoPage";
 import CYESPage from "./pages/CYESPage";
 import CYESAwardsPage from "./pages/CYESAwardsPage";
@@ -137,7 +138,9 @@ const App = () => (
           <EmailRankingsButton />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
-              <Route path="/" element={<FoundationHome />} />
+              <Route path="/" element={<CiyesAppHome />} />
+              <Route path="/waitlist" element={<CiyesAppHome focusWaitlist />} />
+              <Route path="/foundation" element={<FoundationHome />} />
               <Route path="/panache-expo" element={<PanacheExpoPage />} />
               <Route path="/panache-expo/exhibition-stands" element={<ExhibitionStandsPage />} />
               <Route path="/panache-expo/charity-night" element={<CharityNightPage />} />
