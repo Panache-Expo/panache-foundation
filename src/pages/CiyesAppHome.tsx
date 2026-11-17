@@ -1,34 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import {
-  ArrowRight,
-  BadgeCheck,
-  CalendarCheck,
-  CalendarDays,
-  Calculator,
-  ChartColumn,
-  Check,
-  ClipboardList,
-  Clock3,
-  Globe,
-  HeartHandshake,
-  Languages,
-  MessageCircleQuestion,
-  Play,
-  Receipt,
-  Repeat2,
-  Rocket,
-  Share2,
-  Smartphone,
-  Sparkles,
-  Store,
-  Ticket,
-  Users,
-  Vote,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, Check, Languages, Play } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -56,29 +29,28 @@ import {
   type CiyesWaitlistRole,
 } from "@/lib/ciyes-home-content";
 
+// The CIYES app homepage, set in the Panache Foundation homepage's design language:
+// cool off-white page, near-black ink, Reckless Neue display lines mixed with Matter,
+// black pill buttons, white rounded panels and one dark panel that holds the main action.
+
 const WAITLIST_API_URL =
   import.meta.env.VITE_CIYES_WAITLIST_API_URL || "/api/ciyes-waitlist";
 
-const GREEN = "#156D3B";
-const BLUE = "#1875D2";
-const RED = "#CC2129";
-const YELLOW = "#FFB200";
-const ACCENTS = [GREEN, BLUE, RED, YELLOW];
-
-const PROBLEM_ICONS: LucideIcon[] = [Clock3, MessageCircleQuestion, Receipt, ClipboardList];
-const FEATURE_ICONS: LucideIcon[] = [Store, Wallet, Ticket, Share2, ChartColumn, Vote, BadgeCheck];
-const SOON_ICONS: LucideIcon[] = [Globe, CalendarCheck, Calculator, Repeat2];
-const WHO_ICONS: LucideIcon[] = [Rocket, Sparkles, CalendarDays, HeartHandshake, Users];
+const DOTS = ["#156D3B", "#1875D2", "#CC2129", "#E7B008"];
 const ROLES: CiyesWaitlistRole[] = ["entrepreneur", "organiser", "ngo", "customer"];
 const PHONE_OPTIONS: { value: CiyesPhoneOs; label: string }[] = [
   { value: "android", label: "Android" },
   { value: "iphone", label: "iPhone" },
 ];
 
-const surface =
-  "rounded-[1.75rem] border border-black/8 bg-white/80 shadow-[0_18px_44px_rgba(17,16,14,0.06)]";
-const inputClasses =
-  "mt-2 h-12 rounded-[1rem] border-black/10 bg-white px-4 font-sans text-base text-[#171411] shadow-none placeholder:text-[#171411]/35 focus-visible:ring-1 focus-visible:ring-[#156D3B]";
+const panel =
+  "rounded-[2rem] border border-black/8 bg-white/80 shadow-[0_18px_42px_rgba(17,16,14,0.06)]";
+const displayHeading =
+  "font-display font-bold leading-[0.94] tracking-[-0.05em] text-[#11100e]";
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B]";
+const darkInput =
+  "mt-2 h-12 rounded-[1rem] border-white/12 bg-white/[0.07] px-4 font-sans text-base text-white shadow-none placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-white/70 focus-visible:ring-offset-0";
 
 type Status = "idle" | "sending" | "success" | "already" | "error";
 
@@ -94,34 +66,8 @@ const readSource = () => {
   return clean || null;
 };
 
-const Reveal = ({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) => {
-  const reduce = useReducedMotion();
-  return (
-    <motion.div
-      className={className}
-      initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-const SectionHeading = ({ eyebrow, title, color = GREEN, text }: { eyebrow: string; title: string; color?: string; text?: string }) => (
-  <Reveal className="max-w-3xl">
-    <p className="font-sans text-[0.8rem] font-semibold uppercase tracking-[0.18em]" style={{ color }}>
-      {eyebrow}
-    </p>
-    <h2 className="mt-3 font-display text-[clamp(2rem,4.4vw,3.6rem)] font-bold leading-[0.98] tracking-[-0.04em] text-[#171411]">
-      {title}
-    </h2>
-    {text ? <p className="mt-4 font-sans text-base leading-relaxed text-[#171411]/68 md:text-lg">{text}</p> : null}
-  </Reveal>
-);
-
 const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) => {
+  const reduceMotion = useReducedMotion();
   const [lang, setLang] = useState<CiyesLang>(() => detectCiyesLang());
   const t = CIYES_HOME_CONTENT[lang];
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -138,17 +84,15 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Partial<Record<"name" | "phone" | "email" | "role" | "form", string>>>({});
 
-  // Title, description and <html lang> follow the chosen language.
   useEffect(() => {
     document.documentElement.lang = lang;
     document.title = t.meta.title;
     document.querySelector('meta[name="description"]')?.setAttribute("content", t.meta.description);
   }, [lang, t]);
 
-  // /waitlist and #waitlist land on the form.
+  // /waitlist and #waitlist land on the form (after the app's scroll-to-top on route change).
   useEffect(() => {
     if (!focusWaitlist && window.location.hash !== "#waitlist") return;
-    // Instant jump (after the app's scroll-to-top on route change) so the visitor lands on the form.
     const timer = window.setTimeout(() => scrollToId("waitlist", "instant"), 180);
     return () => window.clearTimeout(timer);
   }, [focusWaitlist]);
@@ -173,6 +117,11 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
     const url = new URL(window.location.href);
     url.searchParams.set("lang", next);
     window.history.replaceState(null, "", url.toString());
+  };
+
+  const goToWaitlist = () => {
+    scrollToId("waitlist");
+    window.setTimeout(() => document.getElementById("ciyes-name")?.focus({ preventScroll: true }), 500);
   };
 
   const watchVideo = () => {
@@ -232,466 +181,470 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
   const shareHref = `https://wa.me/?text=${encodeURIComponent(`${t.waitlist.shareMessage} ${CIYES_WAITLIST_URL}`)}`;
   const done = status === "success" || status === "already";
 
+  // The page's one authored motion: the headline lines rise in, one after another.
+  const line = (i: number) =>
+    reduceMotion
+      ? {}
+      : {
+          // Starts visible: if the animation never runs, the headline is still there.
+          initial: { y: 22 },
+          animate: { y: 0 },
+          transition: { duration: 0.7, delay: 0.08 + i * 0.09, ease: [0.16, 1, 0.3, 1] as const },
+        };
+
   return (
-    <div className="min-h-screen bg-[#f7f8f3] text-[#171411]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_10%_8%,rgba(21,109,59,0.10),transparent_28%),radial-gradient(circle_at_88%_14%,rgba(24,117,210,0.10),transparent_26%),radial-gradient(circle_at_60%_95%,rgba(255,178,0,0.10),transparent_30%)]" />
+    <div className="min-h-screen bg-[#eef2f6] text-[#14110f] selection:bg-[#156D3B]/20 selection:text-[#11100e]">
+      <main className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_10%,rgba(21,109,59,0.07),transparent_24%),radial-gradient(circle_at_85%_16%,rgba(24,117,210,0.08),transparent_22%),linear-gradient(180deg,#f9fbfd_0%,#f4f6f9_48%,#edf1f5_100%)]" />
 
-      <header className="sticky top-0 z-30 border-b border-black/5 bg-[#f7f8f3]/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-5 md:h-[4.5rem] md:px-8">
-          <Link to="/" className="flex items-center gap-3" aria-label="CIYES">
-            <img src={ciyesMark} alt="" className="h-9 w-auto md:h-10" />
-            <span className="leading-none">
-              <span className="block font-sans text-xl font-bold tracking-[-0.03em] md:text-2xl">CIYES</span>
-              <span className="hidden font-sans text-[0.72rem] font-medium text-[#171411]/55 sm:block">{t.nav.by}</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={switchLang}
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white/80 px-4 font-sans text-sm font-semibold text-[#171411] transition hover:bg-white"
-              aria-label={t.nav.switchTo}
-            >
-              <Languages className="h-4 w-4" />
-              {t.nav.switchTo}
-            </button>
-            <Button
-              onClick={() => scrollToId("waitlist")}
-              className="hidden h-10 rounded-full px-5 font-sans text-sm font-semibold text-white sm:inline-flex"
-              style={{ backgroundColor: GREEN }}
-            >
-              {t.nav.waitlist}
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="relative">
-        {/* Hero */}
-        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-10 md:px-8 md:pt-16 lg:grid-cols-[1fr,1.08fr] lg:gap-14 lg:pb-24">
-          <Reveal>
-            <p className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/80 px-3.5 py-1.5 font-sans text-[0.8rem] font-semibold text-[#171411]/75">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: GREEN }} />
-              {t.hero.eyebrow}
-            </p>
-            <h1 className="mt-5 font-display text-[clamp(2.7rem,6.4vw,4.9rem)] font-bold leading-[0.95] tracking-[-0.045em]">
-              <span className="block" style={{ color: GREEN }}>{t.hero.lines[0]}</span>
-              <span className="block" style={{ color: BLUE }}>{t.hero.lines[1]}</span>
-              <span className="block" style={{ color: RED }}>{t.hero.lines[2]}</span>
-            </h1>
-            <p className="mt-5 inline-block rounded-full bg-[#171411] px-5 py-2 font-sans text-lg font-semibold text-white">
-              {t.hero.tagline}
-            </p>
-            <p className="mt-6 max-w-xl font-sans text-[1.05rem] leading-relaxed text-[#171411]/72 md:text-lg">{t.hero.text}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button
-                onClick={() => scrollToId("waitlist")}
-                className="h-[3.25rem] rounded-full px-7 py-3.5 font-sans text-base font-semibold text-white shadow-[0_16px_36px_rgba(21,109,59,0.35)]"
-                style={{ backgroundColor: GREEN }}
+        <div className="relative mx-auto w-full">
+          <div className="max-w-full px-5 sm:px-14 lg:px-18">
+            {/* Logo lockup and language switch */}
+            <div className="flex items-start justify-between gap-4 pt-6 sm:pt-8">
+              <Link
+                to="/"
+                className={`inline-flex items-center gap-3 rounded-[1.65rem] border border-black/8 bg-white/78 px-4 py-3 shadow-[0_18px_42px_rgba(17,16,14,0.06)] backdrop-blur-sm sm:gap-4 sm:px-5 sm:py-4 ${focusRing}`}
               >
-                {t.hero.primary}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={watchVideo}
-                className="h-[3.25rem] rounded-full border-black/10 bg-white/80 px-6 py-3.5 font-sans text-base font-semibold text-[#171411] hover:bg-white"
-              >
-                <Play className="mr-2 h-4 w-4" style={{ color: RED }} />
-                {t.hero.secondary}
-              </Button>
-            </div>
-            <ul className="mt-7 flex flex-wrap gap-2">
-              {t.hero.chips.map((chip, i) => (
-                <li key={chip} className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/70 px-3 py-1.5 font-sans text-sm font-medium text-[#171411]/75">
-                  <Check className="h-3.5 w-3.5" style={{ color: ACCENTS[i % ACCENTS.length] }} />
-                  {chip}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-
-          <Reveal delay={0.1}>
-            <div id="video" className="scroll-mt-24 overflow-hidden rounded-[1.75rem] border border-black/8 bg-white shadow-[0_30px_70px_rgba(17,16,14,0.14)]">
-              <video
-                key={lang}
-                ref={videoRef}
-                className="aspect-video w-full bg-[#fbf8fa]"
-                controls
-                playsInline
-                preload="none"
-                poster={`/videos/ciyes-${lang}-poster.jpg`}
-                aria-label={t.hero.videoLabel}
-              >
-                <source src={`/videos/ciyes-${lang}.mp4`} type="video/mp4" />
-              </video>
-            </div>
-          </Reveal>
-        </section>
-
-        {/* Problem */}
-        <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-          <SectionHeading eyebrow={t.problem.eyebrow} title={t.problem.title} color={RED} />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {t.problem.cards.map((card, i) => {
-              const Icon = PROBLEM_ICONS[i];
-              return (
-                <Reveal key={card.title} delay={i * 0.05} className={`${surface} p-6`}>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#CC2129]/10">
-                    <Icon className="h-5 w-5" style={{ color: RED }} />
+                <img src={ciyesMark} alt="" className="h-10 w-auto sm:h-12" />
+                <span className="text-left">
+                  <span className="block font-sans text-lg font-semibold leading-none tracking-[-0.04em] text-[#11100e] sm:text-xl">
+                    CIYES
                   </span>
-                  <h3 className="mt-5 font-sans text-lg font-bold leading-snug tracking-[-0.02em]">{card.title}</h3>
-                  <p className="mt-2 font-sans text-[0.95rem] leading-relaxed text-[#171411]/65">{card.text}</p>
-                </Reveal>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-          <SectionHeading eyebrow={t.features.eyebrow} title={t.features.title} />
-          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {t.features.items.map((item, i) => {
-              const Icon = FEATURE_ICONS[i];
-              const isPro = i === t.features.items.length - 1;
-              const color = ACCENTS[i % ACCENTS.length];
-              if (isPro) {
-                return (
-                  <Reveal key={item.title} className="rounded-[1.75rem] bg-[#171411] p-6 text-white md:col-span-2 lg:col-span-3 lg:flex lg:items-center lg:justify-between lg:p-8">
-                    <div className="flex items-start gap-4">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: YELLOW }}>
-                        <Icon className="h-5 w-5 text-[#171411]" />
-                      </span>
-                      <div>
-                        <h3 className="font-sans text-xl font-bold tracking-[-0.02em]">{item.title}</h3>
-                        <p className="mt-1 font-sans text-[0.95rem] leading-relaxed text-white/70">{item.text}</p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => scrollToId("pricing")}
-                      className="mt-5 h-11 rounded-full bg-white px-5 font-sans text-sm font-semibold text-[#171411] hover:bg-white/90 lg:mt-0"
-                    >
-                      {t.pricing.eyebrow}
-                      <ArrowRight className="ml-1.5 h-4 w-4" />
-                    </Button>
-                  </Reveal>
-                );
-              }
-              return (
-                <Reveal key={item.title} delay={(i % 3) * 0.05} className={`${surface} p-6`}>
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: `${color}1A` }}>
-                    <Icon className="h-5 w-5" style={{ color: color === YELLOW ? "#B07F00" : color }} />
+                  <span className="mt-1 hidden font-sans text-sm font-medium leading-snug text-[#11100e]/64 sm:block">
+                    {t.nav.tagline} <span className="text-[#11100e]/48">{t.nav.by}</span>
                   </span>
-                  <h3 className="mt-5 font-sans text-lg font-bold tracking-[-0.02em]">{item.title}</h3>
-                  <p className="mt-2 font-sans text-[0.95rem] leading-relaxed text-[#171411]/65">{item.text}</p>
-                </Reveal>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Coming soon */}
-        <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-          <SectionHeading eyebrow={t.soon.eyebrow} title={t.soon.title} color={BLUE} />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {t.soon.items.map((item, i) => {
-              const Icon = SOON_ICONS[i];
-              return (
-                <Reveal key={item} delay={i * 0.05} className={`${surface} flex flex-col gap-5 p-6`}>
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1875D2]/10">
-                      <Icon className="h-5 w-5" style={{ color: BLUE }} />
-                    </span>
-                    <span className="rounded-full border border-black/10 px-3 py-1 font-sans text-[0.7rem] font-bold uppercase tracking-[0.12em] text-[#171411]/55">
-                      {t.soon.badge}
-                    </span>
-                  </div>
-                  <h3 className="font-sans text-lg font-bold leading-snug tracking-[-0.02em]">{item}</h3>
-                </Reveal>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Who it's for */}
-        <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-          <SectionHeading eyebrow={t.who.eyebrow} title={t.who.title} color={BLUE} />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {t.who.items.map((item, i) => {
-              const Icon = WHO_ICONS[i];
-              const color = [GREEN, BLUE, RED, "#FF7900", "#E7B008"][i];
-              return (
-                <Reveal key={item.title} delay={i * 0.05} className={`${surface} p-6`}>
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: color }}>
-                    <Icon className="h-5 w-5 text-white" />
-                  </span>
-                  <h3 className="mt-5 font-sans text-lg font-bold leading-tight tracking-[-0.02em]">{item.title}</h3>
-                  <p className="mt-2 font-sans text-[0.92rem] leading-relaxed text-[#171411]/65">{item.text}</p>
-                </Reveal>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Pricing */}
-        <section id="pricing" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-14 md:px-8 md:py-20">
-          <SectionHeading eyebrow={t.pricing.eyebrow} title={t.pricing.title} text={t.pricing.text} />
-          <div className="mt-10 grid gap-5 lg:grid-cols-[0.8fr,1.2fr]">
-            <Reveal className={`${surface} flex flex-col p-7`}>
-              <p className="font-sans text-sm font-bold uppercase tracking-[0.14em] text-[#171411]/55">{t.pricing.free.name}</p>
-              <p className="mt-3 font-display text-5xl font-bold tracking-[-0.04em]">{t.pricing.free.price}</p>
-              <ul className="mt-6 space-y-3">
-                {t.pricing.free.items.map((item) => (
-                  <li key={item} className="flex items-start gap-3 font-sans text-[0.98rem] text-[#171411]/80">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: GREEN }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-
-            <Reveal delay={0.08} className="rounded-[1.75rem] bg-[#171411] p-7 text-white shadow-[0_30px_70px_rgba(17,16,14,0.22)]">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-sans text-sm font-bold uppercase tracking-[0.14em]" style={{ color: YELLOW }}>{t.pricing.pro.name}</p>
-                <span className="rounded-full bg-white/10 px-3 py-1 font-sans text-xs font-semibold text-white/80">{t.pricing.pro.badge}</span>
-              </div>
-              <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-                {t.pricing.pro.items.map((item) => (
-                  <li key={item} className="flex items-start gap-3 font-sans text-[0.95rem] text-white/85">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: YELLOW }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-7 grid gap-3 sm:grid-cols-3">
-                {CIYES_PRO_PLANS.map((plan) => {
-                  const best = plan.months === 12;
-                  return (
-                    <div
-                      key={plan.months}
-                      className={`relative rounded-[1.25rem] border p-4 ${best ? "border-[#FFB200] bg-[#FFB200]/10" : "border-white/12 bg-white/[0.04]"}`}
-                    >
-                      {best ? (
-                        <span className="absolute -top-3 right-3 rounded-full px-2.5 py-0.5 font-sans text-[0.7rem] font-bold text-[#171411]" style={{ backgroundColor: YELLOW }}>
-                          {t.pricing.bestValue}
-                        </span>
-                      ) : null}
-                      <p className="font-sans text-sm font-semibold text-white/70">{t.pricing.planLabel(plan.months)}</p>
-                      <p className="mt-1 font-sans text-[1.6rem] font-bold leading-tight tracking-[-0.03em]">{formatCiyesPrice(lang, plan.priceXaf)}</p>
-                      <p className="mt-1 font-sans text-xs text-white/60">
-                        {t.pricing.perMonth(formatCiyesPrice(lang, plan.priceXaf / plan.months))}
-                      </p>
-                      {plan.freeMonths ? (
-                        <p className="mt-3 inline-block rounded-full px-2.5 py-1 font-sans text-xs font-bold text-[#171411]" style={{ backgroundColor: YELLOW }}>
-                          {t.pricing.freeMonths(plan.freeMonths)}
-                        </p>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="mt-6 font-sans text-sm leading-relaxed text-white/65">{t.pricing.note}</p>
-              <Button
-                onClick={() => scrollToId("waitlist")}
-                className="mt-5 h-12 rounded-full px-6 font-sans text-sm font-semibold text-[#171411] hover:opacity-90"
-                style={{ backgroundColor: YELLOW }}
+                </span>
+              </Link>
+              <button
+                type="button"
+                onClick={switchLang}
+                className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white/80 px-5 font-sans text-sm font-semibold text-[#11100e] transition-colors hover:bg-white ${focusRing}`}
               >
-                {t.pricing.cta}
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Button>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="mx-auto max-w-6xl px-5 py-14 md:px-8 md:py-20">
-          <div className="grid gap-8 lg:grid-cols-[0.8fr,1.2fr]">
-            <SectionHeading eyebrow={t.faq.eyebrow} title={t.faq.title} />
-            <Reveal className={`${surface} px-6 py-2`}>
-              <Accordion type="single" collapsible>
-                {t.faq.items.map((item, i) => (
-                  <AccordionItem key={item.q} value={`q${i}`} className={i === t.faq.items.length - 1 ? "border-b-0" : "border-black/8"}>
-                    <AccordionTrigger className="text-left font-sans text-base font-semibold hover:no-underline">{item.q}</AccordionTrigger>
-                    <AccordionContent className="font-sans text-[0.98rem] leading-relaxed text-[#171411]/70">{item.a}</AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </Reveal>
-          </div>
-        </section>
-
-        {/* Waitlist */}
-        <section id="waitlist" ref={waitlistRef} className="mx-auto max-w-6xl scroll-mt-20 px-5 py-14 md:px-8 md:py-20">
-          <div className="grid gap-8 overflow-hidden rounded-[2.2rem] bg-[#171411] p-6 text-white shadow-[0_30px_80px_rgba(17,16,14,0.25)] md:p-10 lg:grid-cols-[0.9fr,1.1fr] lg:gap-12 lg:p-12">
-            <div>
-              <p className="font-sans text-[0.8rem] font-semibold uppercase tracking-[0.18em]" style={{ color: YELLOW }}>{t.waitlist.eyebrow}</p>
-              <h2 className="mt-3 font-display text-[clamp(2rem,4.2vw,3.4rem)] font-bold leading-[0.98] tracking-[-0.04em]">{t.waitlist.title}</h2>
-              <p className="mt-4 font-sans text-base leading-relaxed text-white/72 md:text-lg">{t.waitlist.text}</p>
-              <ul className="mt-6 space-y-2.5">
-                {t.hero.chips.map((chip) => (
-                  <li key={chip} className="flex items-center gap-3 font-sans text-[0.98rem] text-white/80">
-                    <Smartphone className="h-4 w-4" style={{ color: YELLOW }} />
-                    {chip}
-                  </li>
-                ))}
-              </ul>
+                <Languages className="h-4 w-4" aria-hidden="true" />
+                {t.nav.switchTo}
+              </button>
             </div>
 
-            <div className="rounded-[1.6rem] bg-white p-5 text-[#171411] md:p-7">
-              {done ? (
-                <div className="flex min-h-[22rem] flex-col items-start justify-center" role="status">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full" style={{ backgroundColor: GREEN }}>
-                    <Check className="h-7 w-7 text-white" />
-                  </span>
-                  <h3 className="mt-5 font-display text-3xl font-bold tracking-[-0.03em]">
-                    {status === "already" ? t.waitlist.alreadyTitle : t.waitlist.successTitle}
-                  </h3>
-                  <p className="mt-3 font-sans text-base leading-relaxed text-[#171411]/70">
-                    {status === "already" ? t.waitlist.alreadyText : t.waitlist.successText}
+            {/* Hero: the offer on the left, the waitlist itself on the right */}
+            <section className="relative pb-16 pt-8 sm:pb-20 lg:pt-12">
+              <div className="relative grid gap-8 lg:grid-cols-[1.04fr,0.96fr] lg:items-start">
+                <div className="max-w-[42rem] lg:pt-4">
+                  <h1 className="text-[#11100e]">
+                    <motion.span {...line(0)} className="block font-sans text-[clamp(2.8rem,6vw,5.3rem)] font-semibold leading-[0.9] tracking-[-0.07em]">
+                      {t.hero.headline[0]}
+                    </motion.span>
+                    <motion.span {...line(1)} className="block font-display text-[clamp(3rem,6.4vw,5.8rem)] font-bold leading-[0.88] tracking-[-0.06em]">
+                      {t.hero.headline[1]}
+                    </motion.span>
+                    <motion.span {...line(2)} className="block font-sans text-[clamp(2.8rem,6vw,5.3rem)] font-semibold leading-[0.9] tracking-[-0.07em]">
+                      {t.hero.headline[2]}
+                    </motion.span>
+                  </h1>
+
+                  <p className="mt-6 max-w-[36rem] font-sans text-[clamp(1.04rem,1.9vw,1.32rem)] leading-[1.5] text-[#11100e]/72">
+                    {t.hero.text}
                   </p>
-                  <a href={shareHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex">
-                    <Button className="h-12 rounded-full bg-[#25D366] px-6 font-sans text-sm font-semibold text-white hover:bg-[#25D366]/90">
-                      <WhatsAppLogo className="mr-2 h-4 w-4" />
-                      {t.waitlist.share}
-                    </Button>
-                  </a>
-                </div>
-              ) : (
-                <form onSubmit={submit} noValidate className="space-y-5">
-                  <div>
-                    <Label htmlFor="ciyes-name" className="font-sans text-sm font-semibold">{t.waitlist.name}</Label>
-                    <Input id="ciyes-name" value={name} onChange={(e) => { setName(e.target.value); clearError("name"); }} autoComplete="name" className={inputClasses} aria-invalid={Boolean(errors.name)} />
-                    {errors.name ? <p className="mt-1.5 font-sans text-sm text-[#CC2129]">{errors.name}</p> : null}
-                  </div>
-                  <div>
-                    <Label htmlFor="ciyes-phone" className="font-sans text-sm font-semibold">{t.waitlist.phone}</Label>
-                    <Input
-                      id="ciyes-phone"
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      placeholder={t.waitlist.phonePlaceholder}
-                      value={phone}
-                      onChange={(e) => { setPhone(e.target.value); clearError("phone"); }}
-                      className={inputClasses}
-                      aria-invalid={Boolean(errors.phone)}
-                    />
-                    {errors.phone ? <p className="mt-1.5 font-sans text-sm text-[#CC2129]">{errors.phone}</p> : null}
-                  </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <Label htmlFor="ciyes-email" className="font-sans text-sm font-semibold">
-                        {t.waitlist.email} <span className="font-normal text-[#171411]/45">({t.waitlist.optional})</span>
-                      </Label>
-                      <Input id="ciyes-email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); clearError("email"); }} className={inputClasses} aria-invalid={Boolean(errors.email)} />
-                      {errors.email ? <p className="mt-1.5 font-sans text-sm text-[#CC2129]">{errors.email}</p> : null}
-                    </div>
-                    <div>
-                      <Label htmlFor="ciyes-city" className="font-sans text-sm font-semibold">
-                        {t.waitlist.city} <span className="font-normal text-[#171411]/45">({t.waitlist.optional})</span>
-                      </Label>
-                      <Input id="ciyes-city" autoComplete="address-level2" value={city} onChange={(e) => setCity(e.target.value)} className={inputClasses} />
-                    </div>
-                  </div>
-                  <fieldset>
-                    <legend className="font-sans text-sm font-semibold">{t.waitlist.role}</legend>
-                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                      {ROLES.map((value) => {
-                        const active = role === value;
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => { setRole(value); clearError("role"); }}
-                            aria-pressed={active}
-                            className={`min-h-12 rounded-[1rem] border px-4 py-2.5 text-left font-sans text-sm font-semibold transition ${active ? "border-[#156D3B] bg-[#156D3B]/8 text-[#156D3B]" : "border-black/10 bg-white text-[#171411]/80 hover:border-black/25"}`}
-                          >
-                            {t.waitlist.roles[value]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {errors.role ? <p className="mt-1.5 font-sans text-sm text-[#CC2129]">{errors.role}</p> : null}
-                  </fieldset>
-                  <fieldset>
-                    <legend className="font-sans text-sm font-semibold">
-                      {t.waitlist.phoneOs} <span className="font-normal text-[#171411]/45">({t.waitlist.optional})</span>
-                    </legend>
-                    <div className="mt-2 flex gap-2">
-                      {PHONE_OPTIONS.map((option) => {
-                        const active = phoneOs === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setPhoneOs(active ? null : option.value)}
-                            aria-pressed={active}
-                            className={`h-11 flex-1 rounded-full border px-4 font-sans text-sm font-semibold transition ${active ? "border-[#1875D2] bg-[#1875D2]/8 text-[#1875D2]" : "border-black/10 bg-white text-[#171411]/80 hover:border-black/25"}`}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </fieldset>
-                  {/* Honeypot for bots: hidden from people and screen readers. */}
-                  <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
-                    <label htmlFor="ciyes-website">Website</label>
-                    <input id="ciyes-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
-                  </div>
-                  {errors.form ? (
-                    <p className="rounded-[1rem] bg-[#CC2129]/8 px-4 py-3 font-sans text-sm text-[#CC2129]">
-                      {errors.form}{" "}
-                      <a href={PANACHE_SUPPORT_WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
-                        WhatsApp
-                      </a>
-                    </p>
-                  ) : null}
-                  <Button
-                    type="submit"
-                    disabled={status === "sending"}
-                    className="h-[3.25rem] w-full rounded-full py-3.5 font-sans text-base font-semibold text-white"
-                    style={{ backgroundColor: GREEN }}
-                  >
-                    {status === "sending" ? t.waitlist.sending : t.waitlist.submit}
-                  </Button>
-                  <p className="font-sans text-xs leading-relaxed text-[#171411]/50">{t.waitlist.privacy}</p>
-                </form>
-              )}
-            </div>
-          </div>
-        </section>
+                  <p className="mt-4 flex items-center gap-2 font-sans text-sm font-medium text-[#11100e]/60">
+                    <span className="h-2 w-2 rounded-full bg-[#156D3B]" aria-hidden="true" />
+                    {t.hero.meta}
+                  </p>
 
-        {/* From Panache Foundation */}
-        <section className="mx-auto max-w-6xl px-5 pb-20 pt-6 md:px-8">
-          <SectionHeading eyebrow={t.foundation.eyebrow} title={t.foundation.title} color="#8241B6" />
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {t.foundation.cards.map((card, i) => (
-              <Reveal key={card.to} delay={i * 0.05} className={`${surface} flex flex-col p-6`}>
-                <h3 className="font-sans text-lg font-bold tracking-[-0.02em]">{card.title}</h3>
-                <p className="mt-2 flex-1 font-sans text-[0.95rem] leading-relaxed text-[#171411]/65">{card.text}</p>
-                <Link to={card.to} className="mt-5 inline-flex items-center font-sans text-sm font-semibold text-[#171411] hover:underline">
-                  {card.cta}
-                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <Button
+                      onClick={goToWaitlist}
+                      className={`h-12 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white hover:bg-[#171411]/92 lg:hidden ${focusRing}`}
+                    >
+                      {t.hero.primary}
+                      <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={watchVideo}
+                      className={`h-12 rounded-full border-black/10 bg-white/80 px-6 font-sans text-sm font-semibold text-[#11100e] hover:bg-white ${focusRing}`}
+                    >
+                      <Play className="mr-2 h-4 w-4 text-[#CC2129]" aria-hidden="true" />
+                      {t.hero.secondary}
+                    </Button>
+                  </div>
+
+                  <div className="mt-9 grid gap-3 sm:grid-cols-3">
+                    {t.hero.pillars.map((pillar, i) => (
+                      <div
+                        key={pillar.title}
+                        className="rounded-[1.45rem] border border-black/8 bg-white/72 px-4 py-4 shadow-[0_14px_30px_rgba(17,16,14,0.05)]"
+                      >
+                        <p className="flex items-center gap-2 font-sans text-sm font-semibold tracking-[-0.03em] text-[#11100e]">
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: DOTS[i] }} aria-hidden="true" />
+                          {pillar.title}
+                        </p>
+                        <p className="mt-2 font-sans text-sm leading-relaxed text-[#11100e]/64">{pillar.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <section
+                  id="waitlist"
+                  ref={waitlistRef}
+                  aria-labelledby="waitlist-title"
+                  className="scroll-mt-6 rounded-[2rem] border border-black/8 bg-[#171411] px-6 py-7 text-white shadow-[0_20px_48px_rgba(17,16,14,0.12)] md:px-8 md:py-8"
+                >
+                  {done ? (
+                    <div className="flex min-h-[26rem] flex-col items-start justify-center" role="status">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366]">
+                        <Check className="h-7 w-7 text-[#171411]" aria-hidden="true" />
+                      </span>
+                      <h2 id="waitlist-title" className="mt-6 font-display text-[clamp(2rem,4vw,3rem)] font-bold leading-[0.94] tracking-[-0.05em]">
+                        {status === "already" ? t.waitlist.alreadyTitle : t.waitlist.successTitle}
+                      </h2>
+                      <p className="mt-4 max-w-[28rem] font-sans text-base leading-relaxed text-white/72">
+                        {status === "already" ? t.waitlist.alreadyText : t.waitlist.successText}
+                      </p>
+                      <a href={shareHref} target="_blank" rel="noopener noreferrer" className={`mt-7 inline-flex rounded-full ${focusRing}`}>
+                        <span className="inline-flex h-11 items-center rounded-full bg-white px-5 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white/92">
+                          <WhatsAppLogo className="mr-2 h-4 w-4 text-[#25D366]" />
+                          {t.waitlist.share}
+                        </span>
+                      </a>
+                    </div>
+                  ) : (
+                    <>
+                      <h2 id="waitlist-title" className="font-display text-[clamp(2rem,4vw,3rem)] font-bold leading-[0.94] tracking-[-0.05em]">
+                        {t.waitlist.title}
+                      </h2>
+                      <p className="mt-3 max-w-[28rem] font-sans text-sm leading-relaxed text-white/72 md:text-base">{t.waitlist.text}</p>
+
+                      <form onSubmit={submit} noValidate className="mt-6 space-y-4">
+                        <div>
+                          <Label htmlFor="ciyes-name" className="font-sans text-sm font-semibold text-white/88">{t.waitlist.name}</Label>
+                          <Input id="ciyes-name" value={name} onChange={(e) => { setName(e.target.value); clearError("name"); }} autoComplete="name" className={darkInput} aria-invalid={Boolean(errors.name)} />
+                          {errors.name ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.name}</p> : null}
+                        </div>
+                        <div>
+                          <Label htmlFor="ciyes-phone" className="font-sans text-sm font-semibold text-white/88">{t.waitlist.phone}</Label>
+                          <Input
+                            id="ciyes-phone"
+                            type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
+                            placeholder={t.waitlist.phonePlaceholder}
+                            value={phone}
+                            onChange={(e) => { setPhone(e.target.value); clearError("phone"); }}
+                            className={darkInput}
+                            aria-invalid={Boolean(errors.phone)}
+                          />
+                          {errors.phone ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.phone}</p> : null}
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <Label htmlFor="ciyes-email" className="font-sans text-sm font-semibold text-white/88">
+                              {t.waitlist.email} <span className="font-normal text-white/50">({t.waitlist.optional})</span>
+                            </Label>
+                            <Input id="ciyes-email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); clearError("email"); }} className={darkInput} aria-invalid={Boolean(errors.email)} />
+                            {errors.email ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.email}</p> : null}
+                          </div>
+                          <div>
+                            <Label htmlFor="ciyes-city" className="font-sans text-sm font-semibold text-white/88">
+                              {t.waitlist.city} <span className="font-normal text-white/50">({t.waitlist.optional})</span>
+                            </Label>
+                            <Input id="ciyes-city" autoComplete="address-level2" value={city} onChange={(e) => setCity(e.target.value)} className={darkInput} />
+                          </div>
+                        </div>
+                        <fieldset>
+                          <legend className="font-sans text-sm font-semibold text-white/88">{t.waitlist.role}</legend>
+                          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                            {ROLES.map((value) => {
+                              const active = role === value;
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() => { setRole(value); clearError("role"); }}
+                                  aria-pressed={active}
+                                  className={`min-h-12 rounded-[1rem] border px-4 py-2.5 text-left font-sans text-sm font-semibold transition-colors ${focusRing} ${active ? "border-white bg-white text-[#171411]" : "border-white/12 bg-white/[0.04] text-white/82 hover:border-white/30"}`}
+                                >
+                                  {t.waitlist.roles[value]}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {errors.role ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.role}</p> : null}
+                        </fieldset>
+                        <fieldset>
+                          <legend className="font-sans text-sm font-semibold text-white/88">
+                            {t.waitlist.phoneOs} <span className="font-normal text-white/50">({t.waitlist.optional})</span>
+                          </legend>
+                          <div className="mt-2 flex gap-2">
+                            {PHONE_OPTIONS.map((option) => {
+                              const active = phoneOs === option.value;
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => setPhoneOs(active ? null : option.value)}
+                                  aria-pressed={active}
+                                  className={`h-11 flex-1 rounded-full border px-4 font-sans text-sm font-semibold transition-colors ${focusRing} ${active ? "border-white bg-white text-[#171411]" : "border-white/12 bg-white/[0.04] text-white/82 hover:border-white/30"}`}
+                                >
+                                  {option.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </fieldset>
+                        {/* Honeypot for bots: hidden from people and screen readers. */}
+                        <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
+                          <label htmlFor="ciyes-website">Website</label>
+                          <input id="ciyes-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+                        </div>
+                        {errors.form ? (
+                          <p className="rounded-[1rem] bg-white/[0.06] px-4 py-3 font-sans text-sm text-[#ff9ea2]">
+                            {errors.form}{" "}
+                            <a href={PANACHE_SUPPORT_WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="font-semibold text-white underline underline-offset-2">
+                              WhatsApp
+                            </a>
+                          </p>
+                        ) : null}
+                        <Button
+                          type="submit"
+                          disabled={status === "sending"}
+                          className="h-12 w-full rounded-full bg-white font-sans text-sm font-semibold text-[#171411] hover:bg-white/92 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#171411]"
+                        >
+                          {status === "sending" ? t.waitlist.sending : t.waitlist.submit}
+                          {status === "sending" ? null : <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />}
+                        </Button>
+                        <p className="font-sans text-xs leading-relaxed text-white/56">{t.waitlist.privacy}</p>
+                      </form>
+                    </>
+                  )}
+                </section>
+              </div>
+            </section>
+
+            {/* Video */}
+            <section className="py-10 sm:py-14">
+              <div className="mx-auto max-w-3xl text-center">
+                <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.video.title}</h2>
+                <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.video.text}</p>
+              </div>
+              <div id="video" className={`${panel} mx-auto mt-10 max-w-5xl scroll-mt-8 p-2 sm:p-3`}>
+                <video
+                  key={lang}
+                  ref={videoRef}
+                  className="aspect-video w-full rounded-[1.5rem] bg-[#fbf8fa]"
+                  controls
+                  playsInline
+                  preload="none"
+                  poster={`/videos/ciyes-${lang}-poster.jpg`}
+                  aria-label={t.hero.videoLabel}
+                >
+                  <source src={`/videos/ciyes-${lang}.mp4`} type="video/mp4" />
+                </video>
+              </div>
+            </section>
+
+            {/* The problem, set like the Foundation's mission band */}
+            <section className="py-12 sm:py-16">
+              <div className="rounded-[2.4rem] border border-black/8 bg-[#171411] px-6 py-10 text-white shadow-[0_26px_70px_rgba(17,16,14,0.14)] md:px-12 md:py-14">
+                <h2 className="text-center font-display text-[clamp(2.3rem,4.8vw,4.6rem)] font-bold leading-[0.94] tracking-[-0.05em]">
+                  {t.problem.title}
+                </h2>
+                <div className="mx-auto mt-10 grid max-w-5xl gap-x-12 md:grid-cols-2">
+                  {t.problem.cards.map((card) => (
+                    <div key={card.title} className="border-t border-white/12 py-6">
+                      <h3 className="font-sans text-lg font-semibold leading-snug tracking-[-0.02em] md:text-xl">{card.title}</h3>
+                      <p className="mt-2 font-sans text-[0.98rem] leading-relaxed text-white/70">{card.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* What you can do */}
+            <section className="py-12 sm:py-16">
+              <div className="grid gap-10 lg:grid-cols-[0.82fr,1.18fr] lg:items-start">
+                <div className="lg:sticky lg:top-10">
+                  <h2 className={`${displayHeading} text-[clamp(2.1rem,4vw,3.8rem)]`}>{t.features.title}</h2>
+                  <p className="mt-5 max-w-[30rem] font-sans text-base leading-relaxed text-[#11100e]/70">{t.features.text}</p>
+                </div>
+                <ul className={`${panel} divide-y divide-black/8`}>
+                  {t.features.items.map((item, i) => (
+                    <li key={item.title} className="flex gap-4 px-6 py-5 sm:px-8 sm:py-6">
+                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: DOTS[i % DOTS.length] }} aria-hidden="true" />
+                      <div>
+                        <h3 className="font-sans text-lg font-semibold tracking-[-0.03em] text-[#11100e] sm:text-xl">{item.title}</h3>
+                        <p className="mt-1.5 max-w-[38rem] font-sans text-[0.98rem] leading-relaxed text-[#11100e]/68">{item.text}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+
+            {/* Who it's for and what comes next, set like the Foundation's flagship cards */}
+            <section className="py-12 sm:py-16">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <article className={`${panel} relative overflow-hidden p-7 md:p-9`}>
+                  <div className="absolute inset-x-6 top-0 h-24 rounded-b-[1.75rem] bg-gradient-to-b from-[#156D3B]/14 to-[#1875D2]/10 opacity-90" aria-hidden="true" />
+                  <div className="relative">
+                    <h2 className="font-sans text-[clamp(2.2rem,4.4vw,3.6rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#11100e]">{t.who.title}</h2>
+                    <p className="mt-3 max-w-[28rem] font-sans text-sm font-medium leading-snug text-[#11100e]/70 sm:text-base">{t.who.text}</p>
+                    <ul className="mt-6 divide-y divide-black/8 border-t border-black/8">
+                      {t.who.items.map((item) => (
+                        <li key={item.title} className="flex flex-col gap-0.5 py-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                          <span className="font-sans text-base font-semibold tracking-[-0.02em] text-[#11100e]">{item.title}</span>
+                          <span className="font-sans text-sm text-[#11100e]/66 sm:text-right">{item.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </article>
+                <article className={`${panel} relative overflow-hidden p-7 md:p-9`}>
+                  <div className="absolute inset-x-6 top-0 h-24 rounded-b-[1.75rem] bg-gradient-to-b from-[#E7B008]/22 to-[#CC2129]/8 opacity-90" aria-hidden="true" />
+                  <div className="relative">
+                    <h2 className="font-sans text-[clamp(2.2rem,4.4vw,3.6rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#11100e]">{t.soon.title}</h2>
+                    <p className="mt-3 max-w-[28rem] font-sans text-sm font-medium leading-snug text-[#11100e]/70 sm:text-base">{t.soon.text}</p>
+                    <ul className="mt-6 divide-y divide-black/8 border-t border-black/8">
+                      {t.soon.items.map((item) => (
+                        <li key={item} className="flex items-center justify-between gap-4 py-3.5">
+                          <span className="font-sans text-base font-semibold tracking-[-0.02em] text-[#11100e]">{item}</span>
+                          <span className="shrink-0 rounded-full border border-black/10 px-2.5 py-0.5 font-sans text-xs font-semibold text-[#11100e]/60">{t.soon.badge}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            {/* Pricing */}
+            <section className="py-12 sm:py-16">
+              <div className="mx-auto max-w-3xl text-center">
+                <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.pricing.title}</h2>
+                <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.pricing.text}</p>
+              </div>
+              <div className="mx-auto mt-10 grid max-w-6xl gap-5 lg:grid-cols-[0.85fr,1.15fr]">
+                <div className={`${panel} flex flex-col p-7 md:p-8`}>
+                  <h3 className="font-display text-3xl font-bold tracking-[-0.04em] text-[#11100e]">{t.pricing.free.name}</h3>
+                  <p className="mt-4 font-sans text-[2.6rem] font-semibold leading-none tracking-[-0.05em] text-[#11100e]">{t.pricing.free.price}</p>
+                  <ul className="mt-7 space-y-3 border-t border-black/8 pt-6">
+                    {t.pricing.free.items.map((item) => (
+                      <li key={item} className="flex items-start gap-3 font-sans text-[0.98rem] text-[#11100e]/80">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#156D3B]" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-[2rem] border border-black/8 bg-[#171411] p-7 text-white shadow-[0_20px_48px_rgba(17,16,14,0.12)] md:p-8">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="font-display text-3xl font-bold tracking-[-0.04em]">{t.pricing.pro.name}</h3>
+                    <span className="rounded-full border border-white/16 px-3 py-1 font-sans text-xs font-semibold text-white/80">{t.pricing.pro.badge}</span>
+                  </div>
+                  <ul className="mt-5 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
+                    {t.pricing.pro.items.map((item) => (
+                      <li key={item} className="flex items-start gap-3 font-sans text-[0.95rem] text-white/84">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#FFB200]" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <table className="mt-7 w-full border-t border-white/12 font-sans">
+                    <tbody>
+                      {CIYES_PRO_PLANS.map((plan) => (
+                        <tr key={plan.months} className="border-b border-white/12">
+                          <th scope="row" className="whitespace-nowrap py-4 pr-3 text-left text-sm font-semibold text-white/70">
+                            {t.pricing.planLabel(plan.months)}
+                          </th>
+                          <td className="py-4 pr-3 text-right">
+                            <span className="block text-xl font-semibold tracking-[-0.03em] sm:text-2xl">{formatCiyesPrice(lang, plan.priceXaf)}</span>
+                            <span className="block text-xs text-white/60">{t.pricing.perMonth(formatCiyesPrice(lang, plan.priceXaf / plan.months))}</span>
+                          </td>
+                          <td className="w-px whitespace-nowrap py-4 text-right">
+                            {plan.freeMonths ? (
+                              <span className="rounded-full bg-[#FFB200] px-2.5 py-1 text-xs font-bold text-[#171411]">{t.pricing.freeMonths(plan.freeMonths)}</span>
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="mt-5 font-sans text-sm leading-relaxed text-white/66">{t.pricing.note}</p>
+                  <button
+                    type="button"
+                    onClick={goToWaitlist}
+                    className="mt-5 inline-flex h-11 items-center rounded-full bg-white px-5 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#171411]"
+                  >
+                    {t.pricing.cta}
+                    <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* FAQ */}
+            <section className="py-12 sm:py-16">
+              <div className="grid gap-8 lg:grid-cols-[0.82fr,1.18fr] lg:items-start">
+                <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.faq.title}</h2>
+                <div className={`${panel} px-6 py-2 sm:px-8`}>
+                  <Accordion type="single" collapsible>
+                    {t.faq.items.map((item, i) => (
+                      <AccordionItem key={item.q} value={`q${i}`} className={i === t.faq.items.length - 1 ? "border-b-0" : "border-black/8"}>
+                        <AccordionTrigger className="text-left font-sans text-base font-semibold text-[#11100e] hover:no-underline">{item.q}</AccordionTrigger>
+                        <AccordionContent className="font-sans text-[0.98rem] leading-relaxed text-[#11100e]/70">{item.a}</AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              </div>
+            </section>
+
+            {/* From Panache Foundation: the Foundation's flagship cards */}
+            <section className="py-12 sm:py-16">
+              <div className="mx-auto max-w-3xl text-center">
+                <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.foundation.title}</h2>
+                <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.foundation.text}</p>
+              </div>
+              <div className="mt-12 grid gap-6 lg:grid-cols-2">
+                {t.foundation.cards.map((card) => (
+                  <article key={card.to} className={`${panel} relative overflow-hidden p-7`}>
+                    <div className={`absolute inset-x-6 top-0 h-24 rounded-b-[1.75rem] bg-gradient-to-b ${card.accent} opacity-90`} aria-hidden="true" />
+                    <div className="relative">
+                      <h3 className="mt-2 font-sans text-[clamp(2.2rem,4.8vw,4.1rem)] font-semibold leading-[0.9] tracking-[-0.07em] text-[#11100e]">{card.title}</h3>
+                      <p className="mt-2 max-w-[24rem] font-sans text-[0.84rem] font-medium leading-snug text-[#11100e]/70 sm:text-sm">{card.meta}</p>
+                      <p className="mt-5 max-w-[30rem] font-sans text-sm leading-relaxed text-[#11100e]/74 sm:text-[0.98rem]">{card.text}</p>
+                      <Link to={card.to} className={`mt-6 inline-flex rounded-full ${focusRing}`}>
+                        <span className="inline-flex h-11 items-center rounded-full bg-[#171411] px-5 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#171411]/92">
+                          {card.cta}
+                          <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                        </span>
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <p className="mt-8 text-center">
+                <Link to="/foundation" className={`inline-flex items-center rounded-full font-sans text-sm font-semibold text-[#11100e] underline decoration-black/20 underline-offset-4 hover:decoration-black/60 ${focusRing}`}>
+                  {t.foundation.about}
+                  <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
                 </Link>
-              </Reveal>
-            ))}
+              </p>
+            </section>
           </div>
-        </section>
+
+          <Footer variant="cyes" />
+        </div>
       </main>
 
-      <Footer variant="cyes" />
-
-      {/* Phone-only sticky button, hidden once the form is on screen or done. */}
+      {/* Phone-only sticky button, hidden while the form is on screen or once it's done. */}
       {!waitlistInView && !done ? (
-        <div className="fixed bottom-5 left-4 right-[5.25rem] z-40 sm:hidden">
+        <div className="fixed bottom-5 left-4 right-[5.25rem] z-40 lg:hidden">
           <Button
-            onClick={() => scrollToId("waitlist")}
-            className="h-[3.25rem] w-full rounded-full py-3.5 font-sans text-base font-semibold text-white shadow-[0_18px_40px_rgba(21,109,59,0.45)]"
-            style={{ backgroundColor: GREEN }}
+            onClick={goToWaitlist}
+            className="h-12 w-full rounded-full bg-[#171411] font-sans text-sm font-semibold text-white shadow-[0_18px_40px_rgba(17,16,14,0.35)] hover:bg-[#171411]/92"
           >
             {t.nav.waitlist}
+            <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       ) : null}
