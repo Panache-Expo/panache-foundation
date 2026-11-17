@@ -471,7 +471,7 @@ export const Header = () => {
 
               {shouldShowGatewayLink ? (
                 <Link
-                  to="/"
+                  to="/foundation"
                   className={cn(showcaseDesktopLinkClasses("gateway"), navFontClassForItem("Gateway"))}
                   data-liquid-current={currentLiquidNavKey === "gateway" ? "true" : undefined}
                   onPointerEnter={() => setHoveredLiquidNavKey("gateway")}
@@ -540,7 +540,7 @@ export const Header = () => {
 
               <span className="inline-flex" style={homeNavButtonSlotStyle}>
                 <span ref={homeButtonContentRef} className="inline-flex" style={homeNavButtonInnerStyle}>
-                  <Link to="/">
+                  <Link to="/foundation">
                     <Button
                       variant="outline"
                       size="sm"
@@ -571,7 +571,7 @@ export const Header = () => {
           <nav className="hidden md:flex items-center gap-6">
             {shouldShowGatewayLink ? (
               <Link
-                to="/"
+                to="/foundation"
                 className={cn(
                   "flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors",
                   navFontClassForItem("Choose Event")
@@ -632,7 +632,7 @@ export const Header = () => {
 
               <span className="hidden sm:inline-flex" style={homeNavButtonSlotStyle}>
                 <span ref={homeButtonContentRef} className="inline-flex" style={homeNavButtonInnerStyle}>
-                  <Link to="/">
+                  <Link to="/foundation">
                     <Button
                       variant="outline"
                       size="sm"
@@ -674,7 +674,7 @@ export const Header = () => {
             <nav className="flex flex-col p-6 gap-4">
               {shouldOfferHomepageLink ? (
                 <Link
-                  to="/"
+                  to="/foundation"
                   className={cn(
                     isShowcaseLanding
                       ? "flex items-center gap-2 text-white hover:text-white/80 transition-colors"
@@ -691,7 +691,7 @@ export const Header = () => {
                 <>
                   {shouldShowGatewayLink ? (
                     <Link
-                      to="/"
+                      to="/foundation"
                       className="text-white hover:text-white/80 transition-colors flex items-center gap-2"
                     >
                       <Home className="w-4 h-4" />
@@ -747,7 +747,7 @@ export const Header = () => {
                 </>
               ) : shouldShowGatewayLink ? (
                 <Link
-                  to="/"
+                  to="/foundation"
                   className="text-foreground hover:text-primary transition-colors flex items-center gap-2"
                 >
                   <Home className="w-4 h-4" />
