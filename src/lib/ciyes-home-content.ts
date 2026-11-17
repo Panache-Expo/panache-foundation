@@ -26,23 +26,23 @@ type Card = { title: string; text: string };
 
 export type CiyesHomeContent = {
   meta: { title: string; description: string };
-  nav: { waitlist: string; waitlistShort: string; switchTo: string; by: string };
+  nav: { waitlist: string; switchTo: string; by: string; tagline: string };
   hero: {
-    eyebrow: string;
-    lines: [string, string, string];
-    tagline: string;
+    // Three lines set like the Panache Foundation headline: sans, display, sans.
+    headline: [string, string, string];
     text: string;
+    meta: string;
     primary: string;
     secondary: string;
-    chips: string[];
+    pillars: Card[];
     videoLabel: string;
   };
-  problem: { eyebrow: string; title: string; cards: Card[] };
-  features: { eyebrow: string; title: string; items: Card[] };
-  soon: { eyebrow: string; title: string; badge: string; items: string[] };
-  who: { eyebrow: string; title: string; items: Card[] };
+  video: { title: string; text: string };
+  problem: { title: string; cards: Card[] };
+  features: { title: string; text: string; items: Card[] };
+  who: { title: string; text: string; items: Card[] };
+  soon: { title: string; text: string; badge: string; items: string[] };
   pricing: {
-    eyebrow: string;
     title: string;
     text: string;
     free: { name: string; price: string; items: string[] };
@@ -54,9 +54,8 @@ export type CiyesHomeContent = {
     note: string;
     cta: string;
   };
-  faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
+  faq: { title: string; items: { q: string; a: string }[] };
   waitlist: {
-    eyebrow: string;
     title: string;
     text: string;
     name: string;
@@ -79,7 +78,12 @@ export type CiyesHomeContent = {
     shareMessage: string;
     errors: { name: string; phone: string; email: string; role: string; generic: string };
   };
-  foundation: { eyebrow: string; title: string; cards: (Card & { to: string; cta: string })[] };
+  foundation: {
+    title: string;
+    text: string;
+    cards: (Card & { meta: string; to: string; cta: string; accent: string })[];
+    about: string;
+  };
 };
 
 export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
@@ -89,19 +93,25 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       description:
         "One app to show your business, find customers and get paid with Mobile Money. Coming 2027 on iPhone and Android. Join the waitlist.",
     },
-    nav: { waitlist: "Join the waitlist", waitlistShort: "Waitlist", switchTo: "Français", by: "by Panache Foundation" },
+    nav: { waitlist: "Join the waitlist", switchTo: "Français", by: "by Panache Foundation", tagline: "The app for young entrepreneurs in Cameroon." },
     hero: {
-      eyebrow: "The CIYES app · Coming 2027",
-      lines: ["Show your business.", "Find customers.", "Get paid."],
-      tagline: "All year long.",
-      text: "One app for young entrepreneurs in Cameroon: your own shop page, Mobile Money payments, tickets for your events and voting, right in your pocket.",
+      headline: ["Show your business,", "find customers", "and get paid."],
+      text: "One app for young entrepreneurs in Cameroon: your own shop page, Mobile Money payments, tickets for your events and voting, all year long.",
+      meta: "Coming 2027 · iPhone & Android · free to start",
       primary: "Join the waitlist",
       secondary: "Watch the video",
-      chips: ["iPhone & Android", "MTN MoMo & Orange Money", "Free to start"],
+      pillars: [
+        { title: "Your shop page", text: "Products, prices and one link to share on WhatsApp." },
+        { title: "Mobile Money", text: "Customers pay you with MTN MoMo or Orange Money." },
+        { title: "Tickets & voting", text: "Sell tickets and run free or paid votes for your events." },
+      ],
       videoLabel: "CIYES app video",
     },
+    video: {
+      title: "See CIYES in two minutes.",
+      text: "From your shop page to paid voting, everything the app does in one short video.",
+    },
     problem: {
-      eyebrow: "The problem",
       title: "Selling is hard work.",
       cards: [
         { title: "Your WhatsApp status is gone in a day.", text: "You post your products, and 24 hours later nobody sees them." },
@@ -111,8 +121,8 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       ],
     },
     features: {
-      eyebrow: "What you can do",
       title: "One place to show your business, find customers and get paid.",
+      text: "Everything a young business needs to sell online, built for how people in Cameroon buy and pay.",
       items: [
         { title: "Your own shop page", text: "Add your products and prices, share one link, and customers reach you on WhatsApp in one tap." },
         { title: "Get paid with Mobile Money", text: "Customers pay you in the app with MTN MoMo or Orange Money. You see every payment." },
@@ -123,15 +133,9 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { title: "Go Pro", text: "A verified badge and a featured spot to reach more customers." },
       ],
     },
-    soon: {
-      eyebrow: "Coming soon",
-      title: "And we're just getting started.",
-      badge: "Soon",
-      items: ["Your own website", "Salon & barber bookings", "Income & expense tracking", "Auto-post from TikTok & Instagram"],
-    },
     who: {
-      eyebrow: "Who it's for",
-      title: "Built for you.",
+      title: "Built for you",
+      text: "Whoever you are in Cameroon's business scene, CIYES gives you a place to be seen.",
       items: [
         { title: "Young entrepreneurs", text: "Sell your products and services all year." },
         { title: "Side hustlers", text: "Turn your skills into steady income." },
@@ -140,8 +144,13 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { title: "Their customers", text: "Find, buy from and support local businesses." },
       ],
     },
+    soon: {
+      title: "Coming next",
+      text: "We're just getting started. These arrive after launch.",
+      badge: "Soon",
+      items: ["Your own website", "Salon & barber bookings", "Income & expense tracking", "Auto-post from TikTok & Instagram"],
+    },
     pricing: {
-      eyebrow: "Pricing",
       title: "Free to start. Go Pro when you're ready.",
       text: "Everyone starts free. Pro helps more customers find you.",
       free: {
@@ -162,7 +171,6 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       cta: "Join the waitlist",
     },
     faq: {
-      eyebrow: "Questions",
       title: "Good to know",
       items: [
         { q: "When does CIYES launch?", a: "In 2027, on iPhone and Android. Join the waitlist and we'll message you on WhatsApp when it's ready." },
@@ -176,8 +184,7 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       ],
     },
     waitlist: {
-      eyebrow: "Waitlist",
-      title: "Be among the first to get CIYES.",
+      title: "Join the waitlist",
       text: "Leave your WhatsApp number. We'll send you the link the day the app opens.",
       name: "Full name",
       phone: "WhatsApp number",
@@ -211,13 +218,27 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       },
     },
     foundation: {
-      eyebrow: "From Panache Foundation",
-      title: "The team behind the CIYES Summit & Awards",
+      title: "From the team behind the CIYES Summit & Awards",
+      text: "CIYES grows out of Panache Foundation's work with young entrepreneurs and creatives across Cameroon.",
       cards: [
-        { title: "CIYES Summit & Awards", text: "Cameroon's youth entrepreneurship summit and awards.", to: "/cyes", cta: "Explore the Summit" },
-        { title: "Panache Expo", text: "Beauty, fashion, workshops and awards.", to: "/panache-expo", cta: "Explore Panache Expo" },
-        { title: "Panache Foundation", text: "Who we are and what we do.", to: "/foundation", cta: "About the Foundation" },
+        {
+          title: "CIYES",
+          meta: "Cameroon Youth Entrepreneurial Summit & Awards",
+          text: "Mentorship, networking and recognition for the next generation of Cameroonian entrepreneurs.",
+          to: "/cyes",
+          cta: "Explore the Summit",
+          accent: "from-[#1875D2]/16 to-[#156D3B]/12",
+        },
+        {
+          title: "EXPO",
+          meta: "Panache Expo · 6th edition, 2026",
+          text: "Celebrating and advancing the beauty industry through education, recognition and community.",
+          to: "/panache-expo",
+          cta: "Explore Expo",
+          accent: "from-[#f4e93f]/28 to-[#8241B6]/12",
+        },
       ],
+      about: "About Panache Foundation",
     },
   },
   fr: {
@@ -226,19 +247,25 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       description:
         "Une seule appli pour montrer ton business, trouver des clients et te faire payer avec Mobile Money. Disponible en 2027 sur iPhone et Android. Rejoins la liste d'attente.",
     },
-    nav: { waitlist: "Rejoindre la liste d'attente", waitlistShort: "Liste d'attente", switchTo: "English", by: "par Panache Foundation" },
+    nav: { waitlist: "Rejoindre la liste d'attente", switchTo: "English", by: "par Panache Foundation", tagline: "L'appli des jeunes entrepreneurs au Cameroun." },
     hero: {
-      eyebrow: "L'appli CIYES · Disponible en 2027",
-      lines: ["Montre ton business.", "Trouve des clients.", "Fais-toi payer."],
-      tagline: "Toute l'année.",
-      text: "Une seule appli pour les jeunes entrepreneurs au Cameroun : ta boutique, les paiements Mobile Money, les billets de tes événements et les votes, dans ta poche.",
+      headline: ["Montre ton business,", "trouve des clients", "et fais-toi payer."],
+      text: "Une seule appli pour les jeunes entrepreneurs au Cameroun : ta boutique, les paiements Mobile Money, les billets de tes événements et les votes, toute l'année.",
+      meta: "Disponible en 2027 · iPhone & Android · gratuit pour commencer",
       primary: "Rejoindre la liste d'attente",
       secondary: "Voir la vidéo",
-      chips: ["iPhone & Android", "MTN MoMo & Orange Money", "Gratuit pour commencer"],
+      pillars: [
+        { title: "Ta boutique", text: "Produits, prix et un seul lien à partager sur WhatsApp." },
+        { title: "Mobile Money", text: "Tes clients te paient avec MTN MoMo ou Orange Money." },
+        { title: "Billets & votes", text: "Vends des billets et organise des votes gratuits ou payants." },
+      ],
       videoLabel: "Vidéo de l'appli CIYES",
     },
+    video: {
+      title: "CIYES en deux minutes.",
+      text: "De ta boutique aux votes payants, tout ce que fait l'appli en une courte vidéo.",
+    },
     problem: {
-      eyebrow: "Le problème",
       title: "Vendre, c'est dur.",
       cards: [
         { title: "Ton statut WhatsApp disparaît en un jour.", text: "Tu postes tes produits, et 24 heures plus tard, plus personne ne les voit." },
@@ -248,8 +275,8 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       ],
     },
     features: {
-      eyebrow: "Ce que tu peux faire",
       title: "Un seul endroit pour montrer ton business, trouver des clients et te faire payer.",
+      text: "Tout ce qu'il faut à un jeune business pour vendre en ligne, pensé pour la façon dont on achète et paie au Cameroun.",
       items: [
         { title: "Ta propre boutique", text: "Ajoute tes produits et tes prix, partage un seul lien, et tes clients te joignent sur WhatsApp en un clic." },
         { title: "Encaisse avec Mobile Money", text: "Tes clients te paient dans l'appli avec MTN MoMo ou Orange Money. Tu vois chaque paiement." },
@@ -260,15 +287,9 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { title: "Passe Pro", text: "Un badge vérifié et une place en vedette pour toucher plus de clients." },
       ],
     },
-    soon: {
-      eyebrow: "Bientôt",
-      title: "Et ce n'est que le début.",
-      badge: "Bientôt",
-      items: ["Ton propre site web", "Réservations salons & barbiers", "Suivi des revenus & dépenses", "Publication auto depuis TikTok & Instagram"],
-    },
     who: {
-      eyebrow: "Pour qui ?",
-      title: "Conçu pour toi.",
+      title: "Conçu pour toi",
+      text: "Qui que tu sois dans le business au Cameroun, CIYES te donne un endroit où être vu.",
       items: [
         { title: "Jeunes entrepreneurs", text: "Vends tes produits et services toute l'année." },
         { title: "Petits business", text: "Transforme ton talent en revenu régulier." },
@@ -277,8 +298,13 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { title: "Leurs clients", text: "Trouve, achète et soutiens les business locaux." },
       ],
     },
+    soon: {
+      title: "Et ensuite",
+      text: "Ce n'est que le début. Ces fonctions arrivent après le lancement.",
+      badge: "Bientôt",
+      items: ["Ton propre site web", "Réservations salons & barbiers", "Suivi des revenus & dépenses", "Publication auto depuis TikTok & Instagram"],
+    },
     pricing: {
-      eyebrow: "Tarifs",
       title: "Gratuit pour commencer. Passe Pro quand tu veux.",
       text: "Tout le monde commence gratuitement. Pro aide plus de clients à te trouver.",
       free: {
@@ -299,7 +325,6 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       cta: "Rejoindre la liste d'attente",
     },
     faq: {
-      eyebrow: "Questions",
       title: "Bon à savoir",
       items: [
         { q: "Quand CIYES sera-t-il disponible ?", a: "En 2027, sur iPhone et Android. Rejoins la liste d'attente et on t'écrit sur WhatsApp dès que c'est prêt." },
@@ -313,8 +338,7 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       ],
     },
     waitlist: {
-      eyebrow: "Liste d'attente",
-      title: "Sois parmi les premiers à avoir CIYES.",
+      title: "Rejoins la liste d'attente",
       text: "Laisse ton numéro WhatsApp. On t'envoie le lien le jour de l'ouverture de l'appli.",
       name: "Nom complet",
       phone: "Numéro WhatsApp",
@@ -348,13 +372,27 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       },
     },
     foundation: {
-      eyebrow: "Par Panache Foundation",
-      title: "L'équipe du Sommet et des Awards CIYES",
+      title: "Par l'équipe du Sommet et des Awards CIYES",
+      text: "CIYES est né du travail de Panache Foundation avec les jeunes entrepreneurs et créatifs du Cameroun.",
       cards: [
-        { title: "Sommet & Awards CIYES", text: "Le sommet et les awards des jeunes entrepreneurs du Cameroun.", to: "/cyes", cta: "Découvrir le Sommet" },
-        { title: "Panache Expo", text: "Beauté, mode, ateliers et awards.", to: "/panache-expo", cta: "Découvrir Panache Expo" },
-        { title: "Panache Foundation", text: "Qui nous sommes et ce que nous faisons.", to: "/foundation", cta: "À propos de la Fondation" },
+        {
+          title: "CIYES",
+          meta: "Sommet & Awards des jeunes entrepreneurs du Cameroun",
+          text: "Mentorat, réseau et reconnaissance pour la nouvelle génération d'entrepreneurs camerounais.",
+          to: "/cyes",
+          cta: "Découvrir le Sommet",
+          accent: "from-[#1875D2]/16 to-[#156D3B]/12",
+        },
+        {
+          title: "EXPO",
+          meta: "Panache Expo · 6e édition, 2026",
+          text: "Célébrer et faire grandir l'industrie de la beauté par la formation, la reconnaissance et la communauté.",
+          to: "/panache-expo",
+          cta: "Découvrir l'Expo",
+          accent: "from-[#f4e93f]/28 to-[#8241B6]/12",
+        },
       ],
+      about: "À propos de Panache Foundation",
     },
   },
 };
