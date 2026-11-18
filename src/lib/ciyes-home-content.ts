@@ -61,9 +61,15 @@ export type CiyesHomeContent = {
     name: string;
     phone: string;
     phonePlaceholder: string;
-    email: string;
-    city: string;
-    optional: string;
+    steps: {
+      progress: (n: number) => string;
+      next: string;
+      back: string;
+      details: string;
+      who: string;
+      device: string;
+      deviceHint: string;
+    };
     role: string;
     roles: Record<CiyesWaitlistRole, string>;
     phoneOs: string;
@@ -76,7 +82,7 @@ export type CiyesHomeContent = {
     alreadyText: string;
     share: string;
     shareMessage: string;
-    errors: { name: string; phone: string; email: string; role: string; generic: string };
+    errors: { name: string; phone: string; role: string; generic: string };
   };
   foundation: {
     title: string;
@@ -189,9 +195,15 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       name: "Full name",
       phone: "WhatsApp number",
       phonePlaceholder: "6 70 00 00 00",
-      email: "Email",
-      city: "City",
-      optional: "optional",
+      steps: {
+        progress: (n) => `Step ${n} of 3`,
+        next: "Next",
+        back: "Back",
+        details: "Your name and WhatsApp number",
+        who: "Who are you?",
+        device: "Which phone do you use?",
+        deviceHint: "So we know which app store to point you to. You can skip this.",
+      },
       role: "I am…",
       roles: {
         entrepreneur: "An entrepreneur or side hustler",
@@ -212,7 +224,6 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       errors: {
         name: "Please enter your name.",
         phone: "Please enter a valid WhatsApp number.",
-        email: "Please check your email address.",
         role: "Please choose what describes you.",
         generic: "Something went wrong. Please try again, or message us on WhatsApp.",
       },
@@ -343,9 +354,15 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       name: "Nom complet",
       phone: "Numéro WhatsApp",
       phonePlaceholder: "6 70 00 00 00",
-      email: "E-mail",
-      city: "Ville",
-      optional: "facultatif",
+      steps: {
+        progress: (n) => `Étape ${n} sur 3`,
+        next: "Suivant",
+        back: "Retour",
+        details: "Ton nom et ton numéro WhatsApp",
+        who: "Qui es-tu ?",
+        device: "Quel téléphone utilises-tu ?",
+        deviceHint: "Pour savoir vers quelle boutique d'applis t'envoyer. Tu peux passer cette étape.",
+      },
       role: "Je suis…",
       roles: {
         entrepreneur: "Entrepreneur ou petit business",
@@ -366,7 +383,6 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       errors: {
         name: "Entre ton nom.",
         phone: "Entre un numéro WhatsApp valide.",
-        email: "Vérifie ton adresse e-mail.",
         role: "Choisis ce qui te décrit.",
         generic: "Une erreur s'est produite. Réessaie, ou écris-nous sur WhatsApp.",
       },

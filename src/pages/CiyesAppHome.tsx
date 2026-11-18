@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Check, Languages, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Languages, Play } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -49,6 +49,8 @@ const displayHeading =
   "font-display font-bold leading-[0.94] tracking-[-0.05em] text-[#11100e]";
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B]";
+const focusRingDark =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#171411]";
 const darkInput =
   "mt-2 h-12 rounded-[1rem] border-white/12 bg-white/[0.07] px-4 font-sans text-base text-white shadow-none placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-white/70 focus-visible:ring-offset-0";
 
@@ -76,13 +78,13 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [city, setCity] = useState("");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const stepTitleRef = useRef<HTMLHeadingElement>(null);
   const [role, setRole] = useState<CiyesWaitlistRole | null>(null);
   const [phoneOs, setPhoneOs] = useState<CiyesPhoneOs | null>(null);
   const [website, setWebsite] = useState(""); // honeypot: real people never see this field
   const [status, setStatus] = useState<Status>("idle");
-  const [errors, setErrors] = useState<Partial<Record<"name" | "phone" | "email" | "role" | "form", string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<"name" | "phone" | "role" | "form", string>>>({});
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -106,8 +108,35 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
     return () => observer.disconnect();
   }, []);
 
-  const clearError = (key: "name" | "phone" | "email" | "role") =>
+  const clearError = (key: "name" | "phone" | "role") =>
     setErrors((current) => (current[key] || current.form ? { ...current, [key]: undefined, form: undefined } : current));
+
+  // The waitlist is three short steps: name + WhatsApp, who you are, which phone.
+  const showStep = (next: 1 | 2 | 3) => {
+    setStep(next);
+    trackEvent("ciyes_waitlist_step", { step: next, lang });
+    // Move keyboard and screen-reader focus to the new step's question.
+    window.setTimeout(() => stepTitleRef.current?.focus({ preventScroll: true }), 30);
+  };
+
+  const detailsErrors = () => {
+    const nextErrors: typeof errors = {};
+    if (name.trim().length < 2) nextErrors.name = t.waitlist.errors.name;
+    if (!normalizeWhatsAppNumber(phone)) nextErrors.phone = t.waitlist.errors.phone;
+    return nextErrors;
+  };
+
+  const nextFromDetails = () => {
+    const nextErrors = detailsErrors();
+    setErrors(nextErrors);
+    if (!Object.keys(nextErrors).length) showStep(2);
+  };
+
+  const pickRole = (value: CiyesWaitlistRole) => {
+    setRole(value);
+    clearError("role");
+    window.setTimeout(() => showStep(3), 220); // a beat to show the choice, then move on
+  };
 
   const switchLang = () => {
     const next: CiyesLang = lang === "en" ? "fr" : "en";
@@ -121,7 +150,10 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
 
   const goToWaitlist = () => {
     scrollToId("waitlist");
-    window.setTimeout(() => document.getElementById("ciyes-name")?.focus({ preventScroll: true }), 500);
+    window.setTimeout(() => {
+      const target = step === 1 ? document.getElementById("ciyes-name") : stepTitleRef.current;
+      target?.focus({ preventScroll: true });
+    }, 500);
   };
 
   const watchVideo = () => {
@@ -133,27 +165,32 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const nextErrors: typeof errors = {};
-    const cleanName = name.trim();
-    const normalizedPhone = normalizeWhatsAppNumber(phone);
-    const cleanEmail = email.trim();
-    if (cleanName.length < 2) nextErrors.name = t.waitlist.errors.name;
-    if (!normalizedPhone) nextErrors.phone = t.waitlist.errors.phone;
-    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) nextErrors.email = t.waitlist.errors.email;
-    if (!role) nextErrors.role = t.waitlist.errors.role;
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
+    if (step === 1) {
+      nextFromDetails(); // Enter on the first step means "Next"
+      return;
+    }
+    if (step === 2) return;
+    const missing = detailsErrors();
+    if (Object.keys(missing).length) {
+      setErrors(missing);
+      showStep(1);
+      return;
+    }
+    if (!role) {
+      setErrors({ role: t.waitlist.errors.role });
+      showStep(2);
+      return;
+    }
 
+    setErrors({});
     setStatus("sending");
     try {
       const response = await fetch(WAITLIST_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: cleanName,
-          whatsappPhone: normalizedPhone,
-          email: cleanEmail || null,
-          city: city.trim() || null,
+          fullName: name.trim(),
+          whatsappPhone: normalizeWhatsAppNumber(phone),
           role,
           phoneOs,
           language: lang,
@@ -166,6 +203,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
         if (payload?.field === "whatsappPhone") {
           setErrors({ phone: t.waitlist.errors.phone });
           setStatus("idle");
+          showStep(1);
           return;
         }
         throw new Error(payload?.message || "Waitlist request failed");
@@ -314,105 +352,112 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                       </h2>
                       <p className="mt-3 max-w-[28rem] font-sans text-sm leading-relaxed text-white/72 md:text-base">{t.waitlist.text}</p>
 
-                      <form onSubmit={submit} noValidate className="mt-6 space-y-4">
-                        <div>
-                          <Label htmlFor="ciyes-name" className="font-sans text-sm font-semibold text-white/88">{t.waitlist.name}</Label>
-                          <Input id="ciyes-name" value={name} onChange={(e) => { setName(e.target.value); clearError("name"); }} autoComplete="name" className={darkInput} aria-invalid={Boolean(errors.name)} />
-                          {errors.name ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.name}</p> : null}
+                      <form onSubmit={submit} noValidate className="mt-6">
+                        <div className="flex items-center justify-between gap-4">
+                          <p className="font-sans text-xs font-semibold text-white/60" aria-live="polite">{t.waitlist.steps.progress(step)}</p>
+                          {step > 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => showStep(step === 3 ? 2 : 1)}
+                              className={`inline-flex items-center gap-1 rounded-full px-1 font-sans text-xs font-semibold text-white/70 transition-colors hover:text-white ${focusRingDark}`}
+                            >
+                              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                              {t.waitlist.steps.back}
+                            </button>
+                          ) : null}
                         </div>
-                        <div>
-                          <Label htmlFor="ciyes-phone" className="font-sans text-sm font-semibold text-white/88">{t.waitlist.phone}</Label>
-                          <Input
-                            id="ciyes-phone"
-                            type="tel"
-                            inputMode="tel"
-                            autoComplete="tel"
-                            placeholder={t.waitlist.phonePlaceholder}
-                            value={phone}
-                            onChange={(e) => { setPhone(e.target.value); clearError("phone"); }}
-                            className={darkInput}
-                            aria-invalid={Boolean(errors.phone)}
-                          />
-                          {errors.phone ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.phone}</p> : null}
+                        <div className="mt-2 grid grid-cols-3 gap-1.5" aria-hidden="true">
+                          {[1, 2, 3].map((n) => (
+                            <span key={n} className={`h-1 rounded-full transition-colors duration-300 ${n <= step ? "bg-white" : "bg-white/15"}`} />
+                          ))}
                         </div>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <Label htmlFor="ciyes-email" className="font-sans text-sm font-semibold text-white/88">
-                              {t.waitlist.email} <span className="font-normal text-white/50">({t.waitlist.optional})</span>
-                            </Label>
-                            <Input id="ciyes-email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); clearError("email"); }} className={darkInput} aria-invalid={Boolean(errors.email)} />
-                            {errors.email ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.email}</p> : null}
-                          </div>
-                          <div>
-                            <Label htmlFor="ciyes-city" className="font-sans text-sm font-semibold text-white/88">
-                              {t.waitlist.city} <span className="font-normal text-white/50">({t.waitlist.optional})</span>
-                            </Label>
-                            <Input id="ciyes-city" autoComplete="address-level2" value={city} onChange={(e) => setCity(e.target.value)} className={darkInput} />
-                          </div>
+
+                        <div className="mt-6 min-h-[18.5rem]">
+                          <h3 ref={stepTitleRef} tabIndex={-1} className="font-sans text-xl font-semibold tracking-[-0.03em] text-white outline-none">
+                            {step === 1 ? t.waitlist.steps.details : step === 2 ? t.waitlist.steps.who : t.waitlist.steps.device}
+                          </h3>
+
+                          {step === 1 ? (
+                            <div className="mt-4 space-y-4">
+                              <div>
+                                <Label htmlFor="ciyes-name" className="font-sans text-sm font-semibold text-white/88">{t.waitlist.name}</Label>
+                                <Input id="ciyes-name" value={name} onChange={(e) => { setName(e.target.value); clearError("name"); }} autoComplete="name" className={darkInput} aria-invalid={Boolean(errors.name)} />
+                                {errors.name ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.name}</p> : null}
+                              </div>
+                              <div>
+                                <Label htmlFor="ciyes-phone" className="font-sans text-sm font-semibold text-white/88">{t.waitlist.phone}</Label>
+                                <Input
+                                  id="ciyes-phone"
+                                  type="tel"
+                                  inputMode="tel"
+                                  autoComplete="tel"
+                                  placeholder={t.waitlist.phonePlaceholder}
+                                  value={phone}
+                                  onChange={(e) => { setPhone(e.target.value); clearError("phone"); }}
+                                  className={darkInput}
+                                  aria-invalid={Boolean(errors.phone)}
+                                />
+                                {errors.phone ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.phone}</p> : null}
+                              </div>
+                              <Button type="submit" className={`h-12 w-full rounded-full bg-white font-sans text-sm font-semibold text-[#171411] hover:bg-white/92 ${focusRingDark}`}>
+                                {t.waitlist.steps.next}
+                                <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                              </Button>
+                            </div>
+                          ) : null}
+
+                          {step === 2 ? (
+                            <div className="mt-4 grid gap-2" role="group" aria-label={t.waitlist.steps.who}>
+                              {ROLES.map((value) => {
+                                const active = role === value;
+                                return (
+                                  <button key={value} type="button" onClick={() => pickRole(value)} aria-pressed={active} className={`min-h-[3.25rem] rounded-[1rem] border px-4 py-3 text-left font-sans text-base font-semibold transition-colors ${focusRingDark} ${active ? "border-white bg-white text-[#171411]" : "border-white/12 bg-white/[0.04] text-white/86 hover:border-white/30"}`}>
+                                    {t.waitlist.roles[value]}
+                                  </button>
+                                );
+                              })}
+                              {errors.role ? <p className="mt-1 font-sans text-sm text-[#ff9ea2]">{errors.role}</p> : null}
+                            </div>
+                          ) : null}
+
+                          {step === 3 ? (
+                            <div className="mt-2">
+                              <p className="font-sans text-sm leading-relaxed text-white/68">{t.waitlist.steps.deviceHint}</p>
+                              <div className="mt-4 grid grid-cols-2 gap-2" role="group" aria-label={t.waitlist.steps.device}>
+                                {PHONE_OPTIONS.map((option) => {
+                                  const active = phoneOs === option.value;
+                                  return (
+                                    <button key={option.value} type="button" onClick={() => setPhoneOs(active ? null : option.value)} aria-pressed={active} className={`h-14 rounded-[1rem] border px-4 font-sans text-base font-semibold transition-colors ${focusRingDark} ${active ? "border-white bg-white text-[#171411]" : "border-white/12 bg-white/[0.04] text-white/86 hover:border-white/30"}`}>
+                                      {option.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {/* Honeypot for bots: hidden from people and screen readers. */}
+                              <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
+                                <label htmlFor="ciyes-website">Website</label>
+                                <input id="ciyes-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+                              </div>
+                              {errors.form ? (
+                                <p className="mt-4 rounded-[1rem] bg-white/[0.06] px-4 py-3 font-sans text-sm text-[#ff9ea2]">
+                                  {errors.form}{" "}
+                                  <a href={PANACHE_SUPPORT_WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="font-semibold text-white underline underline-offset-2">
+                                    WhatsApp
+                                  </a>
+                                </p>
+                              ) : null}
+                              <Button
+                                type="submit"
+                                disabled={status === "sending"}
+                                className={`mt-5 h-12 w-full rounded-full bg-white font-sans text-sm font-semibold text-[#171411] hover:bg-white/92 ${focusRingDark}`}
+                              >
+                                {status === "sending" ? t.waitlist.sending : t.waitlist.submit}
+                                {status === "sending" ? null : <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />}
+                              </Button>
+                            </div>
+                          ) : null}
                         </div>
-                        <fieldset>
-                          <legend className="font-sans text-sm font-semibold text-white/88">{t.waitlist.role}</legend>
-                          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                            {ROLES.map((value) => {
-                              const active = role === value;
-                              return (
-                                <button
-                                  key={value}
-                                  type="button"
-                                  onClick={() => { setRole(value); clearError("role"); }}
-                                  aria-pressed={active}
-                                  className={`min-h-12 rounded-[1rem] border px-4 py-2.5 text-left font-sans text-sm font-semibold transition-colors ${focusRing} ${active ? "border-white bg-white text-[#171411]" : "border-white/12 bg-white/[0.04] text-white/82 hover:border-white/30"}`}
-                                >
-                                  {t.waitlist.roles[value]}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {errors.role ? <p className="mt-1.5 font-sans text-sm text-[#ff9ea2]">{errors.role}</p> : null}
-                        </fieldset>
-                        <fieldset>
-                          <legend className="font-sans text-sm font-semibold text-white/88">
-                            {t.waitlist.phoneOs} <span className="font-normal text-white/50">({t.waitlist.optional})</span>
-                          </legend>
-                          <div className="mt-2 flex gap-2">
-                            {PHONE_OPTIONS.map((option) => {
-                              const active = phoneOs === option.value;
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onClick={() => setPhoneOs(active ? null : option.value)}
-                                  aria-pressed={active}
-                                  className={`h-11 flex-1 rounded-full border px-4 font-sans text-sm font-semibold transition-colors ${focusRing} ${active ? "border-white bg-white text-[#171411]" : "border-white/12 bg-white/[0.04] text-white/82 hover:border-white/30"}`}
-                                >
-                                  {option.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </fieldset>
-                        {/* Honeypot for bots: hidden from people and screen readers. */}
-                        <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
-                          <label htmlFor="ciyes-website">Website</label>
-                          <input id="ciyes-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
-                        </div>
-                        {errors.form ? (
-                          <p className="rounded-[1rem] bg-white/[0.06] px-4 py-3 font-sans text-sm text-[#ff9ea2]">
-                            {errors.form}{" "}
-                            <a href={PANACHE_SUPPORT_WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="font-semibold text-white underline underline-offset-2">
-                              WhatsApp
-                            </a>
-                          </p>
-                        ) : null}
-                        <Button
-                          type="submit"
-                          disabled={status === "sending"}
-                          className="h-12 w-full rounded-full bg-white font-sans text-sm font-semibold text-[#171411] hover:bg-white/92 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#171411]"
-                        >
-                          {status === "sending" ? t.waitlist.sending : t.waitlist.submit}
-                          {status === "sending" ? null : <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />}
-                        </Button>
-                        <p className="font-sans text-xs leading-relaxed text-white/56">{t.waitlist.privacy}</p>
+                        <p className="mt-4 font-sans text-xs leading-relaxed text-white/56">{t.waitlist.privacy}</p>
                       </form>
                     </>
                   )}
