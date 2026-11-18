@@ -6,12 +6,14 @@ export type CiyesLang = "en" | "fr";
 export type CiyesWaitlistRole = "entrepreneur" | "organiser" | "ngo" | "customer";
 export type CiyesPhoneOs = "iphone" | "android";
 
-// Pro plan: 7,450 XAF a month, 3-month minimum; 6 months = 1 month free, 12 months = 3 months free.
+// Pro plan: normally 9,450 XAF a month; early users pay 7,450. 3-month minimum;
+// 6 months = 1 month free, 12 months = 3 months free (so you pay for 3, 5 or 9 months).
+export const CIYES_PRO_NORMAL_MONTHLY_XAF = 9450;
 export const CIYES_PRO_MONTHLY_XAF = 7450;
 export const CIYES_PRO_PLANS = [
-  { months: 3, freeMonths: 0, priceXaf: 22350 },
-  { months: 6, freeMonths: 1, priceXaf: 37250 },
-  { months: 12, freeMonths: 3, priceXaf: 67050 },
+  { months: 3, freeMonths: 0, priceXaf: 22350, normalXaf: 28350 },
+  { months: 6, freeMonths: 1, priceXaf: 37250, normalXaf: 47250 },
+  { months: 12, freeMonths: 3, priceXaf: 67050, normalXaf: 85050 },
 ] as const;
 
 export const formatCiyesPrice = (lang: CiyesLang, amount: number) => {
@@ -51,6 +53,7 @@ export type CiyesHomeContent = {
     freeMonths: (n: number) => string;
     perMonth: (amount: string) => string;
     bestValue: string;
+    early: { label: string; normally: string; earlyPay: string };
     note: string;
     cta: string;
   };
@@ -158,7 +161,7 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
     },
     pricing: {
       title: "Free to start. Go Pro when you're ready.",
-      text: "Everyone starts free. Pro helps more customers find you.",
+      text: "Everyone starts free. Pro helps more customers find you, and early users pay less.",
       free: {
         name: "Free",
         price: "0 XAF",
@@ -173,7 +176,8 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       freeMonths: (n) => (n === 1 ? "1 month free" : `${n} months free`),
       perMonth: (amount) => `${amount} / month`,
       bestValue: "Best value",
-      note: "Minimum 3 months · pay with MTN MoMo or Orange Money. Join the waitlist to hear first when Pro pre-orders open.",
+      early: { label: "Early-user price", normally: "Normally", earlyPay: "Early users pay" },
+      note: "Minimum 3 months · pay with MTN MoMo or Orange Money. Join the waitlist to be among the first users and hear when Pro pre-orders open.",
       cta: "Join the waitlist",
     },
     faq: {
@@ -182,7 +186,7 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { q: "When does CIYES launch?", a: "In 2027, on iPhone and Android. Join the waitlist and we'll message you on WhatsApp when it's ready." },
         {
           q: "How much does it cost?",
-          a: "CIYES is free to start. Pro starts at 22,350 XAF for 3 months (7,450 a month), with 1 month free on 6 months and 3 months free on 12 months.",
+          a: "CIYES is free to start. Pro normally costs 9,450 XAF a month. Early users pay 7,450 a month: 22,350 XAF for 3 months, with 1 month free on 6 months and 3 months free on 12 months.",
         },
         { q: "Is it only for CIYES events?", a: "No. Sell tickets and run voting for your own events, awards and competitions." },
         { q: "How do customers pay?", a: "With MTN Mobile Money or Orange Money, right in the app." },
@@ -317,7 +321,7 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
     },
     pricing: {
       title: "Gratuit pour commencer. Passe Pro quand tu veux.",
-      text: "Tout le monde commence gratuitement. Pro aide plus de clients à te trouver.",
+      text: "Tout le monde commence gratuitement. Pro aide plus de clients à te trouver, et les premiers utilisateurs paient moins.",
       free: {
         name: "Gratuit",
         price: "0\u00A0FCFA",
@@ -332,7 +336,8 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       freeMonths: (n) => (n === 1 ? "1 mois offert" : `${n} mois offerts`),
       perMonth: (amount) => `${amount} / mois`,
       bestValue: "Meilleure offre",
-      note: "Minimum 3 mois · paiement par MTN MoMo ou Orange Money. Rejoins la liste d'attente pour être prévenu dès l'ouverture des précommandes Pro.",
+      early: { label: "Prix premiers utilisateurs", normally: "Normalement", earlyPay: "Les premiers utilisateurs paient" },
+      note: "Minimum 3 mois · paiement par MTN MoMo ou Orange Money. Rejoins la liste d'attente pour faire partie des premiers utilisateurs et être prévenu dès l'ouverture des précommandes Pro.",
       cta: "Rejoindre la liste d'attente",
     },
     faq: {
@@ -341,7 +346,7 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { q: "Quand CIYES sera-t-il disponible ?", a: "En 2027, sur iPhone et Android. Rejoins la liste d'attente et on t'écrit sur WhatsApp dès que c'est prêt." },
         {
           q: "Combien ça coûte ?",
-          a: "C'est gratuit pour commencer. Pro commence à 22\u00A0350\u00A0FCFA pour 3 mois (7\u00A0450 par mois), avec 1 mois offert sur 6 mois et 3 mois offerts sur 12 mois.",
+          a: "C'est gratuit pour commencer. Pro coûte normalement 9\u00A0450\u00A0FCFA par mois. Les premiers utilisateurs paient 7\u00A0450 par mois : 22\u00A0350\u00A0FCFA pour 3 mois, avec 1 mois offert sur 6 mois et 3 mois offerts sur 12 mois.",
         },
         { q: "C'est seulement pour les événements CIYES ?", a: "Non. Vends des billets et organise des votes pour tes propres événements, awards et concours." },
         { q: "Comment les clients paient-ils ?", a: "Avec MTN Mobile Money ou Orange Money, directement dans l'appli." },

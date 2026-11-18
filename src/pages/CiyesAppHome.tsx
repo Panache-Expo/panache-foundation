@@ -18,6 +18,8 @@ import { trackEvent } from "@/lib/analytics";
 import { PANACHE_SUPPORT_WHATSAPP_HREF } from "@/lib/registration-links";
 import {
   CIYES_HOME_CONTENT,
+  CIYES_PRO_MONTHLY_XAF,
+  CIYES_PRO_NORMAL_MONTHLY_XAF,
   CIYES_PRO_PLANS,
   CIYES_WAITLIST_URL,
   detectCiyesLang,
@@ -586,6 +588,12 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                     <h3 className="font-display text-3xl font-bold tracking-[-0.04em]">{t.pricing.pro.name}</h3>
                     <span className="rounded-full border border-white/16 px-3 py-1 font-sans text-xs font-semibold text-white/80">{t.pricing.pro.badge}</span>
                   </div>
+                  <p className="mt-3 font-sans text-[0.95rem] leading-relaxed text-white/76">
+                    {t.pricing.early.normally}{" "}
+                    <s className="decoration-white/60">{t.pricing.perMonth(formatCiyesPrice(lang, CIYES_PRO_NORMAL_MONTHLY_XAF))}</s>.{" "}
+                    {t.pricing.early.earlyPay}{" "}
+                    <strong className="font-semibold text-white">{t.pricing.perMonth(formatCiyesPrice(lang, CIYES_PRO_MONTHLY_XAF))}</strong>.
+                  </p>
                   <ul className="mt-5 grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
                     {t.pricing.pro.items.map((item) => (
                       <li key={item} className="flex items-start gap-3 font-sans text-[0.95rem] text-white/84">
@@ -594,7 +602,8 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                       </li>
                     ))}
                   </ul>
-                  <table className="mt-7 w-full border-t border-white/12 font-sans">
+                  <p className="mt-7 inline-flex rounded-full bg-[#FFB200] px-3 py-1 font-sans text-xs font-bold text-[#171411]">{t.pricing.early.label}</p>
+                  <table className="mt-3 w-full border-t border-white/12 font-sans">
                     <tbody>
                       {CIYES_PRO_PLANS.map((plan) => (
                         <tr key={plan.months} className="border-b border-white/12">
@@ -602,6 +611,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                             {t.pricing.planLabel(plan.months)}
                           </th>
                           <td className="py-4 pr-3 text-right">
+                            <s className="block text-xs text-white/50 decoration-white/50">{formatCiyesPrice(lang, plan.normalXaf)}</s>
                             <span className="block text-xl font-semibold tracking-[-0.03em] sm:text-2xl">{formatCiyesPrice(lang, plan.priceXaf)}</span>
                             <span className="block text-xs text-white/60">{t.pricing.perMonth(formatCiyesPrice(lang, plan.priceXaf / plan.months))}</span>
                           </td>
