@@ -2,6 +2,9 @@ import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import baseRevenueHandler from "./panache-revenue.js";
 
+// CIYES donations (external reference "donation-...") are not revenue.
+const isDonationReference = (value) => /^donation-/i.test(String(value || ""));
+
 const SUPABASE_URL =
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -570,6 +573,10 @@ const buildLedgerAudit = (rows, sync) => {
   let latestTimestamp = "";
 
   for (const row of rows) {
+    if (isDonationReference(row.external_reference)) {
+      summary.donation_excluded_count = (summary.donation_excluded_count || 0) + 1;
+      continue;
+    }
     const raw = row?.raw && typeof row.raw === "object" ? row.raw : {};
     const reference = normalizeText(
       row.campay_reference ||

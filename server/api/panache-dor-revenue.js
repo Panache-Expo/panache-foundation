@@ -1,6 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import handler from "./panache-dor-revenue-lite.js";
 
+// CIYES donations (external reference "donation-...") are not revenue.
+const isDonationReference = (value) => /^donation-/i.test(String(value || ""));
+
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const CURRENCY = (process.env.PANACHE_DOR_CURRENCY || process.env.CURRENCY || "XAF").toUpperCase();
@@ -302,6 +305,7 @@ const fetchSyncedDisbursements = async () => {
   const includedWithdrawals = data.filter(
     (row) =>
       !row.excluded_from_revenue &&
+      !isDonationReference(row.external_reference) &&
       !ignoredDisbursementReferences.has(String(row.campay_reference || ""))
   );
 

@@ -1,5 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
+// CIYES donations (external reference "donation-...") are not revenue.
+const isDonationReference = (value) => /^donation-/i.test(String(value || ""));
+
 const SUPABASE_URL =
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -547,7 +550,8 @@ const fetchGlobalWithdrawals = async (supabase) => {
   for (const row of rows) {
     if (
       normalizeText(row.direction).toLowerCase() !== "withdrawal" ||
-      row.excluded_from_revenue
+      row.excluded_from_revenue ||
+      isDonationReference(row.external_reference)
     ) {
       continue;
     }

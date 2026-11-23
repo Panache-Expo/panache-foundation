@@ -1,3 +1,4 @@
+import ciyesDonations from "./ciyes-donations.js";
 import ciyesWaitlist from "./ciyes-waitlist.js";
 import competitionApplications from "./competition-applications.js";
 import contestantAccessPass from "./contestant-access-pass.js";
@@ -20,6 +21,7 @@ import panacheRevenue from "./panache-revenue-account-ledger.js";
 import sendRegistrationEmail from "./send-registration-email.js";
 
 export const apiHandlers = Object.freeze({
+  "ciyes-donations": ciyesDonations,
   "ciyes-waitlist": ciyesWaitlist,
   "competition-applications": competitionApplications,
   "contestant-access-pass": contestantAccessPass,
