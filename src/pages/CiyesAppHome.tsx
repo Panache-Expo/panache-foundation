@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, Languages, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Play } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/Footer";
+import { SiteNav } from "@/components/SiteNav";
 import { WhatsAppLogo } from "@/components/WhatsAppLogo";
-import ciyesMark from "@/assets/ciyes-mark.svg";
 import { trackEvent } from "@/lib/analytics";
 import { PANACHE_SUPPORT_WHATSAPP_HREF } from "@/lib/registration-links";
 import {
@@ -30,6 +30,7 @@ import {
   type CiyesPhoneOs,
   type CiyesWaitlistRole,
 } from "@/lib/ciyes-home-content";
+import { CIYES_DONATE_CONTENT } from "@/lib/ciyes-donate-content";
 
 // The CIYES app homepage, set in the Panache Foundation homepage's design language:
 // cool off-white page, near-black ink, Reckless Neue display lines mixed with Matter,
@@ -74,6 +75,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
   const reduceMotion = useReducedMotion();
   const [lang, setLang] = useState<CiyesLang>(() => detectCiyesLang());
   const t = CIYES_HOME_CONTENT[lang];
+  const donateBand = CIYES_DONATE_CONTENT[lang].band;
   const videoRef = useRef<HTMLVideoElement>(null);
   const waitlistRef = useRef<HTMLElement>(null);
   const [waitlistInView, setWaitlistInView] = useState(false);
@@ -94,10 +96,13 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
     document.querySelector('meta[name="description"]')?.setAttribute("content", t.meta.description);
   }, [lang, t]);
 
-  // /waitlist and #waitlist land on the form (after the app's scroll-to-top on route change).
+  // /waitlist and any #hash (waitlist, features, pricing, faq) land on that section,
+  // after the app's scroll-to-top on route change.
   useEffect(() => {
-    if (!focusWaitlist && window.location.hash !== "#waitlist") return;
-    const timer = window.setTimeout(() => scrollToId("waitlist", "instant"), 180);
+    const hash = window.location.hash.replace(/^#/, "");
+    const target = focusWaitlist ? "waitlist" : hash;
+    if (!target) return;
+    const timer = window.setTimeout(() => scrollToId(target, "instant"), 180);
     return () => window.clearTimeout(timer);
   }, [focusWaitlist]);
 
@@ -234,37 +239,12 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
 
   return (
     <div className="min-h-screen bg-[#eef2f6] text-[#14110f] selection:bg-[#156D3B]/20 selection:text-[#11100e]">
+      <SiteNav lang={lang} onSwitchLang={switchLang} />
       <main className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_10%,rgba(21,109,59,0.07),transparent_24%),radial-gradient(circle_at_85%_16%,rgba(24,117,210,0.08),transparent_22%),linear-gradient(180deg,#f9fbfd_0%,#f4f6f9_48%,#edf1f5_100%)]" />
 
         <div className="relative mx-auto w-full">
           <div className="max-w-full px-5 sm:px-14 lg:px-18">
-            {/* Logo lockup and language switch */}
-            <div className="flex items-start justify-between gap-4 pt-6 sm:pt-8">
-              <Link
-                to="/"
-                className={`inline-flex items-center gap-3 rounded-[1.65rem] border border-black/8 bg-white/78 px-4 py-3 shadow-[0_18px_42px_rgba(17,16,14,0.06)] backdrop-blur-sm sm:gap-4 sm:px-5 sm:py-4 ${focusRing}`}
-              >
-                <img src={ciyesMark} alt="" className="h-10 w-auto sm:h-12" />
-                <span className="text-left">
-                  <span className="block font-sans text-lg font-semibold leading-none tracking-[-0.04em] text-[#11100e] sm:text-xl">
-                    CIYES
-                  </span>
-                  <span className="mt-1 hidden font-sans text-sm font-medium leading-snug text-[#11100e]/64 sm:block">
-                    {t.nav.tagline} <span className="text-[#11100e]/48">{t.nav.by}</span>
-                  </span>
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={switchLang}
-                className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-black/10 bg-white/80 px-5 font-sans text-sm font-semibold text-[#11100e] transition-colors hover:bg-white ${focusRing}`}
-              >
-                <Languages className="h-4 w-4" aria-hidden="true" />
-                {t.nav.switchTo}
-              </button>
-            </div>
-
             {/* Hero: the offer on the left, the waitlist itself on the right */}
             <section className="relative pb-16 pt-8 sm:pb-20 lg:pt-12">
               <div className="relative grid gap-8 lg:grid-cols-[1.04fr,0.96fr] lg:items-start">
@@ -327,7 +307,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                   id="waitlist"
                   ref={waitlistRef}
                   aria-labelledby="waitlist-title"
-                  className="scroll-mt-6 rounded-[2rem] border border-black/8 bg-[#171411] px-6 py-7 text-white shadow-[0_20px_48px_rgba(17,16,14,0.12)] md:px-8 md:py-8"
+                  className="scroll-mt-24 rounded-[2rem] border border-black/8 bg-[#171411] px-6 py-7 text-white shadow-[0_20px_48px_rgba(17,16,14,0.12)] md:px-8 md:py-8"
                 >
                   {done ? (
                     <div className="flex min-h-[26rem] flex-col items-start justify-center" role="status">
@@ -507,7 +487,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
             </section>
 
             {/* What you can do */}
-            <section className="py-12 sm:py-16">
+            <section id="features" className="scroll-mt-20 py-12 sm:py-16">
               <div className="grid gap-10 lg:grid-cols-[0.82fr,1.18fr] lg:items-start">
                 <div className="lg:sticky lg:top-10">
                   <h2 className={`${displayHeading} text-[clamp(2.1rem,4vw,3.8rem)]`}>{t.features.title}</h2>
@@ -564,7 +544,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
             </section>
 
             {/* Pricing */}
-            <section className="py-12 sm:py-16">
+            <section id="pricing" className="scroll-mt-20 py-12 sm:py-16">
               <div className="mx-auto max-w-3xl text-center">
                 <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.pricing.title}</h2>
                 <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.pricing.text}</p>
@@ -638,7 +618,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
             </section>
 
             {/* FAQ */}
-            <section className="py-12 sm:py-16">
+            <section id="faq" className="scroll-mt-20 py-12 sm:py-16">
               <div className="grid gap-8 lg:grid-cols-[0.82fr,1.18fr] lg:items-start">
                 <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.faq.title}</h2>
                 <div className={`${panel} px-6 py-2 sm:px-8`}>
@@ -660,7 +640,20 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                 <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.foundation.title}</h2>
                 <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.foundation.text}</p>
               </div>
-              <div className="mt-12 grid gap-6 lg:grid-cols-2">
+              {/* This year's community project, above the Foundation's cards */}
+              <div className="mt-12 flex flex-col gap-5 rounded-[2rem] border border-[#FFB200]/40 bg-[#FFB200]/[0.14] p-7 sm:flex-row sm:items-center sm:justify-between md:p-8">
+                <div className="max-w-[40rem]">
+                  <h3 className="font-display text-[clamp(1.7rem,3.2vw,2.5rem)] font-bold leading-[0.98] tracking-[-0.04em] text-[#11100e]">{donateBand.title}</h3>
+                  <p className="mt-2 font-sans text-[0.98rem] leading-relaxed text-[#11100e]/72">{donateBand.text}</p>
+                </div>
+                <Link to="/donate" className={`inline-flex shrink-0 rounded-full ${focusRing}`}>
+                  <span className="inline-flex h-12 items-center rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#171411]/92">
+                    {donateBand.cta}
+                    <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                  </span>
+                </Link>
+              </div>
+              <div className="mt-6 grid gap-6 lg:grid-cols-2">
                 {t.foundation.cards.map((card) => (
                   <article key={card.to} className={`${panel} relative overflow-hidden p-7`}>
                     <div className={`absolute inset-x-6 top-0 h-24 rounded-b-[1.75rem] bg-gradient-to-b ${card.accent} opacity-90`} aria-hidden="true" />
