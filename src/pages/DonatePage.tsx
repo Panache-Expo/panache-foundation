@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowRight, Loader2, Mail, Play } from "lucide-react";
+import { ArrowRight, Loader2, Mail, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/Footer";
@@ -12,6 +12,7 @@ import {
   CIYES_DONATE_MAX_XAF,
   CIYES_DONATE_MIN_XAF,
   CIYES_SPONSOR_EMAIL,
+  CIYES_SPONSOR_PHONES,
   formatFcfa,
 } from "@/lib/ciyes-donate-content";
 import { DonationApiError, fetchDonationTotals, startDonation, type DonationTotals } from "@/lib/ciyes-donate-api";
@@ -366,12 +367,17 @@ const DonatePage = () => {
               <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.video.text}</p>
             </div>
             <div className={`${panel} mx-auto mt-10 max-w-5xl p-2 sm:p-3`}>
-              <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-[1.5rem] bg-[linear-gradient(135deg,#e6eef6,#f4f1ea)]">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-sm">
-                  <Play className="h-6 w-6 text-[#11100e]/40" aria-hidden="true" />
-                </span>
-                <p className="font-sans text-sm font-semibold text-[#11100e]/56">{t.video.soon}</p>
-              </div>
+              <video
+                key={lang}
+                className="aspect-video w-full rounded-[1.5rem] bg-[#0b4fd6]"
+                controls
+                playsInline
+                preload="none"
+                poster={`/videos/borehole-${lang}-poster.jpg`}
+                aria-label={t.video.title}
+              >
+                <source src={`/videos/borehole-${lang}.mp4`} type="video/mp4" />
+              </video>
             </div>
           </section>
 
@@ -382,6 +388,7 @@ const DonatePage = () => {
                 <h2 className="font-display text-[clamp(1.8rem,3.4vw,2.8rem)] font-bold leading-[0.98] tracking-[-0.04em] text-[#11100e]">{t.sponsor.title}</h2>
                 <p className="mt-3 font-sans text-[0.98rem] leading-relaxed text-[#11100e]/72">{t.sponsor.text}</p>
               </div>
+              <div className="flex shrink-0 flex-col gap-3 md:items-end">
               <a
                 href={sponsorHref}
                 className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#171411]/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B] md:self-auto"
@@ -390,6 +397,21 @@ const DonatePage = () => {
                 {t.sponsor.cta}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
+              <p className="font-sans text-sm text-[#11100e]/64 md:text-right">{CIYES_SPONSOR_EMAIL}</p>
+              <ul className="flex flex-wrap gap-2 md:justify-end" aria-label={t.sponsor.phones}>
+                {CIYES_SPONSOR_PHONES.map((phone) => (
+                  <li key={phone.tel}>
+                    <a
+                      href={`tel:${phone.tel}`}
+                      className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-black/10 bg-white/80 px-4 font-sans text-sm font-semibold text-[#11100e] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B]"
+                    >
+                      <Phone className="h-4 w-4" aria-hidden="true" />
+                      {phone.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              </div>
             </div>
           </section>
         </div>

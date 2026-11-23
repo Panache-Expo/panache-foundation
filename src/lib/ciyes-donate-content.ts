@@ -8,6 +8,10 @@ export const CIYES_DONATE_MIN_XAF = 500;
 export const CIYES_DONATE_MAX_XAF = 2_000_000;
 export const CIYES_DONATE_AMOUNTS = [1000, 2500, 5000, 10000, 25000] as const;
 export const CIYES_SPONSOR_EMAIL = "info.ciyesawards@gmail.com";
+export const CIYES_SPONSOR_PHONES = [
+  { label: "+237 6 58 11 91 67", tel: "+237658119167" },
+  { label: "+237 6 73 59 49 31", tel: "+237673594931" },
+] as const;
 
 export const formatFcfa = (lang: CiyesLang, amount: number) => {
   const digits = Math.round(amount).toLocaleString("en-US");
@@ -55,8 +59,8 @@ export type CiyesDonateContent = {
   costs: { title: string; text: string; items: Item[] };
   steps: { title: string; items: { when: string; title: string; text: string }[] };
   impact: { title: string; text: string; items: Item[] };
-  video: { title: string; text: string; soon: string };
-  sponsor: { title: string; text: string; cta: string; subject: string };
+  video: { title: string; text: string };
+  sponsor: { title: string; text: string; cta: string; subject: string; phones: string };
   thanks: {
     metaTitle: string;
     checking: string;
@@ -185,13 +189,13 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
     video: {
       title: "See the project",
       text: "A short video about the community and the borehole.",
-      soon: "The video is coming soon.",
     },
     sponsor: {
       title: "Want to sponsor the borehole?",
       text: "Companies and partners can fund the whole project or a part of it, with visibility at CIYES 2027.",
       cta: "Email us about sponsoring",
       subject: "Sponsoring the CIYES 2027 borehole",
+      phones: "Call us",
     },
     thanks: {
       metaTitle: "Thank you | CIYES community borehole",
@@ -291,13 +295,13 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
     video: {
       title: "Découvrez le projet",
       text: "Une courte vidéo sur la communauté et le forage.",
-      soon: "La vidéo arrive bientôt.",
     },
     sponsor: {
       title: "Vous souhaitez sponsoriser le forage ?",
       text: "Les entreprises et partenaires peuvent financer tout ou partie du projet, avec une visibilité au CIYES 2027.",
       cta: "Nous écrire pour sponsoriser",
       subject: "Sponsoriser le forage CIYES 2027",
+      phones: "Appelez-nous",
     },
     thanks: {
       metaTitle: "Merci | Forage communautaire CIYES",
