@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Copy, Play } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -15,7 +15,7 @@ import { Footer } from "@/components/Footer";
 import { SiteNav } from "@/components/SiteNav";
 import { WhatsAppLogo } from "@/components/WhatsAppLogo";
 import { trackEvent } from "@/lib/analytics";
-import { PANACHE_SUPPORT_WHATSAPP_HREF } from "@/lib/registration-links";
+import { CYES_WHATSAPP_CHANNEL_URL, PANACHE_SUPPORT_WHATSAPP_HREF } from "@/lib/registration-links";
 import {
   CIYES_HOME_CONTENT,
   CIYES_PRO_MONTHLY_XAF,
@@ -89,6 +89,8 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
   const [website, setWebsite] = useState(""); // honeypot: real people never see this field
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Partial<Record<"name" | "phone" | "role" | "form", string>>>({});
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const copyTimer = useRef<number>();
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -223,8 +225,36 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
     }
   };
 
-  const shareHref = `https://wa.me/?text=${encodeURIComponent(`${t.waitlist.shareMessage} ${CIYES_WAITLIST_URL}`)}`;
+  const shareText = `${t.waitlist.shareMessage} ${CIYES_WAITLIST_URL}`;
+  const shareHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
   const done = status === "success" || status === "already";
+
+  const copyShareMessage = async () => {
+    trackEvent("ciyes_waitlist_share", { method: "copy", lang, already: status === "already" });
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(shareText);
+      ok = true;
+    } catch {
+      // Older browsers or no clipboard permission: fall back to a hidden textarea.
+      const area = document.createElement("textarea");
+      area.value = shareText;
+      area.setAttribute("readonly", "");
+      area.style.position = "fixed";
+      area.style.opacity = "0";
+      document.body.appendChild(area);
+      area.select();
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      }
+      area.remove();
+    }
+    setCopyState(ok ? "copied" : "failed");
+    window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopyState("idle"), ok ? 2500 : 6000);
+  };
 
   // The page's one authored motion: the headline lines rise in, one after another.
   const line = (i: number) =>
@@ -246,7 +276,7 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
         <div className="relative mx-auto w-full">
           <div className="max-w-full px-5 sm:px-14 lg:px-18">
             {/* Hero: the offer on the left, the waitlist itself on the right */}
-            <section className="relative pb-16 pt-8 sm:pb-20 lg:pt-12">
+            <section className="relative pb-8 pt-8 sm:pb-10 lg:pt-12">
               <div className="relative grid gap-8 lg:grid-cols-[1.04fr,0.96fr] lg:items-start">
                 <div className="max-w-[42rem] lg:pt-4">
                   <h1 className="text-[#11100e]">
@@ -287,19 +317,20 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                     </Button>
                   </div>
 
-                  <div className="mt-9 grid gap-3 sm:grid-cols-3">
-                    {t.hero.pillars.map((pillar, i) => (
-                      <div
-                        key={pillar.title}
-                        className="rounded-[1.45rem] border border-black/8 bg-white/72 px-4 py-4 shadow-[0_14px_30px_rgba(17,16,14,0.05)]"
-                      >
-                        <p className="flex items-center gap-2 font-sans text-sm font-semibold tracking-[-0.03em] text-[#11100e]">
-                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: DOTS[i] }} aria-hidden="true" />
-                          {pillar.title}
-                        </p>
-                        <p className="mt-2 font-sans text-sm leading-relaxed text-[#11100e]/64">{pillar.text}</p>
-                      </div>
-                    ))}
+                  {/* The promo video, right under the offer. On phones: headline, video, then the waitlist. */}
+                  <div id="video" className={`${panel} mt-8 scroll-mt-24 p-2 sm:p-2.5`}>
+                    <video
+                      key={lang}
+                      ref={videoRef}
+                      className="aspect-video w-full rounded-[1.5rem] bg-[#fbf8fa]"
+                      controls
+                      playsInline
+                      preload="none"
+                      poster={`/videos/ciyes-${lang}-poster.jpg`}
+                      aria-label={t.hero.videoLabel}
+                    >
+                      <source src={`/videos/ciyes-${lang}.mp4`} type="video/mp4" />
+                    </video>
                   </div>
                 </div>
 
@@ -310,22 +341,70 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
                   className="scroll-mt-24 rounded-[2rem] border border-black/8 bg-[#171411] px-6 py-7 text-white shadow-[0_20px_48px_rgba(17,16,14,0.12)] md:px-8 md:py-8"
                 >
                   {done ? (
-                    <div className="flex min-h-[26rem] flex-col items-start justify-center" role="status">
-                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366]">
-                        <Check className="h-7 w-7 text-[#171411]" aria-hidden="true" />
+                    <div className="flex min-h-[26rem] flex-col justify-center" role="status">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]">
+                        <Check className="h-6 w-6 text-[#171411]" aria-hidden="true" />
                       </span>
-                      <h2 id="waitlist-title" className="mt-6 font-display text-[clamp(2rem,4vw,3rem)] font-bold leading-[0.94] tracking-[-0.05em]">
+                      <h2 id="waitlist-title" className="mt-5 font-display text-[clamp(2rem,4vw,3rem)] font-bold leading-[0.94] tracking-[-0.05em]">
                         {status === "already" ? t.waitlist.alreadyTitle : t.waitlist.successTitle}
                       </h2>
-                      <p className="mt-4 max-w-[28rem] font-sans text-base leading-relaxed text-white/72">
+                      <p className="mt-3 max-w-[28rem] font-sans text-base leading-relaxed text-white/72">
                         {status === "already" ? t.waitlist.alreadyText : t.waitlist.successText}
                       </p>
-                      <a href={shareHref} target="_blank" rel="noopener noreferrer" className={`mt-7 inline-flex rounded-full ${focusRing}`}>
-                        <span className="inline-flex h-11 items-center rounded-full bg-white px-5 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white/92">
-                          <WhatsAppLogo className="mr-2 h-4 w-4 text-[#25D366]" />
-                          {t.waitlist.share}
-                        </span>
-                      </a>
+
+                      <ol className="mt-6 divide-y divide-white/12 border-t border-white/12">
+                        <li className="py-5">
+                          <h3 className="flex items-center gap-3 font-sans text-lg font-semibold tracking-[-0.02em]">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white font-sans text-sm font-bold text-[#171411]" aria-hidden="true">1</span>
+                            {t.waitlist.shareStep.title}
+                          </h3>
+                          <blockquote className="mt-3 select-all rounded-[1rem] border border-white/10 bg-white/[0.06] px-4 py-3 font-sans text-sm leading-relaxed text-white/84">
+                            {shareText}
+                          </blockquote>
+                          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                            <a
+                              href={shareHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => trackEvent("ciyes_waitlist_share", { method: "whatsapp", lang, already: status === "already" })}
+                              className={`inline-flex h-11 items-center justify-center rounded-full bg-white px-5 font-sans text-sm font-semibold text-[#171411] transition-colors hover:bg-white/92 ${focusRingDark}`}
+                            >
+                              <WhatsAppLogo className="mr-2 h-4 w-4 text-[#25D366]" />
+                              {t.waitlist.shareStep.whatsapp}
+                            </a>
+                            <button
+                              type="button"
+                              onClick={copyShareMessage}
+                              className={`inline-flex h-11 items-center justify-center rounded-full border border-white/16 px-5 font-sans text-sm font-semibold text-white transition-colors hover:bg-white/[0.08] ${focusRingDark}`}
+                            >
+                              {copyState === "copied" ? <Check className="mr-2 h-4 w-4 text-[#25D366]" aria-hidden="true" /> : <Copy className="mr-2 h-4 w-4" aria-hidden="true" />}
+                              {copyState === "copied" ? t.waitlist.shareStep.copied : t.waitlist.shareStep.copy}
+                            </button>
+                          </div>
+                          <p className="sr-only" aria-live="polite">{copyState === "copied" ? t.waitlist.shareStep.copied : ""}</p>
+                          {copyState === "failed" ? (
+                            <p className="mt-2 font-sans text-xs text-white/64">{t.waitlist.shareStep.copyFailed}</p>
+                          ) : null}
+                        </li>
+                        <li className="pt-5">
+                          <h3 className="flex items-center gap-3 font-sans text-lg font-semibold tracking-[-0.02em]">
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white font-sans text-sm font-bold text-[#171411]" aria-hidden="true">2</span>
+                            {t.waitlist.channelStep.title}
+                          </h3>
+                          <p className="mt-2 font-sans text-sm leading-relaxed text-white/68">{t.waitlist.channelStep.text}</p>
+                          <a
+                            href={CYES_WHATSAPP_CHANNEL_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => trackEvent("ciyes_waitlist_channel", { lang, already: status === "already" })}
+                            className={`mt-3 inline-flex h-11 items-center justify-center rounded-full bg-[#25D366] px-5 font-sans text-sm font-semibold text-[#0b2e17] transition-colors hover:bg-[#22c55e] ${focusRingDark}`}
+                          >
+                            <WhatsAppLogo className="mr-2 h-4 w-4" />
+                            {t.waitlist.channelStep.cta}
+                            <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                          </a>
+                        </li>
+                      </ol>
                     </div>
                   ) : (
                     <>
@@ -447,25 +526,21 @@ const CiyesAppHome = ({ focusWaitlist = false }: { focusWaitlist?: boolean }) =>
               </div>
             </section>
 
-            {/* Video */}
-            <section className="py-10 sm:py-14">
-              <div className="mx-auto max-w-3xl text-center">
-                <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4.2rem)]`}>{t.video.title}</h2>
-                <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.video.text}</p>
-              </div>
-              <div id="video" className={`${panel} mx-auto mt-10 max-w-5xl scroll-mt-8 p-2 sm:p-3`}>
-                <video
-                  key={lang}
-                  ref={videoRef}
-                  className="aspect-video w-full rounded-[1.5rem] bg-[#fbf8fa]"
-                  controls
-                  playsInline
-                  preload="none"
-                  poster={`/videos/ciyes-${lang}-poster.jpg`}
-                  aria-label={t.hero.videoLabel}
-                >
-                  <source src={`/videos/ciyes-${lang}.mp4`} type="video/mp4" />
-                </video>
+            {/* The three pillars, just below the hero */}
+            <section className="pb-6 sm:pb-10">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {t.hero.pillars.map((pillar, i) => (
+                  <div
+                    key={pillar.title}
+                    className="rounded-[1.45rem] border border-black/8 bg-white/72 px-4 py-4 shadow-[0_14px_30px_rgba(17,16,14,0.05)]"
+                  >
+                    <p className="flex items-center gap-2 font-sans text-sm font-semibold tracking-[-0.03em] text-[#11100e]">
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: DOTS[i] }} aria-hidden="true" />
+                      {pillar.title}
+                    </p>
+                    <p className="mt-2 font-sans text-sm leading-relaxed text-[#11100e]/64">{pillar.text}</p>
+                  </div>
+                ))}
               </div>
             </section>
 

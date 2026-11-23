@@ -39,7 +39,6 @@ export type CiyesHomeContent = {
     pillars: Card[];
     videoLabel: string;
   };
-  video: { title: string; text: string };
   problem: { title: string; cards: Card[] };
   features: { title: string; text: string; items: Card[] };
   who: { title: string; text: string; items: Card[] };
@@ -83,8 +82,10 @@ export type CiyesHomeContent = {
     successText: string;
     alreadyTitle: string;
     alreadyText: string;
-    share: string;
     shareMessage: string;
+    // After joining: step 1 shares the waitlist, step 2 joins the WhatsApp channel.
+    shareStep: { title: string; whatsapp: string; copy: string; copied: string; copyFailed: string };
+    channelStep: { title: string; text: string; cta: string };
     errors: { name: string; phone: string; role: string; generic: string };
   };
   foundation: {
@@ -115,10 +116,6 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { title: "Tickets & voting", text: "Sell tickets and run free or paid votes for your events." },
       ],
       videoLabel: "CIYES app video",
-    },
-    video: {
-      title: "See CIYES in two minutes.",
-      text: "From your shop page to paid voting, everything the app does in one short video.",
     },
     problem: {
       title: "Selling is hard work.",
@@ -223,7 +220,18 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       successText: "We'll message you on WhatsApp when CIYES opens. Know someone who sells? Send them the link.",
       alreadyTitle: "You're already on the list.",
       alreadyText: "This number is already registered. We'll message you on WhatsApp when CIYES opens.",
-      share: "Share on WhatsApp",
+      shareStep: {
+        title: "Share it",
+        whatsapp: "Send on WhatsApp",
+        copy: "Copy message",
+        copied: "Copied",
+        copyFailed: "Press and hold the message to copy it.",
+      },
+      channelStep: {
+        title: "Join the CIYES WhatsApp channel",
+        text: "Get the launch news first.",
+        cta: "Join the channel",
+      },
       shareMessage: "Join the CIYES app waitlist: show your business, find customers and get paid with Mobile Money.",
       errors: {
         name: "Please enter your name.",
@@ -275,10 +283,6 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
         { title: "Billets & votes", text: "Vends des billets et organise des votes gratuits ou payants." },
       ],
       videoLabel: "Vidéo de l'appli CIYES",
-    },
-    video: {
-      title: "CIYES en deux minutes.",
-      text: "De ta boutique aux votes payants, tout ce que fait l'appli en une courte vidéo.",
     },
     problem: {
       title: "Vendre, c'est dur.",
@@ -383,7 +387,18 @@ export const CIYES_HOME_CONTENT: Record<CiyesLang, CiyesHomeContent> = {
       successText: "On t'écrit sur WhatsApp dès l'ouverture de CIYES. Tu connais quelqu'un qui vend ? Envoie-lui le lien.",
       alreadyTitle: "Tu es déjà sur la liste.",
       alreadyText: "Ce numéro est déjà inscrit. On t'écrit sur WhatsApp dès l'ouverture de CIYES.",
-      share: "Partager sur WhatsApp",
+      shareStep: {
+        title: "Fais passer le mot",
+        whatsapp: "Envoyer sur WhatsApp",
+        copy: "Copier le message",
+        copied: "Copié",
+        copyFailed: "Appuie longuement sur le message pour le copier.",
+      },
+      channelStep: {
+        title: "Rejoins la chaîne WhatsApp CIYES",
+        text: "Reçois les nouvelles du lancement en premier.",
+        cta: "Rejoindre la chaîne",
+      },
       shareMessage: "Rejoins la liste d'attente de l'appli CIYES : montre ton business, trouve des clients et fais-toi payer avec Mobile Money.",
       errors: {
         name: "Entre ton nom.",
