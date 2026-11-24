@@ -593,3 +593,65 @@ All colors MUST be HSL for proper theme support.
     pointer-events: none;
   }
 }
+
+/* CIYES donate page: cartoon kids, water tank, confetti.
+   Everything is drawn at rest first; motion only runs when the visitor allows it. */
+.kid-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.kid-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.tank-bubble,
+.confetti-piece,
+.splash-drop,
+.tank-drip {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kid-bob { animation: kid-bob 2.8s ease-in-out infinite; }
+  .kid-jump { animation: kid-jump 0.55s cubic-bezier(0.3, 0.7, 0.4, 1) 4; }
+  .kid-hop { animation: kid-hop 1.1s ease-in-out infinite; }
+  .kid-eyes { animation: kid-blink 4.8s ease-in-out infinite; }
+  .kid-wave { animation: kid-wave 1.4s ease-in-out infinite; }
+  .kid-arm { transition: transform 0.25s ease-out; }
+  .tank-level { transition: transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .tank-wave { animation: tank-wave 4.5s linear infinite; }
+  .tank-wave-back { animation: tank-wave 7s linear infinite reverse; }
+  .tank-bubble { animation: tank-bubble 3.8s ease-in infinite; }
+  .tank-drip { animation: tank-drip 2.6s ease-in infinite; }
+  .confetti-piece { animation: confetti-fly 1.6s cubic-bezier(0.15, 0.7, 0.35, 1) forwards; }
+  .splash-drop { animation: splash-drop 1.6s ease-out infinite; }
+}
+
+@keyframes kid-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes kid-jump { 0%, 100% { transform: translateY(0) scaleY(1); } 15% { transform: translateY(0) scaleY(0.94); } 45% { transform: translateY(-20px) scaleY(1.03); } }
+@keyframes kid-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-9px); } 60% { transform: translateY(-9px); } }
+@keyframes kid-blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.12); } }
+@keyframes kid-wave { 0%, 100% { transform: rotate(-108deg); } 50% { transform: rotate(-140deg); } }
+@keyframes tank-wave { from { transform: translateX(0); } to { transform: translateX(-56px); } }
+@keyframes tank-bubble {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.85; }
+  85% { opacity: 0.6; }
+  100% { transform: translateY(var(--rise, -80px)); opacity: 0; }
+}
+@keyframes tank-drip {
+  0%, 55% { transform: translateY(0) scale(0.4); opacity: 0; }
+  60% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(26px) scale(1); opacity: 0; }
+}
+@keyframes confetti-fly {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+}
+@keyframes splash-drop {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: 1; }
+  55% { transform: translate(calc(var(--dx) * 0.6), var(--up)) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), 4px) scale(0.7); opacity: 0; }
+}
