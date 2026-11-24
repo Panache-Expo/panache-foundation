@@ -34,8 +34,9 @@ export type CiyesDonateContent = {
   meta: { title: string; description: string };
   hero: { headline: string; text: string; date: string };
   progress: {
-    raised: (amount: string) => string;
-    ofGoal: (goal: string) => string;
+    raisedOf: (goal: string) => string;
+    raisedSoFar: string;
+    tankLabel: (amount: string, donors: number) => string;
     donors: (count: number) => string;
     noGoal: string;
     loading: string;
@@ -59,10 +60,11 @@ export type CiyesDonateContent = {
   costs: { title: string; text: string; items: Item[] };
   steps: { title: string; items: { when: string; title: string; text: string }[] };
   impact: { title: string; text: string; items: Item[] };
-  video: { title: string; text: string };
-  sponsor: { title: string; text: string; cta: string; subject: string; phones: string };
+  kidsVideo: { label: string };
+  sponsor: { title: string; text: string; cta: string; subject: string; phones: string; videoLabel: string };
   thanks: {
     metaTitle: string;
+    sceneLabel: string;
     checking: string;
     pendingTitle: string;
     pendingText: string;
@@ -128,8 +130,10 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       date: "Handover on Day 1 of CIYES 2027 · 14 April 2027",
     },
     progress: {
-      raised: (amount) => `${amount} raised`,
-      ofGoal: (goal) => `of ${goal}`,
+      raisedOf: (goal) => `raised of ${goal}`,
+      raisedSoFar: "raised so far",
+      tankLabel: (amount, donors) =>
+        `A water tank filling up as money comes in: ${amount} raised by ${donors} ${donors === 1 ? "donor" : "donors"}, with CIYES kids cheering around it.`,
       donors: (count) => (count === 1 ? "1 donor" : `${count.toLocaleString("en-US")} donors`),
       noGoal: "The final budget will be published once the site survey is done.",
       loading: "Loading the total…",
@@ -186,19 +190,18 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
         { title: "Still working", text: "A check that the pump runs one year on." },
       ],
     },
-    video: {
-      title: "See the project",
-      text: "A short video about the community and the borehole.",
-    },
+    kidsVideo: { label: "Video: give clean water with the CIYES kids" },
     sponsor: {
       title: "Want to sponsor the borehole?",
       text: "Companies and partners can fund the whole project or a part of it, with visibility at CIYES 2027.",
       cta: "Email us about sponsoring",
       subject: "Sponsoring the CIYES 2027 borehole",
       phones: "Call us",
+      videoLabel: "The CIYES 2027 borehole project, for sponsors",
     },
     thanks: {
       metaTitle: "Thank you | CIYES community borehole",
+      sceneLabel: "CIYES kids splashing in clean water",
       checking: "Checking your payment…",
       pendingTitle: "Your payment is still pending",
       pendingText: "Confirm it on your phone if you have not yet, then check again.",
@@ -234,8 +237,10 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       date: "Remise le jour 1 du CIYES 2027 · 14 avril 2027",
     },
     progress: {
-      raised: (amount) => `${amount} collectés`,
-      ofGoal: (goal) => `sur ${goal}`,
+      raisedOf: (goal) => `collectés sur ${goal}`,
+      raisedSoFar: "collectés jusqu'ici",
+      tankLabel: (amount, donors) =>
+        `Un réservoir d'eau qui se remplit au fil des dons : ${amount} collectés par ${donors} ${donors === 1 ? "donateur" : "donateurs"}, entouré d'enfants CIYES qui applaudissent.`,
       donors: (count) => (count === 1 ? "1 donateur" : `${count.toLocaleString("fr-FR")} donateurs`),
       noGoal: "Le budget final sera publié après l'étude du site.",
       loading: "Chargement du total…",
@@ -292,19 +297,18 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
         { title: "Toujours en service", text: "Une vérification que la pompe fonctionne un an après." },
       ],
     },
-    video: {
-      title: "Découvrez le projet",
-      text: "Une courte vidéo sur la communauté et le forage.",
-    },
+    kidsVideo: { label: "Vidéo : offrez de l'eau potable avec les enfants CIYES" },
     sponsor: {
       title: "Vous souhaitez sponsoriser le forage ?",
       text: "Les entreprises et partenaires peuvent financer tout ou partie du projet, avec une visibilité au CIYES 2027.",
       cta: "Nous écrire pour sponsoriser",
       subject: "Sponsoriser le forage CIYES 2027",
       phones: "Appelez-nous",
+      videoLabel: "Le projet de forage CIYES 2027, pour les sponsors",
     },
     thanks: {
       metaTitle: "Merci | Forage communautaire CIYES",
+      sceneLabel: "Des enfants CIYES qui s'éclaboussent dans l'eau potable",
       checking: "Vérification de votre paiement…",
       pendingTitle: "Votre paiement est toujours en attente",
       pendingText: "Confirmez-le sur votre téléphone si ce n'est pas encore fait, puis vérifiez à nouveau.",

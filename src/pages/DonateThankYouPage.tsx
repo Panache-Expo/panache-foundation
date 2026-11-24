@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CheckCircle2, Clock, Loader2, RefreshCw, XCircle } from "lucide-react";
+import { Clock, Loader2, RefreshCw, XCircle } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import { SiteNav } from "@/components/SiteNav";
 import { WhatsAppLogo } from "@/components/WhatsAppLogo";
+import { ConfettiBurst } from "@/components/donate/ConfettiBurst";
+import { SplashScene } from "@/components/donate/SplashScene";
 import { detectCiyesLang, saveCiyesLang, type CiyesLang } from "@/lib/ciyes-home-content";
 import { CIYES_DONATE_CONTENT, CIYES_DONATE_URL, formatFcfa } from "@/lib/ciyes-donate-content";
 import { DonationApiError, verifyDonation, type DonationVerifyResult } from "@/lib/ciyes-donate-api";
@@ -72,7 +74,7 @@ const DonateThankYouPage = () => {
     <div className="min-h-screen bg-[#eef2f6] text-[#14110f]">
       <SiteNav lang={lang} onSwitchLang={switchLang} />
       <main className="px-5 py-14 sm:px-14 sm:py-20">
-        <div className="mx-auto max-w-xl rounded-[2rem] border border-black/8 bg-white/85 p-8 text-center shadow-[0_18px_42px_rgba(17,16,14,0.06)] sm:p-10" aria-live="polite">
+        <div className="relative mx-auto max-w-xl rounded-[2rem] border border-black/8 bg-white/85 p-8 text-center shadow-[0_18px_42px_rgba(17,16,14,0.06)] sm:p-10" aria-live="polite">
           {state.kind === "checking" ? (
             <>
               <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#156D3B]" aria-hidden="true" />
@@ -80,8 +82,9 @@ const DonateThankYouPage = () => {
             </>
           ) : status === "completed" && state.kind === "result" ? (
             <>
-              <CheckCircle2 className="mx-auto h-12 w-12 text-[#156D3B]" aria-hidden="true" />
-              <h1 className="mt-5 font-display text-[clamp(2rem,5vw,3rem)] font-bold leading-[0.96] tracking-[-0.05em] text-[#11100e]">
+              <ConfettiBurst burst={1} top="22%" count={36} />
+              <SplashScene label={t.sceneLabel} />
+              <h1 className="mt-6 font-display text-[clamp(2rem,5vw,3rem)] font-bold leading-[0.96] tracking-[-0.05em] text-[#11100e]">
                 {t.successTitle(state.result.donor_name)}
               </h1>
               <p className="mt-4 font-sans text-base leading-relaxed text-[#11100e]/72">{t.successText(formatFcfa(lang, state.result.amount_xaf))}</p>

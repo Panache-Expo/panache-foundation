@@ -1,9 +1,13 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Loader2, Mail, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/Footer";
 import { SiteNav } from "@/components/SiteNav";
+import { ConfettiBurst } from "@/components/donate/ConfettiBurst";
+import { KidsVideo } from "@/components/donate/KidsVideo";
+import { WaterTankScene } from "@/components/donate/WaterTankScene";
+import { BucketIcon, CupIcon, DrumIcon, DropPlusIcon, JerrycanIcon, TankIcon } from "@/components/donate/WaterIcons";
 import { trackEvent } from "@/lib/analytics";
 import { detectCiyesLang, saveCiyesLang, type CiyesLang } from "@/lib/ciyes-home-content";
 import {
@@ -21,6 +25,9 @@ import { DonationApiError, fetchDonationTotals, startDonation, type DonationTota
 // cool off-white page, near-black ink, display headings, white panels and one dark panel for the action.
 
 const DOTS = ["#156D3B", "#1875D2", "#CC2129", "#E7B008"];
+const AMOUNT_ICONS = [CupIcon, BucketIcon, JerrycanIcon, DrumIcon, TankIcon];
+// While there is no goal yet, the tank shows a little water rather than a percentage.
+const NO_GOAL_LEVEL = 0.22;
 const panel =
   "rounded-[2rem] border border-black/8 bg-white/80 shadow-[0_18px_42px_rgba(17,16,14,0.06)]";
 const displayHeading = "font-display font-bold leading-[0.94] tracking-[-0.05em] text-[#11100e]";
@@ -47,6 +54,11 @@ const DonatePage = () => {
 
   const [totals, setTotals] = useState<DonationTotals | null>(null);
   const [totalsFailed, setTotalsFailed] = useState(false);
+  // When a refresh finds the total went up, the kids jump and cheer and confetti flies.
+  const lastRaised = useRef<number | null>(null);
+  const cheerTimer = useRef<number>();
+  const [cheerBurst, setCheerBurst] = useState(0);
+  const [cheering, setCheering] = useState(false);
 
   const [preset, setPreset] = useState<number | null>(5000);
   const [custom, setCustom] = useState("");
@@ -69,6 +81,13 @@ const DonatePage = () => {
       fetchDonationTotals()
         .then((next) => {
           if (cancelled) return;
+          if (lastRaised.current !== null && next.raised_xaf > lastRaised.current) {
+            setCheerBurst((n) => n + 1);
+            setCheering(true);
+            window.clearTimeout(cheerTimer.current);
+            cheerTimer.current = window.setTimeout(() => setCheering(false), 2600);
+          }
+          lastRaised.current = next.raised_xaf;
           setTotals(next);
           setTotalsFailed(false);
         })
@@ -78,6 +97,7 @@ const DonatePage = () => {
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      window.clearTimeout(cheerTimer.current);
     };
   }, []);
 
@@ -133,10 +153,12 @@ const DonatePage = () => {
 
   const goal = totals?.goal_xaf ?? null;
   const percent = goal && totals ? Math.min(100, Math.round((totals.raised_xaf / goal) * 100)) : 0;
+  const level = goal && totals ? Math.max(0.04, Math.min(1, totals.raised_xaf / goal)) : NO_GOAL_LEVEL;
+  const tankLabel = totals ? t.progress.tankLabel(formatFcfa(lang, totals.raised_xaf), totals.donors) : t.progress.loading;
   const sponsorHref = `mailto:${CIYES_SPONSOR_EMAIL}?subject=${encodeURIComponent(t.sponsor.subject)}`;
 
   const chip = (selected: boolean) =>
-    `h-12 rounded-full border px-4 font-sans text-sm font-semibold transition-colors ${focusRingDark} ${
+    `flex min-h-[5.5rem] flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border px-3 py-3 font-sans text-[0.95rem] font-bold transition-[background-color,border-color,transform] motion-safe:active:scale-[0.97] ${focusRingDark} ${
       selected ? "border-[#FFB200] bg-[#FFB200] text-[#171411]" : "border-white/14 bg-white/[0.06] text-white hover:bg-white/[0.12]"
     }`;
 
@@ -147,7 +169,10 @@ const DonatePage = () => {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_10%,rgba(24,117,210,0.08),transparent_24%),radial-gradient(circle_at_85%_16%,rgba(21,109,59,0.07),transparent_22%),linear-gradient(180deg,#f9fbfd_0%,#f4f6f9_48%,#edf1f5_100%)]" />
 
         <div className="relative max-w-full px-5 sm:px-14 lg:px-18">
-          {/* Hero: the project and progress on the left, the donation form on the right */}
+          {/* Kids' donation video: portrait on phones, landscape on wide screens; hidden until the files exist */}
+          <KidsVideo lang={lang} label={t.kidsVideo.label} panelClassName={panel} />
+
+          {/* Hero: the project and the water tank on the left, the donation form on the right */}
           <section className="pb-14 pt-10 sm:pb-20 lg:pt-14">
             <div className="grid gap-8 lg:grid-cols-[1.04fr,0.96fr] lg:items-start">
               <div className="max-w-[42rem] lg:pt-2">
@@ -158,36 +183,26 @@ const DonatePage = () => {
                   {t.hero.date}
                 </p>
 
-                <div className={`${panel} mt-8 p-6 sm:p-7`} aria-live="polite">
-                  {totals ? (
-                    <>
-                      <p className="flex flex-wrap items-baseline gap-x-2 font-sans">
-                        <span className="text-[clamp(1.8rem,3.6vw,2.6rem)] font-semibold leading-none tracking-[-0.05em] text-[#11100e]">
-                          {t.progress.raised(formatFcfa(lang, totals.raised_xaf))}
-                        </span>
-                        {goal ? <span className="text-base font-medium text-[#11100e]/60">{t.progress.ofGoal(formatFcfa(lang, goal))}</span> : null}
-                      </p>
-                      {goal ? (
-                        <div
-                          className="mt-5 h-3 overflow-hidden rounded-full bg-black/[0.07]"
-                          role="progressbar"
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={percent}
-                        >
-                          <div className="h-full rounded-full bg-[#156D3B] transition-[width] duration-700" style={{ width: `${percent}%` }} />
-                        </div>
-                      ) : null}
-                      <p className="mt-4 font-sans text-sm font-medium text-[#11100e]/64">
-                        {t.progress.donors(totals.donors)}
-                        {goal ? null : <span className="block pt-1 text-[#11100e]/54">{t.progress.noGoal}</span>}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="font-sans text-sm font-medium text-[#11100e]/60">
-                      {totalsFailed ? t.progress.unavailable : t.progress.loading}
-                    </p>
-                  )}
+                <div className={`${panel} relative mt-8 px-4 pb-6 pt-7 sm:px-7`}>
+                  <ConfettiBurst burst={cheerBurst} top="32%" />
+                  <div className="mx-auto max-w-[34rem]">
+                    <WaterTankScene level={level} cheering={cheering} percentLabel={goal && totals ? `${percent}%` : null} label={tankLabel} />
+                  </div>
+                  <div className="mt-5 text-center" aria-live="polite">
+                    {totals ? (
+                      <>
+                        <p className="font-sans text-[clamp(1.9rem,3.8vw,2.7rem)] font-semibold leading-none tracking-[-0.05em] text-[#11100e]">
+                          {formatFcfa(lang, totals.raised_xaf)}
+                        </p>
+                        <p className="mt-2 font-sans text-base font-medium text-[#11100e]/68">
+                          {goal ? t.progress.raisedOf(formatFcfa(lang, goal)) : t.progress.raisedSoFar} · {t.progress.donors(totals.donors)}
+                        </p>
+                        {goal ? null : <p className="mx-auto mt-2 max-w-[26rem] font-sans text-sm text-[#11100e]/54">{t.progress.noGoal}</p>}
+                      </>
+                    ) : (
+                      <p className="font-sans text-sm font-medium text-[#11100e]/60">{totalsFailed ? t.progress.unavailable : t.progress.loading}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -203,7 +218,9 @@ const DonatePage = () => {
                   <fieldset>
                     <legend className="font-sans text-sm font-semibold text-white/80">{t.form.amountLabel}</legend>
                     <div id="donate-amounts" tabIndex={-1} className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 focus:outline-none">
-                      {CIYES_DONATE_AMOUNTS.map((value) => (
+                      {CIYES_DONATE_AMOUNTS.map((value, i) => {
+                        const Icon = AMOUNT_ICONS[i % AMOUNT_ICONS.length];
+                        return (
                         <button
                           key={value}
                           type="button"
@@ -214,9 +231,11 @@ const DonatePage = () => {
                           }}
                           className={chip(preset === value)}
                         >
+                          <Icon className="h-8 w-8" />
                           {formatFcfa(lang, value)}
                         </button>
-                      ))}
+                        );
+                      })}
                       <button
                         type="button"
                         aria-pressed={preset === null}
@@ -226,6 +245,7 @@ const DonatePage = () => {
                         }}
                         className={chip(preset === null)}
                       >
+                        <DropPlusIcon className="h-8 w-8" />
                         {t.form.custom}
                       </button>
                     </div>
@@ -360,57 +380,49 @@ const DonatePage = () => {
             </div>
           </section>
 
-          {/* Video placeholder: the film comes later */}
-          <section className="py-12 sm:py-16">
-            <div className="mx-auto max-w-3xl text-center">
-              <h2 className={`${displayHeading} text-[clamp(2.1rem,4.4vw,4rem)]`}>{t.video.title}</h2>
-              <p className="mx-auto mt-3 max-w-2xl font-sans text-sm font-medium leading-relaxed text-[#11100e]/70 sm:text-base">{t.video.text}</p>
-            </div>
-            <div className={`${panel} mx-auto mt-10 max-w-5xl p-2 sm:p-3`}>
-              <video
-                key={lang}
-                className="aspect-video w-full rounded-[1.5rem] bg-[#0b4fd6]"
-                controls
-                playsInline
-                preload="none"
-                poster={`/videos/borehole-${lang}-poster.jpg`}
-                aria-label={t.video.title}
-              >
-                <source src={`/videos/borehole-${lang}.mp4`} type="video/mp4" />
-              </video>
-            </div>
-          </section>
-
-          {/* Sponsors */}
+          {/* Sponsors, with the borehole sponsor video */}
           <section className="pb-16 pt-6 sm:pb-24">
-            <div className="flex flex-col gap-6 rounded-[2rem] border border-[#FFB200]/40 bg-[#FFB200]/[0.14] p-7 md:flex-row md:items-center md:justify-between md:p-10">
-              <div className="max-w-[40rem]">
+            <div className="grid gap-8 rounded-[2rem] border border-[#FFB200]/40 bg-[#FFB200]/[0.14] p-6 md:p-10 lg:grid-cols-[0.9fr,1.1fr] lg:items-center">
+              <div>
                 <h2 className="font-display text-[clamp(1.8rem,3.4vw,2.8rem)] font-bold leading-[0.98] tracking-[-0.04em] text-[#11100e]">{t.sponsor.title}</h2>
-                <p className="mt-3 font-sans text-[0.98rem] leading-relaxed text-[#11100e]/72">{t.sponsor.text}</p>
+                <p className="mt-3 max-w-[34rem] font-sans text-[0.98rem] leading-relaxed text-[#11100e]/72">{t.sponsor.text}</p>
+                <div className="mt-6 flex flex-col items-start gap-3">
+                  <a
+                    href={sponsorHref}
+                    className="inline-flex h-12 items-center gap-2 rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#171411]/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B]"
+                  >
+                    <Mail className="h-4 w-4" aria-hidden="true" />
+                    {t.sponsor.cta}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                  <p className="font-sans text-sm text-[#11100e]/64">{CIYES_SPONSOR_EMAIL}</p>
+                  <ul className="flex flex-wrap gap-2" aria-label={t.sponsor.phones}>
+                    {CIYES_SPONSOR_PHONES.map((phone) => (
+                      <li key={phone.tel}>
+                        <a
+                          href={`tel:${phone.tel}`}
+                          className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-black/10 bg-white/80 px-4 font-sans text-sm font-semibold text-[#11100e] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B]"
+                        >
+                          <Phone className="h-4 w-4" aria-hidden="true" />
+                          {phone.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <div className="flex shrink-0 flex-col gap-3 md:items-end">
-              <a
-                href={sponsorHref}
-                className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-full bg-[#171411] px-6 font-sans text-sm font-semibold text-white transition-colors hover:bg-[#171411]/92 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B] md:self-auto"
-              >
-                <Mail className="h-4 w-4" aria-hidden="true" />
-                {t.sponsor.cta}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
-              <p className="font-sans text-sm text-[#11100e]/64 md:text-right">{CIYES_SPONSOR_EMAIL}</p>
-              <ul className="flex flex-wrap gap-2 md:justify-end" aria-label={t.sponsor.phones}>
-                {CIYES_SPONSOR_PHONES.map((phone) => (
-                  <li key={phone.tel}>
-                    <a
-                      href={`tel:${phone.tel}`}
-                      className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-black/10 bg-white/80 px-4 font-sans text-sm font-semibold text-[#11100e] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#156D3B]"
-                    >
-                      <Phone className="h-4 w-4" aria-hidden="true" />
-                      {phone.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <div className={`${panel} p-2 sm:p-2.5`}>
+                <video
+                  key={lang}
+                  className="aspect-video w-full rounded-[1.5rem] bg-[#0b4fd6]"
+                  controls
+                  playsInline
+                  preload="none"
+                  poster={`/videos/borehole-${lang}-poster.jpg`}
+                  aria-label={t.sponsor.videoLabel}
+                >
+                  <source src={`/videos/borehole-${lang}.mp4`} type="video/mp4" />
+                </video>
               </div>
             </div>
           </section>
