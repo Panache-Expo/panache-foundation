@@ -54,6 +54,8 @@ export type CiyesDonateContent = {
     optional: string;
     submit: string;
     sending: string;
+    methodsLabel: string;
+    methods: { momo: string; orange: string; card: string };
     secure: string;
     errors: { amount: string; phone: string; generic: string; notReady: string };
   };
@@ -121,12 +123,12 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
     meta: {
       title: "Donate to the CIYES 2027 community borehole | Panache Foundation",
       description:
-        "This year, the CIYES community project is a borehole for an underserved community in Cameroon. Give with Mobile Money or card.",
+        "This year, the CIYES community project is a borehole for an underserved community in Cameroon. Give with Mobile Money or a bank card.",
     },
     hero: {
       headline:
         "This year, the CIYES community project is a borehole, for an underserved community in Cameroon that needs clean water.",
-      text: "Every franc goes to drilling, equipping and handing over one working borehole. Give with Mobile Money or card in under a minute.",
+      text: "Every franc goes to drilling, equipping and handing over one working borehole. Give with MTN MoMo, Orange Money or a bank card in under a minute.",
       date: "Handover on Day 1 of CIYES 2027 · 14 April 2027",
     },
     progress: {
@@ -149,9 +151,11 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       phoneLabel: "WhatsApp number",
       phoneHint: "We send you photos of the handover.",
       optional: "optional",
-      submit: "Donate",
+      submit: "Donate by Mobile Money or card",
       sending: "Opening secure payment…",
-      secure: "You pay on Campay's secure page with Mobile Money (MTN MoMo, Orange Money) or a bank card. We never see your PIN or card details.",
+      methodsLabel: "Ways to pay",
+      methods: { momo: "MTN MoMo", orange: "Orange Money", card: "Bank card" },
+      secure: "You pay on Campay's secure page and choose Mobile Money or bank card there. We never see your PIN or card details.",
       errors: {
         amount: "Choose an amount between 500 and 2,000,000 FCFA.",
         phone: "Please check the WhatsApp number, or leave it empty.",
@@ -204,7 +208,7 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       sceneLabel: "CIYES kids splashing in clean water",
       checking: "Checking your payment…",
       pendingTitle: "Your payment is still pending",
-      pendingText: "Confirm it on your phone if you have not yet, then check again.",
+      pendingText: "If you paid by Mobile Money, confirm it on your phone. Card payments can take a minute. Then check again.",
       checkAgain: "Check again",
       successTitle: (name) => (name ? `Thank you, ${name}.` : "Thank you."),
       successText: (amount) => `Your ${amount} donation is now part of the CIYES 2027 community borehole.`,
@@ -228,12 +232,12 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
     meta: {
       title: "Faire un don pour le forage communautaire CIYES 2027 | Panache Foundation",
       description:
-        "Cette année, le projet communautaire du CIYES est un forage pour une communauté défavorisée au Cameroun. Donnez par Mobile Money ou par carte.",
+        "Cette année, le projet communautaire du CIYES est un forage pour une communauté défavorisée au Cameroun. Donnez par Mobile Money ou par carte bancaire.",
     },
     hero: {
       headline:
         "Cette année, le projet communautaire du CIYES est un forage, pour une communauté défavorisée au Cameroun qui a besoin d'eau potable.",
-      text: "Chaque franc sert à forer, équiper et remettre un forage qui fonctionne. Donnez par Mobile Money ou par carte en moins d'une minute.",
+      text: "Chaque franc sert à forer, équiper et remettre un forage qui fonctionne. Donnez par MTN MoMo, Orange Money ou carte bancaire en moins d'une minute.",
       date: "Remise le jour 1 du CIYES 2027 · 14 avril 2027",
     },
     progress: {
@@ -256,9 +260,11 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       phoneLabel: "Numéro WhatsApp",
       phoneHint: "Nous vous enverrons les photos de la remise.",
       optional: "facultatif",
-      submit: "Faire un don",
+      submit: "Donner par Mobile Money ou carte",
       sending: "Ouverture du paiement sécurisé…",
-      secure: "Vous payez sur la page sécurisée de Campay, par Mobile Money (MTN MoMo, Orange Money) ou par carte bancaire. Nous ne voyons jamais votre code ni les données de votre carte.",
+      methodsLabel: "Moyens de paiement",
+      methods: { momo: "MTN MoMo", orange: "Orange Money", card: "Carte bancaire" },
+      secure: "Vous payez sur la page sécurisée de Campay et y choisissez Mobile Money ou carte bancaire. Nous ne voyons jamais votre code ni les données de votre carte.",
       errors: {
         amount: "Choisissez un montant entre 500 et 2 000 000 FCFA.",
         phone: "Veuillez vérifier le numéro WhatsApp, ou laissez-le vide.",
@@ -311,7 +317,7 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       sceneLabel: "Des enfants CIYES qui s'éclaboussent dans l'eau potable",
       checking: "Vérification de votre paiement…",
       pendingTitle: "Votre paiement est toujours en attente",
-      pendingText: "Confirmez-le sur votre téléphone si ce n'est pas encore fait, puis vérifiez à nouveau.",
+      pendingText: "Si vous avez payé par Mobile Money, confirmez-le sur votre téléphone. Un paiement par carte peut prendre une minute. Puis vérifiez à nouveau.",
       checkAgain: "Vérifier à nouveau",
       successTitle: (name) => (name ? `Merci, ${name}.` : "Merci."),
       successText: (amount) => `Votre don de ${amount} fait désormais partie du forage communautaire CIYES 2027.`,

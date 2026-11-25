@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Loader2, Mail, Phone } from "lucide-react";
+import { ArrowRight, CreditCard, Loader2, Mail, Phone, Smartphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Footer } from "@/components/Footer";
@@ -319,6 +319,21 @@ const DonatePage = () => {
                     {sending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : null}
                     {sending ? t.form.sending : t.form.submit}
                   </button>
+                  <ul className="flex flex-wrap items-center justify-center gap-2" aria-label={t.form.methodsLabel}>
+                    {[
+                      { label: t.form.methods.momo, Icon: Smartphone, dot: "#FFCC00" },
+                      { label: t.form.methods.orange, Icon: Smartphone, dot: "#FF7900" },
+                      { label: t.form.methods.card, Icon: CreditCard, dot: "#8FD3FF" },
+                    ].map(({ label, Icon, dot }) => (
+                      <li
+                        key={label}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/14 bg-white/[0.06] px-3 font-sans text-xs font-semibold text-white/86"
+                      >
+                        <Icon className="h-3.5 w-3.5" style={{ color: dot }} aria-hidden="true" />
+                        {label}
+                      </li>
+                    ))}
+                  </ul>
                   <p className="font-sans text-xs leading-relaxed text-white/56">{t.form.secure}</p>
                 </form>
               </section>
