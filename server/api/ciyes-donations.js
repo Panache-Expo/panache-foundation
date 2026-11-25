@@ -5,6 +5,8 @@
 //        status, external reference, amount and currency all match (same four checks as ticket payments).
 //   GET  ?campaign=borehole-2027 -> { goal_xaf, raised_xaf, donors } from completed rows only.
 // External references start with "donation-" so the revenue dashboards can leave them out.
+// Donors can pay by Mobile Money or bank card. If Campay refuses the card option for this account,
+// the payment link is requested again with Mobile Money only, so giving never breaks.
 import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
@@ -20,8 +22,14 @@ const CAMPAY_APP_USERNAME =
   process.env.DONATIONS_CAMPAY_APP_USERNAME || process.env.CAMPAY_APP_USERNAME || "";
 const CAMPAY_APP_PASSWORD =
   process.env.DONATIONS_CAMPAY_APP_PASSWORD || process.env.CAMPAY_APP_PASSWORD || "";
+// Cards are on by default. This deliberately ignores the shared CAMPAY_PAYMENT_OPTIONS (other flows
+// may limit it to MOMO); set DONATIONS_CAMPAY_PAYMENT_OPTIONS to override for donations only.
+const normalizePaymentOptions = (value) =>
+  [...new Set(String(value || "").toUpperCase().split(",").map((option) => option.trim()))]
+    .filter((option) => option === "MOMO" || option === "CARD")
+    .join(",");
 const CAMPAY_PAYMENT_OPTIONS =
-  process.env.DONATIONS_CAMPAY_PAYMENT_OPTIONS || process.env.CAMPAY_PAYMENT_OPTIONS || "MOMO,CARD";
+  normalizePaymentOptions(process.env.DONATIONS_CAMPAY_PAYMENT_OPTIONS) || "MOMO,CARD";
 const CURRENCY = "XAF";
 const BASE_URL = (
   process.env.DONATIONS_BASE_URL ||
@@ -171,6 +179,22 @@ const campayRequest = async (endpoint, options = {}) => {
   return payload;
 };
 
+// Ask Campay for a payment link. If it refuses a request that offers cards (for example because card
+// payments are not switched on for this account), try once more with Mobile Money only.
+export const requestPaymentLink = async (paymentLinkRequest, request = campayRequest) => {
+  const send = (body) => request("/api/get_payment_link/", { method: "POST", body: JSON.stringify(body) });
+  try {
+    return { payment: await send(paymentLinkRequest), request: paymentLinkRequest, cardFallback: false };
+  } catch (error) {
+    const options = String(paymentLinkRequest.payment_options || "").split(",");
+    const refused = error?.statusCode >= 400 && error?.statusCode < 500;
+    if (!refused || !options.includes("CARD") || !options.includes("MOMO")) throw error;
+    console.warn("ciyes-donations: Campay refused the card option, retrying with MOMO only:", error.message);
+    const momoOnly = { ...paymentLinkRequest, payment_options: "MOMO" };
+    return { payment: await send(momoOnly), request: momoOnly, cardFallback: true };
+  }
+};
+
 const loadCampaign = async (supabase, slug) => {
   const { data, error } = await supabase
     .from("ciyes_donation_campaigns")
@@ -251,11 +275,10 @@ const startDonation = async (req, body) => {
   if (insertError) throw insertError;
 
   let campayPayment;
+  let linkRequest = paymentLinkRequest;
+  let cardFallback = false;
   try {
-    campayPayment = await campayRequest("/api/get_payment_link/", {
-      method: "POST",
-      body: JSON.stringify(paymentLinkRequest),
-    });
+    ({ payment: campayPayment, request: linkRequest, cardFallback } = await requestPaymentLink(paymentLinkRequest));
   } catch (error) {
     await supabase
       .from("ciyes_donations")
@@ -282,7 +305,11 @@ const startDonation = async (req, body) => {
     .update({
       campay_reference: campayReference,
       payment_link: paymentLink,
-      provider_payload: { payment_link_request: paymentLinkRequest, payment_link_response: campayPayment },
+      provider_payload: {
+        payment_link_request: linkRequest,
+        payment_link_response: campayPayment,
+        ...(cardFallback ? { card_fallback: true } : {}),
+      },
       updated_at: new Date().toISOString(),
     })
     .eq("tx_ref", txRef);
