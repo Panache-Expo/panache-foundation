@@ -13,10 +13,20 @@ export const CIYES_SPONSOR_PHONES = [
   { label: "+237 6 73 59 49 31", tel: "+237673594931" },
 ] as const;
 
-export const formatFcfa = (lang: CiyesLang, amount: number) => {
+// Amounts in the CFA franc: "XAF" in English (as on the homepage), "FCFA" in French.
+export const formatXaf = (lang: CiyesLang, amount: number) => {
   const digits = Math.round(amount).toLocaleString("en-US");
-  return lang === "fr" ? `${digits.replace(/,/g, "\u00A0")}\u00A0FCFA` : `${digits} FCFA`;
+  return lang === "fr" ? `${digits.replace(/,/g, "\u00A0")}\u00A0FCFA` : `${digits} XAF`;
 };
+
+// Approximate US dollars, for international donors.
+export const formatUsd = (lang: CiyesLang, amount: number) =>
+  new Intl.NumberFormat(lang === "fr" ? "fr-FR" : "en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: amount >= 100 ? 0 : 2,
+  }).format(amount);
 
 type Item = { title: string; text: string };
 
@@ -39,6 +49,7 @@ export type CiyesDonateContent = {
     tankLabel: (amount: string, donors: number) => string;
     donors: (count: number) => string;
     noGoal: string;
+    usdNote: (date: string | null) => string;
     loading: string;
     unavailable: string;
   };
@@ -138,6 +149,7 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
         `A water tank filling up as money comes in: ${amount} raised by ${donors} ${donors === 1 ? "donor" : "donors"}, with CIYES kids cheering around it.`,
       donors: (count) => (count === 1 ? "1 donor" : `${count.toLocaleString("en-US")} donors`),
       noGoal: "The final budget will be published once the site survey is done.",
+      usdNote: (date) => `Dollar amounts are approximate, at the European Central Bank rate${date ? ` of ${date}` : ""}.`,
       loading: "Loading the total…",
       unavailable: "The total will show here shortly.",
     },
@@ -145,7 +157,7 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       title: "Give to the borehole",
       amountLabel: "Choose an amount",
       custom: "Other amount",
-      customPlaceholder: "Amount in FCFA",
+      customPlaceholder: "Amount in XAF",
       nameLabel: "Your name",
       namePlaceholder: "Shown as a donor, if you like",
       phoneLabel: "WhatsApp number",
@@ -157,7 +169,7 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
       methods: { momo: "MTN MoMo", orange: "Orange Money", card: "Bank card" },
       secure: "You pay on Campay's secure page and choose Mobile Money or bank card there. We never see your PIN or card details.",
       errors: {
-        amount: "Choose an amount between 500 and 2,000,000 FCFA.",
+        amount: "Choose an amount between 500 and 2,000,000 XAF.",
         phone: "Please check the WhatsApp number, or leave it empty.",
         generic: "We could not open the payment. Please try again.",
         notReady: "Donations open very soon. Please try again shortly.",
@@ -247,6 +259,7 @@ export const CIYES_DONATE_CONTENT: Record<CiyesLang, CiyesDonateContent> = {
         `Un réservoir d'eau qui se remplit au fil des dons : ${amount} collectés par ${donors} ${donors === 1 ? "donateur" : "donateurs"}, entouré d'enfants CIYES qui applaudissent.`,
       donors: (count) => (count === 1 ? "1 donateur" : `${count.toLocaleString("fr-FR")} donateurs`),
       noGoal: "Le budget final sera publié après l'étude du site.",
+      usdNote: (date) => `Montants en dollars approximatifs, au taux de la Banque centrale européenne${date ? ` du ${date}` : ""}.`,
       loading: "Chargement du total…",
       unavailable: "Le total s'affichera ici sous peu.",
     },

@@ -7,7 +7,7 @@ import { WhatsAppLogo } from "@/components/WhatsAppLogo";
 import { ConfettiBurst } from "@/components/donate/ConfettiBurst";
 import { SplashScene } from "@/components/donate/SplashScene";
 import { detectCiyesLang, saveCiyesLang, type CiyesLang } from "@/lib/ciyes-home-content";
-import { CIYES_DONATE_CONTENT, CIYES_DONATE_URL, formatFcfa } from "@/lib/ciyes-donate-content";
+import { CIYES_DONATE_CONTENT, CIYES_DONATE_URL, formatXaf } from "@/lib/ciyes-donate-content";
 import { DonationApiError, verifyDonation, type DonationVerifyResult } from "@/lib/ciyes-donate-api";
 
 // /donate/thank-you?tx_ref=...: Campay sends donors back here. Verify once on load; while the
@@ -87,7 +87,7 @@ const DonateThankYouPage = () => {
               <h1 className="mt-6 font-display text-[clamp(2rem,5vw,3rem)] font-bold leading-[0.96] tracking-[-0.05em] text-[#11100e]">
                 {t.successTitle(state.result.donor_name)}
               </h1>
-              <p className="mt-4 font-sans text-base leading-relaxed text-[#11100e]/72">{t.successText(formatFcfa(lang, state.result.amount_xaf))}</p>
+              <p className="mt-4 font-sans text-base leading-relaxed text-[#11100e]/72">{t.successText(formatXaf(lang, state.result.amount_xaf))}</p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <a href={shareHref} target="_blank" rel="noreferrer" className={`${button} bg-[#25D366] text-[#0b2e17] hover:bg-[#22c55e]`}>
                   <WhatsAppLogo className="h-5 w-5" />

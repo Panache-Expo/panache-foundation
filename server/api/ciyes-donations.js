@@ -3,7 +3,8 @@
 //        -> saves a pending row, asks Campay for a payment link, returns { paymentLink, txRef }
 //   POST {action:"verify", txRef} -> checks the transaction with Campay; completes the row only if
 //        status, external reference, amount and currency all match (same four checks as ticket payments).
-//   GET  ?campaign=borehole-2027 -> { goal_xaf, raised_xaf, donors } from completed rows only.
+//   GET  ?campaign=borehole-2027 -> { goal_xaf, raised_xaf, donors, usd_per_xaf, usd_rate_date } from
+//        completed rows only. The USD rate is approximate (see getUsdPerXaf) and may be null.
 // External references start with "donation-" so the revenue dashboards can leave them out.
 // Donors can pay by Mobile Money or bank card. If Campay refuses the card option for this account,
 // the payment link is requested again with Mobile Money only, so giving never breaks.
@@ -31,6 +32,31 @@ const normalizePaymentOptions = (value) =>
 const CAMPAY_PAYMENT_OPTIONS =
   normalizePaymentOptions(process.env.DONATIONS_CAMPAY_PAYMENT_OPTIONS) || "MOMO,CARD";
 const CURRENCY = "XAF";
+// XAF is pegged to the euro (1 EUR = 655.957 XAF), so XAF -> USD only needs the day's EUR/USD rate.
+// That comes from the European Central Bank via Frankfurter, cached for 6 hours. DONATIONS_USD_PER_XAF
+// pins a rate by hand. If no rate is available the API returns null and the page hides the dollars.
+const XAF_PER_EUR = 655.957;
+const FX_URL = "https://api.frankfurter.dev/v1/latest?base=EUR&symbols=USD";
+const FX_TTL_MS = 6 * 60 * 60 * 1000;
+let fxCache = { usdPerXaf: null, date: null, expiresAt: 0 };
+
+export const getUsdPerXaf = async (fetchImpl = fetch) => {
+  const pinned = Number(process.env.DONATIONS_USD_PER_XAF);
+  if (Number.isFinite(pinned) && pinned > 0) return { usdPerXaf: pinned, date: null };
+  if (fxCache.usdPerXaf && fxCache.expiresAt > Date.now()) return { usdPerXaf: fxCache.usdPerXaf, date: fxCache.date };
+  try {
+    const response = await fetchImpl(FX_URL, { signal: AbortSignal.timeout(3000) });
+    const payload = await response.json().catch(() => null);
+    const eurUsd = Number(payload?.rates?.USD);
+    if (response.ok && eurUsd > 0.5 && eurUsd < 2) {
+      fxCache = { usdPerXaf: eurUsd / XAF_PER_EUR, date: payload.date || null, expiresAt: Date.now() + FX_TTL_MS };
+    }
+  } catch {
+    // Keep the last good rate (even if stale) rather than failing the totals.
+  }
+  return { usdPerXaf: fxCache.usdPerXaf, date: fxCache.date };
+};
+
 const BASE_URL = (
   process.env.DONATIONS_BASE_URL ||
   process.env.PANACHE_FRONTEND_BASE_URL ||
@@ -407,7 +433,16 @@ const getTotals = async (req) => {
     if (data.length < pageSize) break;
   }
 
-  return { ok: true, campaign: campaignSlug, goal_xaf: campaign.goal_xaf ?? null, raised_xaf: raised, donors };
+  const fx = await getUsdPerXaf();
+  return {
+    ok: true,
+    campaign: campaignSlug,
+    goal_xaf: campaign.goal_xaf ?? null,
+    raised_xaf: raised,
+    donors,
+    usd_per_xaf: fx.usdPerXaf,
+    usd_rate_date: fx.date,
+  };
 };
 
 export default async function handler(req, res) {
