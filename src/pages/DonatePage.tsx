@@ -17,7 +17,8 @@ import {
   CIYES_DONATE_MIN_XAF,
   CIYES_SPONSOR_EMAIL,
   CIYES_SPONSOR_PHONES,
-  formatFcfa,
+  formatUsd,
+  formatXaf,
 } from "@/lib/ciyes-donate-content";
 import { DonationApiError, fetchDonationTotals, startDonation, type DonationTotals } from "@/lib/ciyes-donate-api";
 
@@ -154,7 +155,18 @@ const DonatePage = () => {
   const goal = totals?.goal_xaf ?? null;
   const percent = goal && totals ? Math.min(100, Math.round((totals.raised_xaf / goal) * 100)) : 0;
   const level = goal && totals ? Math.max(0.04, Math.min(1, totals.raised_xaf / goal)) : NO_GOAL_LEVEL;
-  const tankLabel = totals ? t.progress.tankLabel(formatFcfa(lang, totals.raised_xaf), totals.donors) : t.progress.loading;
+  // Approximate US dollars next to the XAF amounts, when the server has an exchange rate.
+  const usdPerXaf = totals?.usd_per_xaf ?? null;
+  const toUsd = (xaf: number) => (usdPerXaf ? formatUsd(lang, xaf * usdPerXaf) : null);
+  const raisedUsd = totals && totals.raised_xaf > 0 ? toUsd(totals.raised_xaf) : null;
+  // Non-breaking spaces keep "≈ $4,178" (and its bracket) on one line.
+  const goalText = goal ? (toUsd(goal) ? `${formatXaf(lang, goal)}\u00A0(≈\u00A0${toUsd(goal)})` : formatXaf(lang, goal)) : "";
+  const rateDate = totals?.usd_rate_date
+    ? new Intl.DateTimeFormat(lang === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(
+        new Date(`${totals.usd_rate_date}T12:00:00Z`)
+      )
+    : null;
+  const tankLabel = totals ? t.progress.tankLabel(formatXaf(lang, totals.raised_xaf), totals.donors) : t.progress.loading;
   const sponsorHref = `mailto:${CIYES_SPONSOR_EMAIL}?subject=${encodeURIComponent(t.sponsor.subject)}`;
 
   const chip = (selected: boolean) =>
@@ -191,13 +203,18 @@ const DonatePage = () => {
                   <div className="mt-5 text-center" aria-live="polite">
                     {totals ? (
                       <>
-                        <p className="font-sans text-[clamp(1.9rem,3.8vw,2.7rem)] font-semibold leading-none tracking-[-0.05em] text-[#11100e]">
-                          {formatFcfa(lang, totals.raised_xaf)}
+                        <p className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1 font-sans">
+                          <span className="text-[clamp(1.9rem,3.8vw,2.7rem)] font-semibold leading-none tracking-[-0.05em] text-[#11100e]">
+                            {formatXaf(lang, totals.raised_xaf)}
+                          </span>
+                          {raisedUsd ? <span className="whitespace-nowrap text-lg font-semibold tracking-[-0.02em] text-[#11100e]/56">≈ {raisedUsd}</span> : null}
                         </p>
                         <p className="mt-2 font-sans text-base font-medium text-[#11100e]/68">
-                          {goal ? t.progress.raisedOf(formatFcfa(lang, goal)) : t.progress.raisedSoFar} · {t.progress.donors(totals.donors)}
+                          {goal ? t.progress.raisedOf(goalText) : t.progress.raisedSoFar}{" "}
+                          <span className="whitespace-nowrap">· {t.progress.donors(totals.donors)}</span>
                         </p>
                         {goal ? null : <p className="mx-auto mt-2 max-w-[26rem] font-sans text-sm text-[#11100e]/54">{t.progress.noGoal}</p>}
+                        {usdPerXaf ? <p className="mx-auto mt-3 max-w-[26rem] font-sans text-xs text-[#11100e]/48">{t.progress.usdNote(rateDate)}</p> : null}
                       </>
                     ) : (
                       <p className="font-sans text-sm font-medium text-[#11100e]/60">{totalsFailed ? t.progress.unavailable : t.progress.loading}</p>
@@ -232,7 +249,7 @@ const DonatePage = () => {
                           className={chip(preset === value)}
                         >
                           <Icon className="h-8 w-8" />
-                          {formatFcfa(lang, value)}
+                          {formatXaf(lang, value)}
                         </button>
                         );
                       })}

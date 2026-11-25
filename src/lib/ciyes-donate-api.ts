@@ -3,7 +3,13 @@ import { CIYES_DONATE_CAMPAIGN } from "@/lib/ciyes-donate-content";
 export const DONATIONS_API_URL =
   import.meta.env.VITE_CIYES_DONATIONS_API_URL || "/api/ciyes-donations";
 
-export type DonationTotals = { goal_xaf: number | null; raised_xaf: number; donors: number };
+export type DonationTotals = {
+  goal_xaf: number | null;
+  raised_xaf: number;
+  donors: number;
+  usd_per_xaf: number | null; // approximate; null when no exchange rate is available
+  usd_rate_date: string | null; // YYYY-MM-DD of the European Central Bank rate, if known
+};
 export type DonationVerifyStatus = "pending" | "completed" | "failed" | "cancelled";
 export type DonationVerifyResult = {
   status: DonationVerifyStatus;
@@ -38,6 +44,8 @@ export const fetchDonationTotals = async (campaign = CIYES_DONATE_CAMPAIGN): Pro
     goal_xaf: typeof payload.goal_xaf === "number" ? payload.goal_xaf : null,
     raised_xaf: Number(payload.raised_xaf) || 0,
     donors: Number(payload.donors) || 0,
+    usd_per_xaf: Number(payload.usd_per_xaf) > 0 ? Number(payload.usd_per_xaf) : null,
+    usd_rate_date: typeof payload.usd_rate_date === "string" ? payload.usd_rate_date : null,
   };
 };
 
