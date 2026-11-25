@@ -30,7 +30,7 @@ const normalizePaymentOptions = (value) =>
     .filter((option) => option === "MOMO" || option === "CARD")
     .join(",");
 const CAMPAY_PAYMENT_OPTIONS =
-  normalizePaymentOptions(process.env.DONATIONS_CAMPAY_PAYMENT_OPTIONS) || "MOMO,CARD";
+  "MOMO,CARD";
 const CURRENCY = "XAF";
 // XAF is pegged to the euro (1 EUR = 655.957 XAF), so XAF -> USD only needs the day's EUR/USD rate.
 // That comes from the European Central Bank via Frankfurter, cached for 6 hours. DONATIONS_USD_PER_XAF
