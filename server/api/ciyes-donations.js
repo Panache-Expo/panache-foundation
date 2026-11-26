@@ -15,14 +15,14 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL |
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 const CAMPAY_BASE_URL = (
-  process.env.DONATIONS_CAMPAY_BASE_URL ||
+  process.env.PANACHE_360_CAMPAY_BASE_URL ||
   process.env.CAMPAY_BASE_URL ||
   "https://www.campay.net"
 ).replace(/\/+$/, "");
 const CAMPAY_APP_USERNAME =
-  process.env.DONATIONS_CAMPAY_APP_USERNAME || process.env.CAMPAY_APP_USERNAME || "";
+  process.env.PANACHE_360_CAMPAY_APP_USERNAME || process.env.CAMPAY_APP_USERNAME || "";
 const CAMPAY_APP_PASSWORD =
-  process.env.DONATIONS_CAMPAY_APP_PASSWORD || process.env.CAMPAY_APP_PASSWORD || "";
+  process.env.PANACHE_360_CAMPAY_APP_PASSWORD || process.env.CAMPAY_APP_PASSWORD || "";
 // Cards are on by default. This deliberately ignores the shared CAMPAY_PAYMENT_OPTIONS (other flows
 // may limit it to MOMO); set DONATIONS_CAMPAY_PAYMENT_OPTIONS to override for donations only.
 const normalizePaymentOptions = (value) =>
